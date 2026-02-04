@@ -1,0 +1,633 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// AUTH MODELS (NextAuth compatible)
+// ==========================================
+
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?
+  access_token             String?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?
+  session_state            String?
+  refresh_token_expires_in Int?
+  user                     User    @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  user         User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model OTP {
+  id         String   @id @default(cuid())
+  identifier String
+  code       String
+  type       OTPType
+  expiresAt  DateTime
+  verified   Boolean  @default(false)
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, type])
+  @@index([expiresAt])
+}
+
+// ==========================================
+// USER MODEL
+// ==========================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  username      String?   @unique
+  phone         String?   @unique
+  phoneVerified DateTime?
+  countryCode   String?
+  password      String?
+  bio           String?
+
+  // Role flags
+  isBrand       Boolean   @default(false)
+  isCreator     Boolean   @default(false)
+  activeRole    UserRole  @default(CREATOR) // Current active view
+
+  // Status
+  isOnboarded   Boolean   @default(false)
+  isActive      Boolean   @default(true)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth relations
+  accounts      Account[]  @relation("UserAccounts")
+  sessions      Session[]  @relation("UserSessions")
+
+  // Brand relations
+  brandProfile  BrandProfile?  @relation("UserBrandProfile")
+  campaigns     Campaign[]     @relation("BrandCampaigns")
+
+  // Creator relations
+  creatorProfile    CreatorProfile?      @relation("UserCreatorProfile")
+  submissions       CampaignSubmission[] @relation("CreatorSubmissions")
+  savedCampaigns    SavedCampaign[]      @relation("UserSavedCampaigns")
+
+  // Wallet relations
+  wallet            Wallet?              @relation("UserWallet")
+  transactionsFrom  Transaction[]        @relation("TransactionsFrom")
+  transactionsTo    Transaction[]        @relation("TransactionsTo")
+  payouts           Payout[]             @relation("UserPayouts")
+
+  // Notifications
+  notifications     Notification[]       @relation("UserNotifications")
+
+  @@index([email])
+  @@index([username])
+  @@index([phone])
+}
+
+// ==========================================
+// BRAND PROFILE
+// ==========================================
+
+model BrandProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  companyName     String?
+  companyLogo     String?
+  website         String?
+  industry        String?
+  description     String?
+  gstin           String?
+  isVerified      Boolean  @default(false)
+  totalCampaigns  Int      @default(0)
+  totalSpent      Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation("UserBrandProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ==========================================
+// CREATOR PROFILE
+// ==========================================
+
+model CreatorProfile {
+  id                  String       @id @default(cuid())
+  userId              String       @unique
+  displayName         String?
+  bio                 String?
+  profileImage        String?
+
+  // Tier system
+  tier                CreatorTier  @default(BRONZE)
+  totalCampaigns      Int          @default(0)
+  totalEarnings       Float        @default(0)
+  totalViews          Int          @default(0)
+
+  // Social accounts (for verification)
+  instagramHandle     String?
+  instagramFollowers  Int?
+  instagramVerified   Boolean      @default(false)
+  youtubeHandle       String?
+  youtubeSubscribers  Int?
+  youtubeVerified     Boolean      @default(false)
+  twitterHandle       String?
+  twitterFollowers    Int?
+  twitterVerified     Boolean      @default(false)
+  linkedinHandle      String?
+
+  // Content preferences
+  contentCategories   String[]     @default([])
+  preferredPlatforms  Platform[]   @default([])
+
+  // Ratings
+  avgRating           Float?       @default(0)
+  reviewCount         Int          @default(0)
+
+  // Badges
+  badges              String[]     @default([])
+
+  // Bank details for payouts
+  upiId               String?
+  bankAccountNumber   String?
+  bankIfsc            String?
+  bankAccountName     String?
+
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  user                User         @relation("UserCreatorProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tier])
+}
+
+// ==========================================
+// CAMPAIGN MODELS
+// ==========================================
+
+model Campaign {
+  id                String           @id @default(cuid())
+  brandId           String
+
+  // Basic info
+  name              String
+  description       String?
+  coverImage        String?
+
+  // Campaign type
+  type              CampaignType
+
+  // Content details
+  productName       String?
+  campaignBrief     String?
+  contentGuidelines String?
+  assetsLink        String?
+  rules             String?
+
+  // Targeting
+  targetPlatforms   Platform[]       @default([])
+  targetAudience    AudienceType[]   @default([])
+  targetCategories  String[]         @default([])
+
+  // Budget & Payout
+  totalBudget       Float
+  spentBudget       Float            @default(0)
+  minPayoutPerView  Float?           // Per 1K views
+  maxPayoutPerView  Float?
+  fixedPayout       Float?           // Per approved post
+  conversionPayout  Float?           // Per conversion
+
+  // Duration
+  startDate         DateTime
+  endDate           DateTime
+  duration          Int              // Days
+
+  // Status
+  status            CampaignStatus   @default(DRAFT)
+
+  // Stats
+  totalViews        Int              @default(0)
+  totalSubmissions  Int              @default(0)
+  approvedCount     Int              @default(0)
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  publishedAt       DateTime?
+
+  // Relations
+  brand             User             @relation("BrandCampaigns", fields: [brandId], references: [id], onDelete: Cascade)
+  submissions       CampaignSubmission[] @relation("CampaignSubmissions")
+  savedBy           SavedCampaign[]  @relation("CampaignSavedBy")
+  media             CampaignMedia[]  @relation("CampaignMedia")
+
+  @@index([brandId])
+  @@index([type])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model CampaignMedia {
+  id          String   @id @default(cuid())
+  campaignId  String
+  type        MediaType
+  url         String
+  filename    String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  campaign    Campaign @relation("CampaignMedia", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+}
+
+// ==========================================
+// SUBMISSIONS
+// ==========================================
+
+model CampaignSubmission {
+  id                String              @id @default(cuid())
+  campaignId        String
+  creatorId         String
+
+  // Submission content
+  contentUrl        String?             // Link to posted content
+  platform          Platform
+  selectedPlatforms String[]            @default([]) // All platforms creator will post on
+  caption           String?
+  trackingCode      String?             @unique // Unique code for tracking
+
+  // Status
+  status            SubmissionStatus    @default(PENDING)
+
+  // Performance metrics
+  totalViews        Int                 @default(0)
+  views             Int                 @default(0)
+  likes             Int                 @default(0)
+  comments          Int                 @default(0)
+  shares            Int                 @default(0)
+  clicks            Int                 @default(0)
+  conversions       Int                 @default(0)
+  engagementRate    Float               @default(0)
+
+  // Payout
+  earnedAmount      Float               @default(0)
+  calculatedPayout  Float               @default(0)
+  paidAmount        Float               @default(0)
+  isPaid            Boolean             @default(false)
+  paidAt            DateTime?
+
+  // Review
+  reviewNote        String?
+  reviewedAt        DateTime?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  submittedAt       DateTime?
+  approvedAt        DateTime?
+
+  // Relations
+  campaign          Campaign            @relation("CampaignSubmissions", fields: [campaignId], references: [id], onDelete: Cascade)
+  creator           User                @relation("CreatorSubmissions", fields: [creatorId], references: [id], onDelete: Cascade)
+  contentItems      ContentItem[]       @relation("SubmissionContent")
+  transactions      Transaction[]       @relation("SubmissionTransactions")
+
+  @@unique([campaignId, creatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([platform])
+}
+
+model ContentItem {
+  id              String           @id @default(cuid())
+  submissionId    String
+  type            MediaType
+  url             String
+  thumbnailUrl    String?
+  createdAt       DateTime         @default(now())
+
+  submission      CampaignSubmission @relation("SubmissionContent", fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+}
+
+// ==========================================
+// SAVED CAMPAIGNS
+// ==========================================
+
+model SavedCampaign {
+  id          String   @id @default(cuid())
+  userId      String
+  campaignId  String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation("UserSavedCampaigns", fields: [userId], references: [id], onDelete: Cascade)
+  campaign    Campaign @relation("CampaignSavedBy", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([userId])
+  @@index([campaignId])
+}
+
+// ==========================================
+// WALLET & TRANSACTIONS
+// ==========================================
+
+model Wallet {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  availableBalance Float           @default(0)
+  pendingBalance   Float           @default(0) // Earnings not yet released
+  lifetimeEarnings Float           @default(0)
+  totalWithdrawn   Float           @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  user             User            @relation("UserWallet", fields: [userId], references: [id], onDelete: Cascade)
+  transactions     Transaction[]   @relation("WalletTransactions")
+  payouts          Payout[]        @relation("WalletPayouts")
+  paymentMethods   PaymentMethod[] @relation("WalletPaymentMethods")
+
+  @@index([userId])
+}
+
+model Transaction {
+  id              String              @id @default(cuid())
+  walletId        String
+  fromUserId      String?
+  toUserId        String?
+  submissionId    String?
+  amount          Float
+  type            TransactionType
+  status          TransactionStatus   @default(PENDING)
+  description     String?
+  referenceId     String?             // Campaign ID, Submission ID, etc.
+  referenceType   String?             // CAMPAIGN, SUBMISSION, PAYOUT, etc.
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  wallet          Wallet              @relation("WalletTransactions", fields: [walletId], references: [id], onDelete: Cascade)
+  fromUser        User?               @relation("TransactionsFrom", fields: [fromUserId], references: [id])
+  toUser          User?               @relation("TransactionsTo", fields: [toUserId], references: [id])
+  submission      CampaignSubmission? @relation("SubmissionTransactions", fields: [submissionId], references: [id])
+
+  @@index([walletId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([submissionId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PaymentMethod {
+  id              String              @id @default(cuid())
+  walletId        String
+  type            PaymentMethodType
+  details         Json                // UPI ID, bank details, etc.
+  isPrimary       Boolean             @default(false)
+  isVerified      Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  wallet          Wallet              @relation("WalletPaymentMethods", fields: [walletId], references: [id], onDelete: Cascade)
+  payouts         Payout[]            @relation("PaymentMethodPayouts")
+
+  @@index([walletId])
+}
+
+model Payout {
+  id              String          @id @default(cuid())
+  walletId        String
+  paymentMethodId String
+  userId          String
+  amount          Float
+  status          PayoutStatus    @default(PENDING)
+
+  // TDS
+  tdsAmount       Float           @default(0)
+  netAmount       Float?          // Amount after TDS
+
+  transactionId   String?         // Payment gateway reference
+  processedAt     DateTime?
+  failedReason    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  wallet          Wallet          @relation("WalletPayouts", fields: [walletId], references: [id], onDelete: Cascade)
+  paymentMethod   PaymentMethod   @relation("PaymentMethodPayouts", fields: [paymentMethodId], references: [id])
+  user            User            @relation("UserPayouts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([paymentMethodId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String?
+  isRead      Boolean          @default(false)
+  actionUrl   String?
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+
+  user        User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum OTPType {
+  EMAIL_VERIFICATION
+  PHONE_VERIFICATION
+  LOGIN
+  PASSWORD_RESET
+}
+
+enum UserRole {
+  BRAND
+  CREATOR
+}
+
+enum CreatorTier {
+  BRONZE      // 500-5K followers, just joined
+  SILVER      // 5K-50K followers, 5+ campaigns
+  GOLD        // 50K-200K followers, 10+ campaigns
+  PLATINUM    // 200K-1M followers, 20+ campaigns
+  DIAMOND     // 1M+ followers, brand invitations only
+}
+
+enum CampaignType {
+  CLIPPING    // Viral video clips
+  UGC         // User Generated Content
+  JUST_POSTING // Simple image posting/tagging
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum Platform {
+  INSTAGRAM
+  YOUTUBE
+  TWITTER
+  LINKEDIN
+  TIKTOK
+  MOJ
+  JOSH
+}
+
+enum AudienceType {
+  BUSINESS
+  COLLEGE
+  EDUCATORS
+  GAMERS
+  TECH
+  ARTISTS
+  FASHION
+  BEAUTY
+  HEALTH_FITNESS
+  FOOD
+  TRAVEL
+  LIFESTYLE
+}
+
+enum SubmissionStatus {
+  PENDING         // Creator applied, waiting for approval
+  APPROVED        // Brand approved, creator can post
+  SUBMITTED       // Creator submitted content
+  UNDER_REVIEW    // Brand reviewing content
+  PUBLISHED       // Content is live
+  REJECTED        // Submission rejected
+  COMPLETED       // Campaign completed, payout processed
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum TransactionType {
+  EARNING             // Creator earns from campaign
+  WITHDRAWAL          // Creator withdraws
+  BONUS               // Milestone bonus
+  REFUND              // Campaign refund
+  CAMPAIGN_FUND       // Brand funds campaign
+  PLATFORM_FEE        // Nocage commission
+}
+
+enum PaymentMethodType {
+  UPI
+  BANK_ACCOUNT
+  PAYPAL
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PayoutMethod {
+  UPI
+  BANK_TRANSFER
+}
+
+enum NotificationType {
+  // Campaign notifications
+  CAMPAIGN_APPROVED
+  CAMPAIGN_REJECTED
+  CAMPAIGN_LIVE
+  CAMPAIGN_COMPLETED
+
+  // Submission notifications
+  SUBMISSION_RECEIVED
+  SUBMISSION_APPROVED
+  SUBMISSION_REJECTED
+  CONTENT_APPROVED
+
+  // Payout notifications
+  EARNING_CREDITED
+  PAYOUT_PROCESSED
+  PAYOUT_FAILED
+
+  // Milestone notifications
+  TIER_UPGRADED
+  BADGE_EARNED
+  MILESTONE_REACHED
+
+  // System
+  SYSTEM_ANNOUNCEMENT
+}
