@@ -46,6 +46,9 @@ export const campaignRouter = createTRPCRouter({
             },
           },
           media: true,
+          _count: {
+            select: { submissions: true },
+          },
         },
       });
 

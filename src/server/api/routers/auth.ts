@@ -366,47 +366,45 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      // Update user
+      // Update user - enable both roles, set selected as active
       await ctx.db.user.update({
         where: { id: userId },
         data: {
           name,
           username: username.toLowerCase(),
           activeRole: role,
-          isBrand: role === UserRole.BRAND,
-          isCreator: role === UserRole.CREATOR,
+          isBrand: true,
+          isCreator: true,
           isOnboarded: true,
         },
       });
 
-      // Create/update profile based on role
-      if (role === UserRole.BRAND) {
-        await ctx.db.brandProfile.upsert({
-          where: { userId },
-          create: {
-            userId,
-            companyName,
-            industry,
-          },
-          update: {
-            companyName,
-            industry,
-          },
-        });
-      } else {
-        await ctx.db.creatorProfile.upsert({
-          where: { userId },
-          create: {
-            userId,
-            bio,
-            instagramHandle,
-          },
-          update: {
-            bio,
-            instagramHandle,
-          },
-        });
-      }
+      // Create both profiles so user can switch roles freely
+      await ctx.db.brandProfile.upsert({
+        where: { userId },
+        create: {
+          userId,
+          companyName,
+          industry,
+        },
+        update: {
+          companyName,
+          industry,
+        },
+      });
+
+      await ctx.db.creatorProfile.upsert({
+        where: { userId },
+        create: {
+          userId,
+          bio,
+          instagramHandle,
+        },
+        update: {
+          bio,
+          instagramHandle,
+        },
+      });
 
       return { success: true };
     }),

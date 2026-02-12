@@ -154,30 +154,44 @@ export const authOptions: NextAuthOptions = {
     newUser: "/onboarding",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // On initial sign-in, set the userId from the user object
       if (user) {
-        const dbUser = await db.user.findUnique({
-          where: { email: user.email! },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            image: true,
-            isBrand: true,
-            isCreator: true,
-            activeRole: true,
-            isOnboarded: true,
-          },
-        });
+        token.userId = user.id;
+      }
 
-        if (dbUser) {
-          token.userId = dbUser.id;
-          token.isBrand = dbUser.isBrand;
-          token.isCreator = dbUser.isCreator;
-          token.activeRole = dbUser.activeRole;
-          token.isOnboarded = dbUser.isOnboarded;
+      // Always fetch fresh user data from DB on sign-in and session updates
+      // This ensures role switches, onboarding, and profile changes are reflected
+      if (trigger === "signIn" || trigger === "update" || user) {
+        const userId = token.userId as string;
+        if (userId) {
+          const dbUser = await db.user.findUnique({
+            where: { id: userId },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              image: true,
+              isBrand: true,
+              isCreator: true,
+              activeRole: true,
+              isOnboarded: true,
+            },
+          });
+
+          if (dbUser) {
+            token.userId = dbUser.id;
+            token.email = dbUser.email;
+            token.name = dbUser.name;
+            token.picture = dbUser.image;
+            token.isBrand = dbUser.isBrand;
+            token.isCreator = dbUser.isCreator;
+            token.activeRole = dbUser.activeRole;
+            token.isOnboarded = dbUser.isOnboarded;
+          }
         }
       }
+
       return token;
     },
     async session({ session, token }) {

@@ -23,8 +23,9 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <main className="pl-[260px]">
-        <div className="container mx-auto max-w-7xl p-6">
+      {/* Main content - responsive padding for sidebar */}
+      <main className="pt-14 lg:pt-0 lg:pl-[260px]">
+        <div className="container mx-auto max-w-7xl p-4 md:p-6">
           {children}
         </div>
       </main>

@@ -9,8 +9,13 @@ export default async function AuthLayout({
 }) {
   const session = await getServerSession(authOptions);
 
+  // If user is authenticated and already onboarded, redirect to dashboard
+  // If user is authenticated but NOT onboarded, allow them to access onboarding page
   if (session) {
-    redirect("/dashboard");
+    const isOnboarded = (session.user as any)?.isOnboarded;
+    if (isOnboarded) {
+      redirect("/dashboard");
+    }
   }
 
   return (
