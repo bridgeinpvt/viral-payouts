@@ -59,7 +59,7 @@ const STEPS = [
 
 export default function CreatorOnboardingPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +73,9 @@ export default function CreatorOnboardingPage() {
   const [upiId, setUpiId] = useState("");
 
   const completeOnboarding = trpc.auth.completeOnboarding.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Force session update to reflect isOnboarded: true
+      await update();
       router.push("/creator/dashboard");
       router.refresh();
     },
@@ -138,28 +140,25 @@ export default function CreatorOnboardingPage() {
         {STEPS.map((s, i) => (
           <div key={i} className="flex items-center gap-2">
             <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                i < step
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${i < step
                   ? "bg-primary text-primary-foreground"
                   : i === step
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground"
-              }`}
+                }`}
             >
               {i < step ? "\u2713" : i + 1}
             </div>
             <span
-              className={`hidden text-sm sm:inline ${
-                i === step ? "font-medium" : "text-muted-foreground"
-              }`}
+              className={`hidden text-sm sm:inline ${i === step ? "font-medium" : "text-muted-foreground"
+                }`}
             >
               {s.title}
             </span>
             {i < STEPS.length - 1 && (
               <div
-                className={`h-px w-8 ${
-                  i < step ? "bg-primary" : "bg-muted"
-                }`}
+                className={`h-px w-8 ${i < step ? "bg-primary" : "bg-muted"
+                  }`}
               />
             )}
           </div>

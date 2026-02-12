@@ -39,9 +39,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const receiptId = `w_${wallet.id.slice(-8)}_${Date.now()}`;
+
     const order = await createRazorpayOrder({
       amount,
-      receipt: `wallet_${wallet.id}_${Date.now()}`,
+      receipt: receiptId,
       notes: {
         userId: session.user.id,
         walletId: wallet.id,

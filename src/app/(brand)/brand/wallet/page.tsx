@@ -137,12 +137,12 @@ export default function BrandWalletPage() {
       const orderData = await response.json();
 
       const options = {
-        key: orderData.key,
+        key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency || "INR",
         name: "Viral Payouts",
         description: "Add funds to wallet",
-        order_id: orderData.id,
+        order_id: orderData.orderId,
         handler: async (response: {
           razorpay_payment_id: string;
           razorpay_order_id: string;
@@ -352,9 +352,8 @@ export default function BrandWalletPage() {
                         {tx.description || "-"}
                       </TableCell>
                       <TableCell
-                        className={`text-right font-medium ${
-                          isCredit ? "text-green-600" : "text-red-600"
-                        }`}
+                        className={`text-right font-medium ${isCredit ? "text-green-600" : "text-red-600"
+                          }`}
                       >
                         {isCredit ? "+" : "-"}
                         {formatCurrency(Math.abs(tx.amount))}

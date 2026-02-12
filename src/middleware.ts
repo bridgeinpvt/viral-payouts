@@ -17,6 +17,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/marketplace" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
+    pathname.startsWith("/choose-role") ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon")
@@ -34,6 +35,15 @@ export async function middleware(request: NextRequest) {
   const role = token.role as string;
   const isAdmin = token.isAdmin as boolean;
   const isOnboarded = token.isOnboarded as boolean;
+
+  // Redirect unonboarded users to role selection if they're trying to access protected routes
+  // but NOT if they're already on a role-specific onboarding page
+  if (!isOnboarded &&
+    pathname !== "/choose-role" &&
+    !pathname.startsWith("/brand/onboarding") &&
+    !pathname.startsWith("/creator/onboarding")) {
+    return NextResponse.redirect(new URL("/choose-role", request.url));
+  }
 
   // Brand routes
   if (pathname.startsWith("/brand")) {
