@@ -5,28 +5,25 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      isBrand?: boolean;
-      isCreator?: boolean;
-      activeRole?: UserRole;
-      isOnboarded?: boolean;
+      role: UserRole;
+      isAdmin: boolean;
+      isOnboarded: boolean;
     } & DefaultSession["user"];
   }
 
   interface User extends DefaultUser {
     id: string;
-    isBrand?: boolean;
-    isCreator?: boolean;
-    activeRole?: UserRole;
-    isOnboarded?: boolean;
+    role: UserRole;
+    isAdmin: boolean;
+    isOnboarded: boolean;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     userId?: string;
-    isBrand?: boolean;
-    isCreator?: boolean;
-    activeRole?: UserRole;
+    role?: UserRole;
+    isAdmin?: boolean;
     isOnboarded?: boolean;
   }
 }

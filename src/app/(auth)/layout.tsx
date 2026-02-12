@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth";
+import { getDashboardPath } from "@/lib/rbac";
 
 export default async function AuthLayout({
   children,
@@ -9,12 +10,10 @@ export default async function AuthLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  // If user is authenticated and already onboarded, redirect to dashboard
-  // If user is authenticated but NOT onboarded, allow them to access onboarding page
   if (session) {
-    const isOnboarded = (session.user as any)?.isOnboarded;
+    const isOnboarded = session.user?.isOnboarded;
     if (isOnboarded) {
-      redirect("/dashboard");
+      redirect(getDashboardPath(session));
     }
   }
 

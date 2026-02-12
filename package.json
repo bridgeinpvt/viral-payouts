@@ -12,7 +12,10 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "worker:dev": "cd worker && npm run dev",
+    "worker:build": "cd worker && npm run build",
+    "worker:start": "cd worker && npm run start"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
@@ -50,6 +53,8 @@
     "next": "^16.1.6",
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
+    "razorpay": "^2.9.6",
+    "recharts": "^2.12.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.2",
@@ -74,6 +79,10 @@
     "prettier": "^3.3.2",
     "prisma": "^6.2.1",
     "tailwindcss": "^3.4.3",
+    "tsx": "^4.19.2",
     "typescript": "^5.8.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

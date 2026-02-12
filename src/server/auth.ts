@@ -33,7 +33,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
-    // Email/Password login
     CredentialsProvider({
       id: "email-password",
       name: "Email & Password",
@@ -65,10 +64,12 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           image: user.image,
+          role: user.role,
+          isAdmin: user.isAdmin,
+          isOnboarded: user.isOnboarded,
         };
       },
     }),
-    // Email OTP login
     CredentialsProvider({
       id: "email-otp",
       name: "Email OTP",
@@ -94,10 +95,12 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           image: user.image,
+          role: user.role,
+          isAdmin: user.isAdmin,
+          isOnboarded: user.isOnboarded,
         };
       },
     }),
-    // Phone OTP login
     CredentialsProvider({
       id: "phone-otp",
       name: "Phone OTP",
@@ -124,6 +127,9 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           image: user.image,
+          role: user.role,
+          isAdmin: user.isAdmin,
+          isOnboarded: user.isOnboarded,
         };
       },
     }),
@@ -155,13 +161,10 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, trigger }) {
-      // On initial sign-in, set the userId from the user object
       if (user) {
         token.userId = user.id;
       }
 
-      // Always fetch fresh user data from DB on sign-in and session updates
-      // This ensures role switches, onboarding, and profile changes are reflected
       if (trigger === "signIn" || trigger === "update" || user) {
         const userId = token.userId as string;
         if (userId) {
@@ -172,9 +175,8 @@ export const authOptions: NextAuthOptions = {
               email: true,
               name: true,
               image: true,
-              isBrand: true,
-              isCreator: true,
-              activeRole: true,
+              role: true,
+              isAdmin: true,
               isOnboarded: true,
             },
           });
@@ -184,9 +186,8 @@ export const authOptions: NextAuthOptions = {
             token.email = dbUser.email;
             token.name = dbUser.name;
             token.picture = dbUser.image;
-            token.isBrand = dbUser.isBrand;
-            token.isCreator = dbUser.isCreator;
-            token.activeRole = dbUser.activeRole;
+            token.role = dbUser.role;
+            token.isAdmin = dbUser.isAdmin;
             token.isOnboarded = dbUser.isOnboarded;
           }
         }
@@ -197,20 +198,17 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && token.userId) {
         session.user.id = token.userId as string;
-        (session.user as any).isBrand = token.isBrand;
-        (session.user as any).isCreator = token.isCreator;
-        (session.user as any).activeRole = token.activeRole;
-        (session.user as any).isOnboarded = token.isOnboarded;
+        session.user.role = token.role!;
+        session.user.isAdmin = token.isAdmin!;
+        session.user.isOnboarded = token.isOnboarded!;
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Handle relative URLs
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
       }
 
-      // Same origin is always allowed
       try {
         const urlObj = new URL(url);
         if (urlObj.origin === baseUrl) {

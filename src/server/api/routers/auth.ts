@@ -2,9 +2,8 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { OTPType, UserRole } from "@prisma/client";
+import { OTPType, UserRole, WalletType } from "@prisma/client";
 
-// Helper functions
 function generateOTP(): string {
   if (process.env.NODE_ENV === "development") {
     return "123456";
@@ -17,7 +16,6 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 export const authRouter = createTRPCRouter({
-  // Get current user
   getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
     const user = await ctx.db.user.findUnique({
       where: { id: ctx.session.user.id },
@@ -30,7 +28,6 @@ export const authRouter = createTRPCRouter({
     return user;
   }),
 
-  // Send Email OTP
   sendEmailOTP: publicProcedure
     .input(z.object({
       email: z.string().email(),
@@ -39,7 +36,6 @@ export const authRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { email, type } = input;
 
-      // For login OTPs, check if user exists
       if (type === OTPType.LOGIN) {
         const existingUser = await ctx.db.user.findUnique({
           where: { email },
@@ -56,25 +52,21 @@ export const authRouter = createTRPCRouter({
       const code = generateOTP();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-      // Delete existing OTPs
       await ctx.db.oTP.deleteMany({
         where: { identifier: email, type },
       });
 
-      // Create new OTP
       const otp = await ctx.db.oTP.create({
         data: { identifier: email, code, type, expiresAt },
       });
 
-      // In development, log the OTP
       if (process.env.NODE_ENV === "development") {
-        console.log(`📧 OTP for ${email}: ${code}`);
+        console.log(`OTP for ${email}: ${code}`);
       }
 
       return { success: true, otpId: otp.id };
     }),
 
-  // Send Phone OTP
   sendPhoneOTP: publicProcedure
     .input(z.object({
       phone: z.string().min(7),
@@ -84,7 +76,6 @@ export const authRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { phone, countryCode, type } = input;
 
-      // For login OTPs, check if user exists
       if (type === OTPType.LOGIN) {
         const existingUser = await ctx.db.user.findUnique({
           where: { phone },
@@ -101,25 +92,21 @@ export const authRouter = createTRPCRouter({
       const code = generateOTP();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-      // Delete existing OTPs
       await ctx.db.oTP.deleteMany({
         where: { identifier: phone, type },
       });
 
-      // Create new OTP
       const otp = await ctx.db.oTP.create({
         data: { identifier: phone, code, type, expiresAt },
       });
 
-      // In development, log the OTP
       if (process.env.NODE_ENV === "development") {
-        console.log(`📱 OTP for +${countryCode} ${phone}: ${code}`);
+        console.log(`OTP for +${countryCode} ${phone}: ${code}`);
       }
 
       return { success: true, otpId: otp.id };
     }),
 
-  // Verify OTP
   verifyOTPCode: publicProcedure
     .input(z.object({
       identifier: z.string(),
@@ -173,18 +160,17 @@ export const authRouter = createTRPCRouter({
       return { success: true, otpId: otp.id };
     }),
 
-  // Register with email
   registerWithEmail: publicProcedure
     .input(z.object({
       email: z.string().email(),
       password: z.string().min(6),
       name: z.string().min(1),
+      role: z.nativeEnum(UserRole),
       otpId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { email, password, name, otpId } = input;
+      const { email, password, name, role, otpId } = input;
 
-      // Check if email exists
       const existingUser = await ctx.db.user.findUnique({
         where: { email },
       });
@@ -196,7 +182,6 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      // Verify OTP
       const otp = await ctx.db.oTP.findUnique({
         where: { id: otpId },
       });
@@ -210,7 +195,8 @@ export const authRouter = createTRPCRouter({
 
       const hashedPassword = await hashPassword(password);
 
-      // Create user with wallet
+      const walletType = role === UserRole.BRAND ? WalletType.BRAND : WalletType.CREATOR;
+
       const user = await ctx.db.user.create({
         data: {
           email,
@@ -218,30 +204,28 @@ export const authRouter = createTRPCRouter({
           name,
           emailVerified: new Date(),
           image: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7847eb&color=fff`,
-          isCreator: true, // Default to creator
-          activeRole: UserRole.CREATOR,
+          role,
           wallet: {
-            create: {},
+            create: { type: walletType },
           },
         },
       });
 
-      // Clean up OTP
       await ctx.db.oTP.delete({ where: { id: otpId } });
 
       return { success: true, userId: user.id };
     }),
 
-  // Register with phone
   registerWithPhone: publicProcedure
     .input(z.object({
       phone: z.string().min(7),
       countryCode: z.string().min(1).max(4),
       name: z.string().min(1),
+      role: z.nativeEnum(UserRole),
       otpId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { phone, countryCode, name, otpId } = input;
+      const { phone, countryCode, name, role, otpId } = input;
 
       const existingUser = await ctx.db.user.findUnique({
         where: { phone },
@@ -265,6 +249,8 @@ export const authRouter = createTRPCRouter({
         });
       }
 
+      const walletType = role === UserRole.BRAND ? WalletType.BRAND : WalletType.CREATOR;
+
       const user = await ctx.db.user.create({
         data: {
           phone,
@@ -272,10 +258,9 @@ export const authRouter = createTRPCRouter({
           name,
           phoneVerified: new Date(),
           image: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7847eb&color=fff`,
-          isCreator: true,
-          activeRole: UserRole.CREATOR,
+          role,
           wallet: {
-            create: {},
+            create: { type: walletType },
           },
         },
       });
@@ -285,76 +270,31 @@ export const authRouter = createTRPCRouter({
       return { success: true, userId: user.id };
     }),
 
-  // Switch role (Brand <-> Creator)
-  switchRole: protectedProcedure
-    .input(z.object({
-      role: z.nativeEnum(UserRole),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const { role } = input;
-      const userId = ctx.session.user.id;
-
-      const updateData: any = { activeRole: role };
-
-      // Enable the role if switching to it
-      if (role === UserRole.BRAND) {
-        updateData.isBrand = true;
-      } else {
-        updateData.isCreator = true;
-      }
-
-      const user = await ctx.db.user.update({
-        where: { id: userId },
-        data: updateData,
-      });
-
-      // Create brand profile if switching to brand for the first time
-      if (role === UserRole.BRAND) {
-        const existingProfile = await ctx.db.brandProfile.findUnique({
-          where: { userId },
-        });
-
-        if (!existingProfile) {
-          await ctx.db.brandProfile.create({
-            data: { userId },
-          });
-        }
-      }
-
-      // Create creator profile if switching to creator for the first time
-      if (role === UserRole.CREATOR) {
-        const existingProfile = await ctx.db.creatorProfile.findUnique({
-          where: { userId },
-        });
-
-        if (!existingProfile) {
-          await ctx.db.creatorProfile.create({
-            data: { userId },
-          });
-        }
-      }
-
-      return { success: true, activeRole: role };
-    }),
-
-  // Complete onboarding
   completeOnboarding: protectedProcedure
     .input(z.object({
       name: z.string().min(1),
       username: z.string().min(3).max(30),
-      role: z.nativeEnum(UserRole),
       // Brand fields
       companyName: z.string().optional(),
+      website: z.string().optional(),
       industry: z.string().optional(),
+      gstin: z.string().optional(),
+      contactPerson: z.string().optional(),
       // Creator fields
+      displayName: z.string().optional(),
       bio: z.string().optional(),
+      niche: z.string().optional(),
+      language: z.string().optional(),
+      location: z.string().optional(),
       instagramHandle: z.string().optional(),
+      youtubeHandle: z.string().optional(),
+      upiId: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      const { name, username, role, companyName, industry, bio, instagramHandle } = input;
+      const role = ctx.session.user.role;
+      const { name, username, ...profileData } = input;
 
-      // Check username availability
       const existingUsername = await ctx.db.user.findUnique({
         where: { username: username.toLowerCase() },
       });
@@ -366,44 +306,83 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      // Update user - enable both roles, set selected as active
       await ctx.db.user.update({
         where: { id: userId },
         data: {
           name,
           username: username.toLowerCase(),
-          activeRole: role,
-          isBrand: true,
-          isCreator: true,
           isOnboarded: true,
         },
       });
 
-      // Create both profiles so user can switch roles freely
-      await ctx.db.brandProfile.upsert({
-        where: { userId },
-        create: {
-          userId,
-          companyName,
-          industry,
-        },
-        update: {
-          companyName,
-          industry,
-        },
+      if (role === UserRole.BRAND) {
+        await ctx.db.brandProfile.upsert({
+          where: { userId },
+          create: {
+            userId,
+            companyName: profileData.companyName,
+            website: profileData.website,
+            industry: profileData.industry,
+            gstin: profileData.gstin,
+            contactPerson: profileData.contactPerson,
+          },
+          update: {
+            companyName: profileData.companyName,
+            website: profileData.website,
+            industry: profileData.industry,
+            gstin: profileData.gstin,
+            contactPerson: profileData.contactPerson,
+          },
+        });
+      } else {
+        await ctx.db.creatorProfile.upsert({
+          where: { userId },
+          create: {
+            userId,
+            displayName: profileData.displayName,
+            bio: profileData.bio,
+            niche: profileData.niche,
+            language: profileData.language,
+            location: profileData.location,
+            instagramHandle: profileData.instagramHandle,
+            youtubeHandle: profileData.youtubeHandle,
+            upiId: profileData.upiId,
+          },
+          update: {
+            displayName: profileData.displayName,
+            bio: profileData.bio,
+            niche: profileData.niche,
+            language: profileData.language,
+            location: profileData.location,
+            instagramHandle: profileData.instagramHandle,
+            youtubeHandle: profileData.youtubeHandle,
+            upiId: profileData.upiId,
+          },
+        });
+      }
+
+      return { success: true };
+    }),
+
+  setUserRole: protectedProcedure
+    .input(z.object({
+      role: z.nativeEnum(UserRole),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      // Update user role
+      await ctx.db.user.update({
+        where: { id: userId },
+        data: { role: input.role },
       });
 
-      await ctx.db.creatorProfile.upsert({
+      // Create appropriate wallet if not exists
+      const walletType = input.role === UserRole.BRAND ? WalletType.BRAND : WalletType.CREATOR;
+      await ctx.db.wallet.upsert({
         where: { userId },
-        create: {
-          userId,
-          bio,
-          instagramHandle,
-        },
-        update: {
-          bio,
-          instagramHandle,
-        },
+        create: { userId, type: walletType },
+        update: { type: walletType },
       });
 
       return { success: true };
