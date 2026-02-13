@@ -8,44 +8,7 @@ import { TRPCError } from "@trpc/server";
 
 export const trackingRouter = createTRPCRouter({
   // Get tracking link for a campaign+creator
-  getTrackingLink: protectedProcedure
-    .input(
-      z.object({
-        campaignId: z.string(),
-        creatorId: z.string().optional(),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const creatorId = input.creatorId ?? ctx.session.user.id;
 
-      const trackingLink = await ctx.db.trackingLink.findUnique({
-        where: {
-          campaignId_creatorId: {
-            campaignId: input.campaignId,
-            creatorId,
-          },
-        },
-      });
-
-      if (!trackingLink) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Tracking link not found" });
-      }
-
-      // Verify access: creator can see their own, brand/admin can see any
-      if (
-        creatorId !== ctx.session.user.id &&
-        !ctx.session.user.isAdmin
-      ) {
-        const campaign = await ctx.db.campaign.findUnique({
-          where: { id: input.campaignId },
-        });
-        if (!campaign || campaign.brandId !== ctx.session.user.id) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
-        }
-      }
-
-      return trackingLink;
-    }),
 
   // Get click events for a tracking link
   getClickEvents: protectedProcedure

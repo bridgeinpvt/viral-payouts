@@ -13,7 +13,7 @@ export default async function AuthLayout({
   if (session) {
     const isOnboarded = session.user?.isOnboarded;
     if (isOnboarded) {
-      redirect(getDashboardPath(session));
+      redirect(getDashboardPath(session.user));
     }
   }
 

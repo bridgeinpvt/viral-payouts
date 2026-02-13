@@ -87,7 +87,7 @@ export const adminRouter = createTRPCRouter({
                   },
                 },
               },
-              trackingLink: true,
+              trackingLinks: true,
               promoCode: true,
             },
           },

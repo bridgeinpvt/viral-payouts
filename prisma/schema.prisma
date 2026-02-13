@@ -367,7 +367,7 @@ model CampaignParticipation {
   caption           String?
 
   // Tracking
-  trackingLinkId    String?
+  // trackingLinkId removed
   promoCodeId       String?
 
   // Review
@@ -382,7 +382,7 @@ model CampaignParticipation {
   // Relations
   campaign          Campaign            @relation("CampaignParticipations", fields: [campaignId], references: [id], onDelete: Cascade)
   creator           User                @relation("CreatorParticipations", fields: [creatorId], references: [id], onDelete: Cascade)
-  trackingLink      TrackingLink?       @relation("ParticipationTrackingLink", fields: [trackingLinkId], references: [id])
+  trackingLinks     TrackingLink[]      @relation("ParticipationTrackingLinks")
   promoCode         PromoCode?          @relation("ParticipationPromoCode", fields: [promoCodeId], references: [id])
   contentItems      ContentItem[]       @relation("ParticipationContent")
   transactions      Transaction[]       @relation("ParticipationTransactions")
@@ -414,6 +414,7 @@ model TrackingLink {
   id              String   @id @default(cuid())
   campaignId      String
   creatorId       String
+  platform        Platform? // Platform this link is for (Instagram, YouTube, etc.)
   slug            String   @unique
   destinationUrl  String
   totalClicks     Int      @default(0)
@@ -423,9 +424,11 @@ model TrackingLink {
   campaign        Campaign @relation("CampaignTrackingLinks", fields: [campaignId], references: [id], onDelete: Cascade)
   creator         User     @relation("CreatorTrackingLinks", fields: [creatorId], references: [id], onDelete: Cascade)
   clickEvents     ClickEvent[] @relation("TrackingLinkClickEvents")
-  participation   CampaignParticipation[] @relation("ParticipationTrackingLink")
+  
+  participationId String?
+  participation   CampaignParticipation? @relation("ParticipationTrackingLinks", fields: [participationId], references: [id], onDelete: Cascade)
 
-  @@unique([campaignId, creatorId])
+  @@index([campaignId, creatorId])
   @@index([slug])
 }
 

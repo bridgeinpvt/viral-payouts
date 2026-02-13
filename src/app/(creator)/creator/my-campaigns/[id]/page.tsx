@@ -128,10 +128,7 @@ export default function CreatorCampaignDetailPage() {
     );
   }
 
-  const { campaign, trackingLink, promoCode, metrics } = participation;
-  const trackingUrl = trackingLink
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/go/${trackingLink.slug}`
-    : null;
+  const { campaign, promoCode, metrics } = participation;
 
   return (
     <div className="space-y-6">
@@ -232,37 +229,87 @@ export default function CreatorCampaignDetailPage() {
       </div>
 
       {/* Tracking Link (CLICK campaigns) */}
-      {campaign.type === "CLICK" && trackingLink && trackingUrl && (
+      {/* Tracking Link (CLICK campaigns) */}
+      {campaign.type === "CLICK" && (
         <Card>
           <CardHeader>
-            <CardTitle>Your Tracking Link</CardTitle>
+            <CardTitle>Tracking Links</CardTitle>
             <CardDescription>
-              Share this link with your audience. Clicks will be tracked
-              automatically.
+              Generate unique tracking links for each platform to track performance accurately.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
-              <Input
-                readOnly
-                value={trackingUrl}
-                className="font-mono text-sm"
-              />
+          <CardContent className="space-y-6">
+            {/* Link Generator */}
+            <div className="flex flex-col sm:flex-row gap-3 items-end">
+              <div className="w-full sm:w-[200px] space-y-2">
+                <label className="text-sm font-medium">Select Platform</label>
+                <Select
+                  value={selectedPlatform}
+                  onValueChange={(val) => setSelectedPlatform(val as Platform)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(platformLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button
-                variant="outline"
-                onClick={() => handleCopy(trackingUrl, "link")}
+                onClick={handleGenerateLink}
+                disabled={!selectedPlatform || generateLinkMutation.isPending}
+                className="w-full sm:w-auto"
               >
-                {copied === "link" ? "Copied!" : "Copy"}
+                {generateLinkMutation.isPending ? "Generating..." : "Generate Link"}
               </Button>
             </div>
-            {trackingLink.destinationUrl && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Redirects to: {trackingLink.destinationUrl}
-              </p>
+
+            {/* Links List */}
+            {participation.trackingLinks && participation.trackingLinks.length > 0 ? (
+              <div className="space-y-3 pt-2">
+                <h4 className="text-sm font-medium text-muted-foreground">Your Active Links</h4>
+                {participation.trackingLinks.map((link) => {
+                  const linkUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/go/${link.slug}`;
+                  const platformName = link.platform
+                    ? platformLabels[link.platform as Platform]
+                    : "General";
+
+                  return (
+                    <div key={link.id} className="rounded-lg border bg-card p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{platformName}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {link.totalClicks} clicks
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8"
+                          onClick={() => handleCopy(linkUrl, link.id)}
+                        >
+                          {copied === link.id ? "Copied!" : "Copy URL"}
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-2">
+                        <code className="text-xs flex-1 truncate">{linkUrl}</code>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6 border rounded-lg border-dashed">
+                <p className="text-sm text-muted-foreground">
+                  No tracking links generated yet. Create one above to start promoting!
+                </p>
+              </div>
             )}
-            <p className="text-sm text-muted-foreground mt-2">
-              Total clicks: <span className="font-medium">{trackingLink.totalClicks}</span>
-            </p>
           </CardContent>
         </Card>
       )}
@@ -298,71 +345,71 @@ export default function CreatorCampaignDetailPage() {
       {/* Content Submission */}
       {(participation.status === "APPROVED" ||
         participation.status === "ACTIVE") && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Submit Content</CardTitle>
-            <CardDescription>
-              Submit the URL of your published content for verification.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {participation.contentUrl && (
-              <div className="rounded-md border bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground mb-1">
-                  Previously submitted
-                </p>
-                <a
-                  href={participation.contentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary underline break-all"
+          <Card>
+            <CardHeader>
+              <CardTitle>Submit Content</CardTitle>
+              <CardDescription>
+                Submit the URL of your published content for verification.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {participation.contentUrl && (
+                <div className="rounded-md border bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Previously submitted
+                  </p>
+                  <a
+                    href={participation.contentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary underline break-all"
+                  >
+                    {participation.contentUrl}
+                  </a>
+                  {participation.platform && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({platformLabels[participation.platform as Platform] ?? participation.platform})
+                    </span>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  placeholder="https://instagram.com/p/..."
+                  value={contentUrl}
+                  onChange={(e) => setContentUrl(e.target.value)}
+                  className="flex-1"
+                />
+                <Select
+                  value={platform}
+                  onValueChange={(val) => setPlatform(val as Platform)}
                 >
-                  {participation.contentUrl}
-                </a>
-                {participation.platform && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    ({platformLabels[participation.platform as Platform] ?? participation.platform})
-                  </span>
-                )}
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(platformLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
-            <div className="flex flex-col sm:flex-row gap-3">
               <Input
-                placeholder="https://instagram.com/p/..."
-                value={contentUrl}
-                onChange={(e) => setContentUrl(e.target.value)}
-                className="flex-1"
+                placeholder="Caption or notes (optional)"
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
               />
-              <Select
-                value={platform}
-                onValueChange={(val) => setPlatform(val as Platform)}
+              <Button
+                onClick={handleSubmitContent}
+                disabled={submitMutation.isPending}
               >
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Platform" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(platformLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Input
-              placeholder="Caption or notes (optional)"
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-            />
-            <Button
-              onClick={handleSubmitContent}
-              disabled={submitMutation.isPending}
-            >
-              {submitMutation.isPending ? "Submitting..." : "Submit Content"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+                {submitMutation.isPending ? "Submitting..." : "Submit Content"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Metrics */}
       {metrics && (

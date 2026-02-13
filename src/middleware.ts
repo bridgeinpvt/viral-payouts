@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { getDashboardPath } from "@/lib/rbac";
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({
@@ -32,57 +33,63 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = token.role as string;
-  const isAdmin = token.isAdmin as boolean;
-  const isOnboarded = token.isOnboarded as boolean;
+  // Use centralized logic for path determination
+  const user = {
+    role: token.role as string | undefined,
+    isAdmin: token.isAdmin as boolean | undefined,
+    isOnboarded: token.isOnboarded as boolean | undefined,
+  };
 
-  // Redirect unonboarded users to role selection if they're trying to access protected routes
-  // but NOT if they're already on a role-specific onboarding page
-  if (!isOnboarded &&
-    pathname !== "/choose-role" &&
-    !pathname.startsWith("/brand/onboarding") &&
-    !pathname.startsWith("/creator/onboarding")) {
-    return NextResponse.redirect(new URL("/choose-role", request.url));
+  // 1. Admin Handling
+  if (user.isAdmin) {
+    // Admins only access /admin/* or generic public routes
+    if (pathname.startsWith("/admin")) {
+      // Root admin should go to dashboard
+      if (pathname === "/admin") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      }
+      return NextResponse.next();
+    }
+
+    // If admin is on root or any other role path, redirect to admin dashboard
+    if (pathname === "/" || pathname.startsWith("/brand") || pathname.startsWith("/creator")) {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
   }
 
-  // Brand routes
+  // 2. Brand/Creator Handling
+  // If user is trying to access a role-specific path, check if they are authorized
   if (pathname.startsWith("/brand")) {
-    if (role !== "BRAND") {
-      const redirect = role === "CREATOR" ? "/creator/dashboard" : "/login";
-      return NextResponse.redirect(new URL(redirect, request.url));
+    if (user.role !== "BRAND") {
+      // Redirect to their correct dashboard
+      const correctPath = getDashboardPath(user);
+      return NextResponse.redirect(new URL(correctPath, request.url));
     }
-    // Allow onboarding page even if not onboarded
-    if (!isOnboarded && !pathname.startsWith("/brand/onboarding")) {
+    // Check onboarding
+    if (!user.isOnboarded && !pathname.startsWith("/brand/onboarding")) {
       return NextResponse.redirect(new URL("/brand/onboarding", request.url));
     }
     return NextResponse.next();
   }
 
-  // Creator routes
   if (pathname.startsWith("/creator")) {
-    if (role !== "CREATOR") {
-      const redirect = role === "BRAND" ? "/brand/dashboard" : "/login";
-      return NextResponse.redirect(new URL(redirect, request.url));
+    if (user.role !== "CREATOR") {
+      const correctPath = getDashboardPath(user);
+      return NextResponse.redirect(new URL(correctPath, request.url));
     }
-    if (!isOnboarded && !pathname.startsWith("/creator/onboarding")) {
+    // Check onboarding
+    if (!user.isOnboarded && !pathname.startsWith("/creator/onboarding")) {
       return NextResponse.redirect(new URL("/creator/onboarding", request.url));
     }
     return NextResponse.next();
   }
 
-  // Admin routes
-  if (pathname.startsWith("/admin")) {
-    if (!isAdmin) {
-      const redirect = role === "BRAND" ? "/brand/dashboard" : "/creator/dashboard";
-      return NextResponse.redirect(new URL(redirect, request.url));
+  // 3. Root Path / Onboarding / Choose Role - let getDashboardPath handle it
+  if (pathname === "/" || pathname === "/onboarding" || (pathname === "/choose-role" && user.role)) {
+    const targetPath = getDashboardPath(user);
+    if (targetPath !== pathname) {
+      return NextResponse.redirect(new URL(targetPath, request.url));
     }
-    return NextResponse.next();
-  }
-
-  // Onboarding route (legacy /onboarding)
-  if (pathname === "/onboarding") {
-    const redirect = role === "BRAND" ? "/brand/onboarding" : "/creator/onboarding";
-    return NextResponse.redirect(new URL(redirect, request.url));
   }
 
   return NextResponse.next();

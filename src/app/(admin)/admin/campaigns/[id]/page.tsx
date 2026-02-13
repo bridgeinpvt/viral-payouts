@@ -154,8 +154,8 @@ export default function AdminCampaignDetailPage() {
                     {campaign.type === "VIEW"
                       ? `₹${campaign.payoutPer1KViews ?? 0}/1K views`
                       : campaign.type === "CLICK"
-                      ? `₹${campaign.payoutPerClick ?? 0}/click`
-                      : `₹${campaign.payoutPerSale ?? 0}/sale`}
+                        ? `₹${campaign.payoutPerClick ?? 0}/click`
+                        : `₹${campaign.payoutPerSale ?? 0}/sale`}
                   </span>
                 </div>
               </CardContent>
@@ -231,9 +231,9 @@ export default function AdminCampaignDetailPage() {
                 {formatCurrency(campaign.totalBudget)} spent (
                 {campaign.totalBudget > 0
                   ? (
-                      (campaign.spentBudget / campaign.totalBudget) *
-                      100
-                    ).toFixed(1)
+                    (campaign.spentBudget / campaign.totalBudget) *
+                    100
+                  ).toFixed(1)
                   : 0}
                 %)
               </CardDescription>
@@ -294,8 +294,23 @@ export default function AdminCampaignDetailPage() {
                       <TableCell>
                         <Badge variant="secondary">{p.status}</Badge>
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm">
-                        {p.trackingLink?.url ?? "-"}
+                      <TableCell className="max-w-[200px] text-sm">
+                        {p.trackingLinks && p.trackingLinks.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {p.trackingLinks.map((link: any) => (
+                              <div key={link.id} className="flex justify-between text-xs">
+                                <span className="truncate" title={link.slug}>
+                                  {link.slug} ({link.platform ?? "Gen"})
+                                </span>
+                                <span className="text-muted-foreground ml-1">
+                                  {link.totalClicks}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                       <TableCell>{p.promoCode?.code ?? "-"}</TableCell>
                       <TableCell>
@@ -347,12 +362,12 @@ export default function AdminCampaignDetailPage() {
                   ))}
                   {(!campaign.participations ||
                     campaign.participations.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        No participations found
-                      </TableCell>
-                    </TableRow>
-                  )}
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          No participations found
+                        </TableCell>
+                      </TableRow>
+                    )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -540,21 +555,21 @@ export default function AdminCampaignDetailPage() {
                           )}
                         {(flag.status === "CONFIRMED" ||
                           flag.status === "DISMISSED") && (
-                          <span className="text-sm text-muted-foreground">
-                            Resolved
-                          </span>
-                        )}
+                            <span className="text-sm text-muted-foreground">
+                              Resolved
+                            </span>
+                          )}
                       </TableCell>
                     </TableRow>
                   ))}
                   {(!campaign.fraudFlags ||
                     campaign.fraudFlags.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        No fraud flags
-                      </TableCell>
-                    </TableRow>
-                  )}
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          No fraud flags
+                        </TableCell>
+                      </TableRow>
+                    )}
                 </TableBody>
               </Table>
             </CardContent>

@@ -125,7 +125,7 @@ export default function SignupPage() {
         router.push("/login");
       } else {
         toast.success("Account created successfully!");
-        router.push("/onboarding");
+        router.push("/");
         router.refresh();
       }
     } catch (error: any) {
@@ -182,7 +182,7 @@ export default function SignupPage() {
           router.push("/login");
         } else {
           toast.success("Account created successfully!");
-          router.push("/onboarding");
+          router.push("/");
           router.refresh();
         }
       }
@@ -195,7 +195,7 @@ export default function SignupPage() {
 
   const handleGoogleSignup = async () => {
     setIsLoading(true);
-    await signIn("google", { callbackUrl: "/choose-role" });
+    await signIn("google", { callbackUrl: "/" });
   };
 
   return (
@@ -219,8 +219,8 @@ export default function SignupPage() {
                 type="button"
                 onClick={() => setSelectedRole(UserRole.CREATOR)}
                 className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${selectedRole === UserRole.CREATOR
-                    ? "border-primary bg-primary/5"
-                    : "border-muted hover:border-muted-foreground/30"
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-muted-foreground/30"
                   }`}
               >
                 <Sparkles className={`h-6 w-6 ${selectedRole === UserRole.CREATOR ? "text-primary" : "text-muted-foreground"}`} />
@@ -231,8 +231,8 @@ export default function SignupPage() {
                 type="button"
                 onClick={() => setSelectedRole(UserRole.BRAND)}
                 className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${selectedRole === UserRole.BRAND
-                    ? "border-primary bg-primary/5"
-                    : "border-muted hover:border-muted-foreground/30"
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-muted-foreground/30"
                   }`}
               >
                 <Building2 className={`h-6 w-6 ${selectedRole === UserRole.BRAND ? "text-primary" : "text-muted-foreground"}`} />

@@ -1,25 +1,53 @@
 import { type Session } from "next-auth";
+import { type JWT } from "next-auth/jwt";
 
-export function isBrandUser(session: Session | null): boolean {
-  return session?.user?.role === "BRAND";
+export type UserLike = {
+  role?: string | null;
+  isAdmin?: boolean | null;
+  isOnboarded?: boolean | null;
+};
+
+export function isBrandUser(user: UserLike | null): boolean {
+  return user?.role === "BRAND";
 }
 
-export function isCreatorUser(session: Session | null): boolean {
-  return session?.user?.role === "CREATOR";
+export function isCreatorUser(user: UserLike | null): boolean {
+  return user?.role === "CREATOR";
 }
 
-export function isAdminUser(session: Session | null): boolean {
-  return session?.user?.isAdmin === true;
+export function isAdminUser(user: UserLike | null): boolean {
+  return user?.isAdmin === true;
 }
 
-export function isOnboarded(session: Session | null): boolean {
-  return session?.user?.isOnboarded === true;
+export function isOnboarded(user: UserLike | null): boolean {
+  return user?.isOnboarded === true;
 }
 
-export function getDashboardPath(session: Session | null): string {
-  if (!session?.user) return "/login";
-  if (!session.user.isOnboarded) {
-    return session.user.role === "BRAND" ? "/brand/onboarding" : "/creator/onboarding";
+/**
+ * varying user objects (Session['user'] or JWT token)
+ */
+export function getDashboardPath(user: UserLike | null): string {
+  if (!user) return "/login";
+
+  // Admin always goes to admin dashboard
+  if (user.isAdmin) {
+    return "/admin/dashboard";
   }
-  return session.user.role === "BRAND" ? "/brand/dashboard" : "/creator/dashboard";
+
+  // Check onboarding status
+  if (!user.isOnboarded) {
+    // If role is selected, go to role specific onboarding
+    if (user.role === "BRAND") return "/brand/onboarding";
+    if (user.role === "CREATOR") return "/creator/onboarding";
+
+    // If no role, go to role selection
+    return "/choose-role";
+  }
+
+  // Dashboard based on role
+  if (user.role === "BRAND") return "/brand/dashboard";
+  if (user.role === "CREATOR") return "/creator/dashboard";
+
+  // Fallback (should ideally not happen for authenticated users)
+  return "/choose-role";
 }

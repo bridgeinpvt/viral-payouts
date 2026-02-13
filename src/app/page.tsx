@@ -7,7 +7,7 @@ export default async function HomePage() {
   const session = await getServerSession(authOptions);
 
   if (session) {
-    redirect(getDashboardPath(session));
+    redirect(getDashboardPath(session.user));
   } else {
     redirect("/marketplace");
   }

@@ -368,7 +368,7 @@ export const campaignRouter = createTRPCRouter({
                   },
                 },
               },
-              trackingLink: true,
+              trackingLinks: true,
               promoCode: true,
             },
             orderBy: { createdAt: "desc" },
@@ -446,17 +446,17 @@ export const campaignRouter = createTRPCRouter({
       // Create tracking link for CLICK campaigns
       if (campaign.type === CampaignType.CLICK && campaign.landingPageUrl) {
         const linkSlug = `${campaign.slug}-${Date.now().toString(36)}`;
-        const trackingLink = await ctx.db.trackingLink.create({
+        await ctx.db.trackingLink.create({
           data: {
             campaignId: input.campaignId,
             creatorId: input.creatorId,
+            participationId: participation.id,
             slug: linkSlug,
             destinationUrl: campaign.landingPageUrl,
+            // Default platform to generic/null or maybe we should set one?
+            // For invite flow, maybe we don't set a platform yet or default to something?
+            // Leaving platform as null for now as it's optional
           },
-        });
-        await ctx.db.campaignParticipation.update({
-          where: { id: participation.id },
-          data: { trackingLinkId: trackingLink.id },
         });
       }
 
@@ -531,17 +531,16 @@ export const campaignRouter = createTRPCRouter({
       // Create tracking link for CLICK campaigns
       if (campaign.type === CampaignType.CLICK && campaign.landingPageUrl) {
         const linkSlug = `${campaign.slug}-${Date.now().toString(36)}`;
-        const trackingLink = await ctx.db.trackingLink.create({
+        await ctx.db.trackingLink.create({
           data: {
             campaignId: campaign.id,
             creatorId: participation.creatorId,
+            participationId: input.participationId,
             slug: linkSlug,
             destinationUrl: campaign.landingPageUrl,
+            // Use applied platform if available, otherwise null
+            platform: participation.platform,
           },
-        });
-        await ctx.db.campaignParticipation.update({
-          where: { id: input.participationId },
-          data: { trackingLinkId: trackingLink.id },
         });
       }
 
@@ -723,7 +722,7 @@ export const campaignRouter = createTRPCRouter({
               },
             },
           },
-          trackingLink: true,
+          trackingLinks: true,
           promoCode: true,
         },
       });
@@ -750,7 +749,7 @@ export const campaignRouter = createTRPCRouter({
               },
             },
           },
-          trackingLink: true,
+          trackingLinks: true,
           promoCode: true,
           contentItems: true,
         },
@@ -770,7 +769,84 @@ export const campaignRouter = createTRPCRouter({
         },
       });
 
+      // Tracking links are now included in the participation object via relation
       return { ...participation, metrics };
+    }),
+
+  // Generate platform-specific tracking link (creator)
+  generateTrackingLink: creatorProcedure
+    .input(
+      z.object({
+        participationId: z.string(),
+        platform: z.nativeEnum(Platform),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const participation = await ctx.db.campaignParticipation.findUnique({
+        where: { id: input.participationId },
+        include: { campaign: true },
+      });
+
+      if (!participation || participation.creatorId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+      }
+
+      if (
+        participation.status !== ParticipationStatus.APPROVED &&
+        participation.status !== ParticipationStatus.ACTIVE
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only generate links for approved participations",
+        });
+      }
+
+      if (participation.campaign.type !== CampaignType.CLICK) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Tracking links are only for CLICK campaigns",
+        });
+      }
+
+      if (!participation.campaign.landingPageUrl) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Campaign does not have a landing page URL configured",
+        });
+      }
+
+      // Check if link already exists for this platform
+      const existing = await ctx.db.trackingLink.findFirst({
+        where: {
+          campaignId: participation.campaignId,
+          creatorId: ctx.session.user.id,
+          platform: input.platform,
+        },
+      });
+
+      if (existing) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `You already have a tracking link for ${input.platform}`,
+        });
+      }
+
+      // Generate unique slug with platform prefix
+      const platformPrefix = input.platform.toLowerCase().slice(0, 2);
+      const linkSlug = `${participation.campaign.slug}-${platformPrefix}-${Date.now().toString(36)}`;
+
+      const trackingLink = await ctx.db.trackingLink.create({
+        data: {
+          campaignId: participation.campaignId,
+          creatorId: ctx.session.user.id,
+          participationId: participation.id,
+          platform: input.platform,
+          slug: linkSlug,
+          destinationUrl: participation.campaign.landingPageUrl,
+        },
+      });
+
+      return trackingLink;
     }),
 
   // ==========================================
