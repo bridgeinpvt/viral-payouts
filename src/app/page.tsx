@@ -9,6 +9,6 @@ export default async function HomePage() {
   if (session) {
     redirect(getDashboardPath(session.user));
   } else {
-    redirect("/marketplace");
+    redirect("/login");
   }
 }
