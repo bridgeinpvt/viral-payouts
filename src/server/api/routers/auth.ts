@@ -165,11 +165,11 @@ export const authRouter = createTRPCRouter({
       email: z.string().email(),
       password: z.string().min(6),
       name: z.string().min(1),
-      role: z.nativeEnum(UserRole),
+      name: z.string().min(1),
       otpId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { email, password, name, role, otpId } = input;
+      const { email, password, name, otpId } = input;
 
       const existingUser = await ctx.db.user.findUnique({
         where: { email },
@@ -195,7 +195,7 @@ export const authRouter = createTRPCRouter({
 
       const hashedPassword = await hashPassword(password);
 
-      const walletType = role === UserRole.BRAND ? WalletType.BRAND : WalletType.CREATOR;
+
 
       const user = await ctx.db.user.create({
         data: {
@@ -204,10 +204,6 @@ export const authRouter = createTRPCRouter({
           name,
           emailVerified: new Date(),
           image: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7847eb&color=fff`,
-          role,
-          wallet: {
-            create: { type: walletType },
-          },
         },
       });
 
@@ -221,11 +217,11 @@ export const authRouter = createTRPCRouter({
       phone: z.string().min(7),
       countryCode: z.string().min(1).max(4),
       name: z.string().min(1),
-      role: z.nativeEnum(UserRole),
+      name: z.string().min(1),
       otpId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { phone, countryCode, name, role, otpId } = input;
+      const { phone, countryCode, name, otpId } = input;
 
       const existingUser = await ctx.db.user.findUnique({
         where: { phone },
@@ -249,7 +245,7 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      const walletType = role === UserRole.BRAND ? WalletType.BRAND : WalletType.CREATOR;
+
 
       const user = await ctx.db.user.create({
         data: {
@@ -258,10 +254,6 @@ export const authRouter = createTRPCRouter({
           name,
           phoneVerified: new Date(),
           image: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7847eb&color=fff`,
-          role,
-          wallet: {
-            create: { type: walletType },
-          },
         },
       });
 

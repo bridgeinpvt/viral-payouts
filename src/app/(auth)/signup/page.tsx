@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Rocket, Mail, Phone, Eye, EyeOff, Loader2, CheckCircle2, Building2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/trpc/client";
-import { OTPType, UserRole } from "@prisma/client";
+import { OTPType } from "@prisma/client";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -20,7 +20,6 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [signupMethod, setSignupMethod] = useState<"email" | "phone">("email");
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CREATOR);
 
   // Email signup state
   const [name, setName] = useState("");
@@ -110,7 +109,6 @@ export default function SignupPage() {
         password,
         name,
         otpId: emailOtpId,
-        role: selectedRole,
       });
 
       // Auto sign-in after registration
@@ -166,7 +164,6 @@ export default function SignupPage() {
           countryCode,
           name: phoneName,
           otpId: verifyResult.otpId,
-          role: selectedRole,
         });
 
         // Auto sign-in
@@ -211,37 +208,6 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Role Selection */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">I am a</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedRole(UserRole.CREATOR)}
-                className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${selectedRole === UserRole.CREATOR
-                  ? "border-primary bg-primary/5"
-                  : "border-muted hover:border-muted-foreground/30"
-                  }`}
-              >
-                <Sparkles className={`h-6 w-6 ${selectedRole === UserRole.CREATOR ? "text-primary" : "text-muted-foreground"}`} />
-                <span className={`text-sm font-medium ${selectedRole === UserRole.CREATOR ? "text-primary" : ""}`}>Creator</span>
-                <span className="text-xs text-muted-foreground text-center">Earn by promoting brands</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedRole(UserRole.BRAND)}
-                className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${selectedRole === UserRole.BRAND
-                  ? "border-primary bg-primary/5"
-                  : "border-muted hover:border-muted-foreground/30"
-                  }`}
-              >
-                <Building2 className={`h-6 w-6 ${selectedRole === UserRole.BRAND ? "text-primary" : "text-muted-foreground"}`} />
-                <span className={`text-sm font-medium ${selectedRole === UserRole.BRAND ? "text-primary" : ""}`}>Brand</span>
-                <span className="text-xs text-muted-foreground text-center">Run influencer campaigns</span>
-              </button>
-            </div>
-          </div>
-
           {/* Google Sign Up */}
           <Button
             variant="outline"

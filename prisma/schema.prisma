@@ -84,7 +84,7 @@ model User {
   bio           String?
 
   // Single role per user
-  role          UserRole  @default(CREATOR)
+  role          UserRole?
 
   // Admin flag
   isAdmin       Boolean   @default(false)
