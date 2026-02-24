@@ -12,15 +12,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import { FileText, Users, Eye, Copy, PauseCircle } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-700 border-gray-200",
@@ -115,97 +110,95 @@ export default function BrandCampaignsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Campaigns</CardTitle>
-          <CardDescription>
-            {campaigns?.length ?? 0} campaign{campaigns?.length !== 1 ? "s" : ""} total
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!campaigns || campaigns.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                You have not created any campaigns yet.
-              </p>
-              <Button asChild>
-                <Link href="/brand/campaigns/new">Create Your First Campaign</Link>
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Budget</TableHead>
-                  <TableHead>Spent</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Participants</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {campaigns.map((campaign) => (
-                  <TableRow key={campaign.id}>
-                    <TableCell className="font-medium">
-                      {campaign.name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{campaign.type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {formatCurrency(campaign.totalBudget)}
-                    </TableCell>
-                    <TableCell>
-                      {formatCurrency(campaign.spentBudget)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          statusColors[campaign.status] ?? "bg-gray-100 text-gray-700"
-                        }
-                      >
-                        {campaign.status}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {!campaigns || campaigns.length === 0 ? (
+          <div className="col-span-full text-center py-12 bg-card rounded-xl border">
+            <p className="text-muted-foreground mb-4">
+              You have not created any campaigns yet.
+            </p>
+            <Button asChild>
+              <Link href="/brand/campaigns/new">Create Your First Campaign</Link>
+            </Button>
+          </div>
+        ) : (
+          campaigns.map((campaign) => {
+            const progress = campaign.totalBudget > 0 ? (campaign.spentBudget / campaign.totalBudget) * 100 : 0;
+            return (
+              <Card key={campaign.id} className="flex flex-col">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg line-clamp-2">{campaign.name}</CardTitle>
+                      <Badge variant="outline" className="font-normal">
+                        {campaign.type}
                       </Badge>
-                    </TableCell>
-                    <TableCell>{campaign._count.participations}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/brand/campaigns/${campaign.id}`}>
-                            View
-                          </Link>
-                        </Button>
-                        {campaign.status === "LIVE" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={pausingId === campaign.id}
-                            onClick={() => handlePause(campaign.id)}
-                          >
-                            {pausingId === campaign.id ? "Pausing..." : "Pause"}
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={duplicatingId === campaign.id}
-                          onClick={() => handleDuplicate(campaign.id)}
-                        >
-                          {duplicatingId === campaign.id
-                            ? "Duplicating..."
-                            : "Duplicate"}
-                        </Button>
+                    </div>
+                    <Badge
+                      className={`whitespace-nowrap ${statusColors[campaign.status] ?? "bg-gray-100 text-gray-700"}`}
+                    >
+                      {campaign.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-1 space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground text-xs">Total Budget</p>
+                      <p className="font-semibold">{formatCurrency(campaign.totalBudget)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground text-xs">Participants</p>
+                      <div className="flex items-center gap-1.5 font-semibold">
+                        <Users className="h-3.5 w-3.5" />
+                        {campaign._count.participations}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Spent: {formatCurrency(campaign.spentBudget)}</span>
+                      <span>{Math.round(progress)}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-4 border-t bg-muted/40 grid grid-cols-2 gap-2">
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Link href={`/brand/campaigns/${campaign.id}`}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View
+                    </Link>
+                  </Button>
+                  {campaign.status === "LIVE" ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={pausingId === campaign.id}
+                      onClick={() => handlePause(campaign.id)}
+                    >
+                      <PauseCircle className="h-4 w-4 mr-2" />
+                      {pausingId === campaign.id ? "Pausing..." : "Pause"}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={duplicatingId === campaign.id}
+                      onClick={() => handleDuplicate(campaign.id)}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      {duplicatingId === campaign.id ? "Copying..." : "Duplicate"}
+                    </Button>
+                  )}
+                </CardFooter>
+              </Card>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

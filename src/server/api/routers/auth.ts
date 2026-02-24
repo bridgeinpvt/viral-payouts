@@ -165,7 +165,6 @@ export const authRouter = createTRPCRouter({
       email: z.string().email(),
       password: z.string().min(6),
       name: z.string().min(1),
-      name: z.string().min(1),
       otpId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -216,7 +215,6 @@ export const authRouter = createTRPCRouter({
     .input(z.object({
       phone: z.string().min(7),
       countryCode: z.string().min(1).max(4),
-      name: z.string().min(1),
       name: z.string().min(1),
       otpId: z.string(),
     }))

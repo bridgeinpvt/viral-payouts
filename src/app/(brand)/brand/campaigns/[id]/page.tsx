@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { trpc } from "@/trpc/client";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +29,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+import { UploadCloud, X, FileImage, FileText as FileIcon, Film } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-700 border-gray-200",
@@ -71,6 +74,10 @@ export default function CampaignDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
+  // Asset upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
   const approveMutation = trpc.campaign.approveParticipation.useMutation({
     onSuccess: () => {
       utils.campaign.getBrandCampaignDetail.invalidate({ id });
@@ -96,6 +103,19 @@ export default function CampaignDetailPage() {
       utils.campaign.getBrandCampaignDetail.invalidate({ id });
     },
   });
+
+  const saveMediaMutation = trpc.campaign.saveCampaignMedia.useMutation({
+    onSuccess: () => {
+      utils.campaign.getBrandCampaignDetail.invalidate({ id });
+      setSelectedFiles([]);
+      setIsUploading(false);
+    },
+    onError: () => {
+      setIsUploading(false);
+    }
+  });
+
+  const { uploadFile } = useFileUpload();
 
   if (isLoading) {
     return (
@@ -137,6 +157,51 @@ export default function CampaignDetailPage() {
   const activeParticipations = campaign.participations.filter(
     (p) => p.status === "ACTIVE" || p.status === "COMPLETED"
   );
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFiles((prev) => [...prev, ...Array.from(e.target.files as FileList)]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadFiles = async () => {
+    if (selectedFiles.length === 0) return;
+    setIsUploading(true);
+
+    try {
+      // Upload all files
+      const uploadedAssets = await Promise.all(
+        selectedFiles.map(async (file) => {
+          const res = await uploadFile(file);
+
+          // Determine MediaType
+          let type: "IMAGE" | "VIDEO" | "DOCUMENT" = "DOCUMENT";
+          if (file.type.startsWith("image/")) type = "IMAGE";
+          else if (file.type.startsWith("video/")) type = "VIDEO";
+
+          return {
+            type,
+            url: res.url,
+            filename: file.name
+          };
+        })
+      );
+
+      // Save to database
+      saveMediaMutation.mutate({
+        campaignId: id,
+        media: uploadedAssets
+      });
+
+    } catch (error) {
+      console.error("Failed to upload assets:", error);
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -201,6 +266,7 @@ export default function CampaignDetailPage() {
             Creators ({campaign.participations.length})
           </TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="assets">Assets</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -553,7 +619,7 @@ export default function CampaignDetailPage() {
             </CardHeader>
             <CardContent>
               {activeParticipations.filter((p) => p.contentUrl).length ===
-              0 ? (
+                0 ? (
                 <p className="text-center py-8 text-muted-foreground">
                   No content has been submitted yet.
                 </p>
@@ -614,31 +680,107 @@ export default function CampaignDetailPage() {
                     ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              {/* Campaign Media */}
-              {campaign.media.length > 0 && (
-                <div className="mt-6 pt-6 border-t">
-                  <h3 className="font-medium mb-3">Campaign Media</h3>
+        {/* Assets Tab */}
+        <TabsContent value="assets" className="space-y-6 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Campaign Assets</CardTitle>
+              <CardDescription>
+                Upload logos, product images, brand guidelines, and other assets for creators to use.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+
+              {/* Upload Zone */}
+              <div className="border-2 border-dashed rounded-xl p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer relative group">
+                <input
+                  type="file"
+                  multiple
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleFileChange}
+                />
+                <div className="flex flex-col items-center justify-center space-y-3">
+                  <div className="p-4 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors">
+                    <UploadCloud className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">Click to upload or drag and drop</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      SVG, PNG, JPG, PDF or MP4 (max. 50MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Selected Files Preview */}
+              {selectedFiles.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium">Files to Upload ({selectedFiles.length})</h4>
+                  <div className="space-y-2">
+                    {selectedFiles.map((file, idx) => (
+                      <div key={idx} className="flex justify-between items-center p-3 border rounded-lg bg-card">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="p-2 bg-muted rounded">
+                            {file.type.startsWith('image/') ? <FileImage className="h-4 w-4" /> :
+                              file.type.startsWith('video/') ? <Film className="h-4 w-4" /> :
+                                <FileIcon className="h-4 w-4" />}
+                          </div>
+                          <div className="truncate">
+                            <p className="text-sm font-medium truncate">{file.name}</p>
+                            <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => removeFile(idx)} className="text-muted-foreground hover:text-red-500">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <Button onClick={handleUploadFiles} disabled={isUploading}>
+                      {isUploading ? "Uploading..." : `Upload ${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''}`}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Existing Campaign Media */}
+              {campaign.media.length > 0 ? (
+                <div className="pt-6 border-t">
+                  <h3 className="font-medium mb-4">Uploaded Assets</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {campaign.media.map((m) => (
                       <div
                         key={m.id}
-                        className="rounded-lg border overflow-hidden"
+                        className="rounded-lg border overflow-hidden relative group"
                       >
                         {m.type === "IMAGE" ? (
                           <img
                             src={m.url}
                             alt={m.filename ?? ""}
-                            className="w-full h-32 object-cover"
+                            className="w-full h-32 object-cover group-hover:opacity-90 transition-opacity"
                           />
                         ) : (
                           <div className="h-32 bg-muted flex items-center justify-center text-sm text-muted-foreground">
                             {m.type}
                           </div>
                         )}
+                        {m.filename && (
+                          <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform">
+                            <p className="text-xs text-white truncate">{m.filename}</p>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
+                </div>
+              ) : (
+                <div className="pt-6 border-t text-center py-8">
+                  <p className="text-muted-foreground text-sm">No assets have been uploaded for this campaign yet.</p>
                 </div>
               )}
             </CardContent>

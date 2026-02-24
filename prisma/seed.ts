@@ -440,12 +440,12 @@ async function main() {
   // Update participations with tracking links
   await prisma.campaignParticipation.update({
     where: { id: clickParticipation1.id },
-    data: { trackingLinkId: trackingLink1.id },
+    data: { trackingLinks: { connect: { id: trackingLink1.id } } },
   });
 
   await prisma.campaignParticipation.update({
     where: { id: clickParticipation2.id },
-    data: { trackingLinkId: trackingLink2.id },
+    data: { trackingLinks: { connect: { id: trackingLink2.id } } },
   });
 
   console.log("✅ Created tracking links");

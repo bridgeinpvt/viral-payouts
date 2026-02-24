@@ -180,9 +180,9 @@ export default function MyCampaignsPage() {
                     </TableCell>
                     <TableCell>{formatDate(participation.createdAt)}</TableCell>
                     <TableCell>
-                      {participation.trackingLink && (
+                      {participation.trackingLinks && participation.trackingLinks.length > 0 && (
                         <span className="text-xs text-muted-foreground">
-                          {participation.trackingLink.totalClicks} clicks
+                          {participation.trackingLinks.reduce((acc, link) => acc + (link.totalClicks || 0), 0)} clicks
                         </span>
                       )}
                       {participation.promoCode && (

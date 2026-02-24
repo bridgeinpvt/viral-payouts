@@ -59,6 +59,27 @@ export default function CreatorCampaignDetailPage() {
   const id = params.id as string;
   const utils = trpc.useUtils();
 
+  const generateLinkMutation = trpc.campaign.generateTrackingLink.useMutation({
+    onSuccess: () => {
+      utils.campaign.getMyParticipation.invalidate({ id });
+      alert("Tracking link generated successfully!");
+    },
+    onError: (error) => {
+      alert(error.message || "Failed to generate tracking link.");
+    },
+  });
+
+  function handleGenerateLink() {
+    if (!platform) {
+      alert("Please select a platform first.");
+      return;
+    }
+    generateLinkMutation.mutate({
+      participationId: id,
+      platform,
+    });
+  }
+
   const { data: participation, isLoading } =
     trpc.campaign.getMyParticipation.useQuery({ id });
 
@@ -229,7 +250,6 @@ export default function CreatorCampaignDetailPage() {
       </div>
 
       {/* Tracking Link (CLICK campaigns) */}
-      {/* Tracking Link (CLICK campaigns) */}
       {campaign.type === "CLICK" && (
         <Card>
           <CardHeader>
@@ -244,8 +264,8 @@ export default function CreatorCampaignDetailPage() {
               <div className="w-full sm:w-[200px] space-y-2">
                 <label className="text-sm font-medium">Select Platform</label>
                 <Select
-                  value={selectedPlatform}
-                  onValueChange={(val) => setSelectedPlatform(val as Platform)}
+                  value={platform}
+                  onValueChange={(val) => setPlatform(val as Platform)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Platform" />
@@ -261,7 +281,7 @@ export default function CreatorCampaignDetailPage() {
               </div>
               <Button
                 onClick={handleGenerateLink}
-                disabled={!selectedPlatform || generateLinkMutation.isPending}
+                disabled={!platform || generateLinkMutation.isPending}
                 className="w-full sm:w-auto"
               >
                 {generateLinkMutation.isPending ? "Generating..." : "Generate Link"}

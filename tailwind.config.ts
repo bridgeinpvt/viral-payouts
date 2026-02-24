@@ -19,14 +19,23 @@ const config: Config = {
   	},
   	extend: {
   		fontFamily: {
-  			sans: ['Lato', 'Inter', 'Work Sans', 'Roboto', ...fontFamily.sans],
-  			body: ['Work Sans', 'Noto Sans', ...fontFamily.sans],
+  			sans: [
+  				'Lato',
+  				'Inter',
+  				'Work Sans',
+  				'Roboto',
+                    ...fontFamily.sans
+                ],
+  			body: [
+  				'Work Sans',
+  				'Noto Sans',
+                    ...fontFamily.sans
+                ]
   		},
   		colors: {
   			'primary-purple': '#6D28D9',
   			'secondary-purple': '#EDE9FE',
   			'accent-purple': '#7847eb',
-
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',

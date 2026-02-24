@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { CampaignType, Platform } from "@prisma/client";
+import { CampaignType, Platform, AudienceType } from "@prisma/client";
 import { trpc } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,11 +44,27 @@ const CAMPAIGN_TYPES: { value: CampaignType; label: string; description: string 
   },
 ];
 
+const AUDIENCES: { value: AudienceType; label: string }[] = [
+  { value: "BUSINESS", label: "Business & Professionals" },
+  { value: "COLLEGE", label: "College Students" },
+  { value: "EDUCATORS", label: "Educators & Teachers" },
+  { value: "GAMERS", label: "Gamers & Esports" },
+  { value: "TECH", label: "Tech Enthusiasts" },
+  { value: "ARTISTS", label: "Artists & Creatives" },
+  { value: "FASHION", label: "Fashion & Style" },
+  { value: "BEAUTY", label: "Beauty & Makeup" },
+  { value: "HEALTH_FITNESS", label: "Health & Fitness" },
+  { value: "FOOD", label: "Food & Beverage" },
+  { value: "TRAVEL", label: "Travel & Hospitality" },
+  { value: "LIFESTYLE", label: "Lifestyle" },
+];
+
 interface FormData {
   name: string;
   type: CampaignType;
   description: string;
   targetPlatforms: Platform[];
+  targetAudience: AudienceType[];
   startDate: string;
   endDate: string;
   payoutPer1KViews: string;
@@ -66,6 +82,7 @@ const initialFormData: FormData = {
   type: "VIEW",
   description: "",
   targetPlatforms: [],
+  targetAudience: [],
   startDate: "",
   endDate: "",
   payoutPer1KViews: "",
@@ -114,6 +131,15 @@ export default function CreateCampaignPage() {
     }));
   }
 
+  function toggleAudience(audience: AudienceType) {
+    setForm((prev) => ({
+      ...prev,
+      targetAudience: prev.targetAudience.includes(audience)
+        ? prev.targetAudience.filter((a) => a !== audience)
+        : [...prev.targetAudience, audience],
+    }));
+  }
+
   const duration = useMemo(() => {
     if (!form.startDate || !form.endDate) return 0;
     const start = new Date(form.startDate);
@@ -155,6 +181,9 @@ export default function CreateCampaignPage() {
       );
     }
     if (step === 2) {
+      return form.targetAudience.length > 0;
+    }
+    if (step === 3) {
       if (form.type === "VIEW") {
         return parseFloat(form.payoutPer1KViews) > 0;
       }
@@ -168,7 +197,7 @@ export default function CreateCampaignPage() {
         return parseFloat(form.payoutPerSale) > 0;
       }
     }
-    if (step === 3) {
+    if (step === 4) {
       return parseFloat(form.totalBudget) >= 25000;
     }
     return true;
@@ -182,6 +211,7 @@ export default function CreateCampaignPage() {
       type: form.type,
       description: form.description.trim() || undefined,
       targetPlatforms: form.targetPlatforms,
+      targetAudience: form.targetAudience,
       startDate: new Date(form.startDate),
       endDate: new Date(form.endDate),
       duration,
@@ -214,18 +244,17 @@ export default function CreateCampaignPage() {
       <div>
         <h1 className="text-2xl font-bold">Create Campaign</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Step {step} of 4
+          Step {step} of 5
         </p>
       </div>
 
       {/* Step Indicator */}
       <div className="flex items-center gap-2">
-        {[1, 2, 3, 4].map((s) => (
+        {[1, 2, 3, 4, 5].map((s) => (
           <div key={s} className="flex items-center gap-2 flex-1">
             <div
-              className={`h-2 rounded-full flex-1 transition-colors ${
-                s <= step ? "bg-primary" : "bg-muted"
-              }`}
+              className={`h-2 rounded-full flex-1 transition-colors ${s <= step ? "bg-primary" : "bg-muted"
+                }`}
             />
           </div>
         ))}
@@ -257,11 +286,10 @@ export default function CreateCampaignPage() {
                 {CAMPAIGN_TYPES.map((ct) => (
                   <label
                     key={ct.value}
-                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                      form.type === ct.value
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${form.type === ct.value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <input
                       type="radio"
@@ -345,8 +373,47 @@ export default function CreateCampaignPage() {
         </Card>
       )}
 
-      {/* Step 2: Payout Config */}
+      {/* Step 2: Audience */}
       {step === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Target Audience</CardTitle>
+            <CardDescription>
+              Select the audience demographics you want to reach
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              <Label>Audience Categories</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {AUDIENCES.map((audience) => (
+                  <label
+                    key={audience.value}
+                    className="flex items-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    <Checkbox
+                      checked={form.targetAudience.includes(audience.value)}
+                      onCheckedChange={() => toggleAudience(audience.value)}
+                    />
+                    <span className="text-sm font-medium">{audience.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="justify-between">
+            <Button variant="outline" onClick={() => setStep(1)}>
+              Back
+            </Button>
+            <Button disabled={!canProceed()} onClick={() => setStep(3)}>
+              Next
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
+      {/* Step 3: Payout Config */}
+      {step === 3 && (
         <Card>
           <CardHeader>
             <CardTitle>Payout Configuration</CardTitle>
@@ -474,23 +541,23 @@ export default function CreateCampaignPage() {
             )}
           </CardContent>
           <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(1)}>
+            <Button variant="outline" onClick={() => setStep(2)}>
               Back
             </Button>
-            <Button disabled={!canProceed()} onClick={() => setStep(3)}>
+            <Button disabled={!canProceed()} onClick={() => setStep(4)}>
               Next
             </Button>
           </CardFooter>
         </Card>
       )}
 
-      {/* Step 3: Budget */}
-      {step === 3 && (
+      {/* Step 4: AI Budgeting */}
+      {step === 4 && (
         <Card>
           <CardHeader>
-            <CardTitle>Campaign Budget</CardTitle>
+            <CardTitle>AI Budgeting</CardTitle>
             <CardDescription>
-              Set the total budget for this campaign (minimum 25,000 INR)
+              Set the total budget for this campaign (minimum 25,000 INR). Our AI will optimize reach based on your settings.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -530,18 +597,18 @@ export default function CreateCampaignPage() {
             )}
           </CardContent>
           <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(2)}>
+            <Button variant="outline" onClick={() => setStep(3)}>
               Back
             </Button>
-            <Button disabled={!canProceed()} onClick={() => setStep(4)}>
+            <Button disabled={!canProceed()} onClick={() => setStep(5)}>
               Next
             </Button>
           </CardFooter>
         </Card>
       )}
 
-      {/* Step 4: Review & Launch */}
-      {step === 4 && (
+      {/* Step 5: Review & Launch */}
+      {step === 5 && (
         <Card>
           <CardHeader>
             <CardTitle>Review & Create</CardTitle>
@@ -582,6 +649,15 @@ export default function CreateCampaignPage() {
                     {form.targetPlatforms.join(", ")}
                   </p>
                 </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Audience</p>
+                  <p className="font-medium">
+                    {form.targetAudience.join(", ")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Duration</p>
                   <p className="font-medium">
@@ -708,7 +784,7 @@ export default function CreateCampaignPage() {
             </div>
           </CardContent>
           <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(3)}>
+            <Button variant="outline" onClick={() => setStep(4)}>
               Back
             </Button>
             <Button

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { trpc } from "@/trpc/client";
 import {
   Card,
@@ -18,6 +19,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Instagram, Youtube, Twitter } from "lucide-react";
 
 function formatCurrency(amount: number): string {
   return `₹${amount.toLocaleString("en-IN")}`;
@@ -54,6 +65,11 @@ function TableSkeleton({ rows = 5, cols = 6 }: { rows?: number; cols?: number })
 
 export default function BrandAnalyticsPage() {
   const { data, isLoading } = trpc.analytics.getBrandAnalytics.useQuery();
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
+
+  // We can derive the selected creator's data from the existing list, 
+  // or use a separate query. Here we just find them in the list.
+  const selectedCreator = data?.topCreators.find((c) => c.creatorId === selectedCreatorId);
 
   return (
     <div className="space-y-8">
@@ -168,8 +184,8 @@ export default function BrandAnalyticsPage() {
                           campaign.status === "LIVE"
                             ? "default"
                             : campaign.status === "PAUSED"
-                            ? "outline"
-                            : "secondary"
+                              ? "outline"
+                              : "secondary"
                         }
                       >
                         {campaign.status}
@@ -216,6 +232,7 @@ export default function BrandAnalyticsPage() {
                 <TableHead className="text-right">Views</TableHead>
                 <TableHead className="text-right">Clicks</TableHead>
                 <TableHead className="text-right">Conversions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -231,8 +248,8 @@ export default function BrandAnalyticsPage() {
                 data?.topCreators.slice(0, 10).map((creator, index) => (
                   <TableRow key={creator.creatorId}>
                     <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell>{creator.creatorId}</TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="max-w-[150px] truncate" title={creator.creatorId}>{creator.creatorId}</TableCell>
+                    <TableCell className="text-right font-medium text-green-600">
                       {formatCurrency(creator.earnedAmount)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -244,6 +261,11 @@ export default function BrandAnalyticsPage() {
                     <TableCell className="text-right">
                       {creator.verifiedConversions.toLocaleString("en-IN")}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedCreatorId(creator.creatorId)}>
+                        View Profile
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -251,6 +273,103 @@ export default function BrandAnalyticsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Profile Drawer */}
+      <Sheet open={!!selectedCreatorId} onOpenChange={(open) => !open && setSelectedCreatorId(null)}>
+        <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+          <SheetHeader className="pb-6 border-b">
+            <SheetTitle>Creator Profile</SheetTitle>
+            <SheetDescription>
+              Detailed performance metrics and social links.
+            </SheetDescription>
+          </SheetHeader>
+
+          {selectedCreator ? (
+            <div className="py-6 space-y-8">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedCreator.creatorId}`} />
+                  <AvatarFallback>CR</AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-lg">Creator {selectedCreator.creatorId.substring(0, 8)}...</h3>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">Gold Tier</Badge>
+                    <Badge variant="outline" className="text-emerald-600 bg-emerald-50 border-emerald-200">Highly Active</Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold">Social Reach</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="p-2 bg-pink-100 text-pink-600 rounded-md">
+                      <Instagram className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Instagram</p>
+                      <p className="font-semibold text-sm">45.2K</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="p-2 bg-red-100 text-red-600 rounded-md">
+                      <Youtube className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">YouTube</p>
+                      <p className="font-semibold text-sm">128K</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold">Campaign Performance</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="p-4 pb-2">
+                      <CardDescription className="text-xs">Total Views</CardDescription>
+                      <CardTitle className="text-lg">{selectedCreator.verifiedViews.toLocaleString()}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4 pb-2">
+                      <CardDescription className="text-xs">Total Earned</CardDescription>
+                      <CardTitle className="text-lg text-green-600">{formatCurrency(selectedCreator.earnedAmount)}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4 pb-2">
+                      <CardDescription className="text-xs">Conversions</CardDescription>
+                      <CardTitle className="text-lg">{selectedCreator.verifiedConversions.toLocaleString()}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4 pb-2">
+                      <CardDescription className="text-xs">Avg. Click Rate</CardDescription>
+                      <CardTitle className="text-lg">
+                        {selectedCreator.verifiedViews > 0
+                          ? ((selectedCreator.verifiedClicks / selectedCreator.verifiedViews) * 100).toFixed(1) + "%"
+                          : "0%"}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <Button className="flex-1">Invite to New Campaign</Button>
+                <Button variant="outline" className="flex-1">Message</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-muted-foreground">
+              Loading creator details...
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Daily Trends */}
       <Card>

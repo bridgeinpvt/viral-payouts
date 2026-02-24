@@ -13,6 +13,7 @@ import {
   Platform,
   AudienceType,
   ParticipationStatus,
+  MediaType,
 } from "@prisma/client";
 
 function generateSlug(name: string): string {
@@ -596,6 +597,50 @@ export const campaignRouter = createTRPCRouter({
           reviewedAt: new Date(),
         },
       });
+    }),
+
+  // Save campaign media (brand)
+  saveCampaignMedia: brandProcedure
+    .input(
+      z.object({
+        campaignId: z.string(),
+        media: z.array(
+          z.object({
+            type: z.nativeEnum(MediaType),
+            url: z.string().url(),
+            filename: z.string().optional(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await ctx.db.campaign.findUnique({
+        where: { id: input.campaignId },
+        include: { media: true },
+      });
+
+      if (!campaign || campaign.brandId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+      }
+
+      const startingSortOrder = campaign.media.length;
+
+      // Add new media
+      const newMedia = await Promise.all(
+        input.media.map(async (item, idx) => {
+          return ctx.db.campaignMedia.create({
+            data: {
+              campaignId: input.campaignId,
+              type: item.type,
+              url: item.url,
+              filename: item.filename,
+              sortOrder: startingSortOrder + idx,
+            },
+          });
+        })
+      );
+
+      return newMedia;
     }),
 
   // ==========================================
