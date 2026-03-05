@@ -8,6 +8,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PromotionType {
+  UGC
+  CLIPPING
+  POSTING
+}
+
 // ==========================================
 // AUTH MODELS (NextAuth compatible)
 // ==========================================
@@ -250,11 +256,13 @@ model Campaign {
   targetPlatforms   Platform[]       @default([])
   targetAudience    AudienceType[]   @default([])
   targetCategories  String[]         @default([])
+  locations         String[]         @default([])
 
   // Budget
   totalBudget       Float
   spentBudget       Float            @default(0)
   platformCommissionRate Float       @default(0.15)
+  promotionType     PromotionType?
 
   // VIEW type fields
   payoutPer1KViews  Float?

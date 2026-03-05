@@ -16,6 +16,8 @@ import {
   MediaType,
 } from "@prisma/client";
 
+type PromotionType = "UGC" | "CLIPPING" | "POSTING";
+
 function generateSlug(name: string): string {
   return (
     name
@@ -57,6 +59,8 @@ export const campaignRouter = createTRPCRouter({
         targetPlatforms: z.array(z.nativeEnum(Platform)).optional(),
         targetAudience: z.array(z.nativeEnum(AudienceType)).optional(),
         targetCategories: z.array(z.string()).optional(),
+        locations: z.array(z.string()).optional(),
+        promotionType: z.enum(["UGC", "CLIPPING", "POSTING"]).optional(),
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
         duration: z.number().int().positive(),
@@ -94,6 +98,8 @@ export const campaignRouter = createTRPCRouter({
           targetPlatforms: input.targetPlatforms ?? [],
           targetAudience: input.targetAudience ?? [],
           targetCategories: input.targetCategories ?? [],
+          locations: input.locations ?? [],
+          promotionType: input.promotionType,
           startDate: input.startDate,
           endDate: input.endDate,
           duration: input.duration,
@@ -130,6 +136,8 @@ export const campaignRouter = createTRPCRouter({
         targetPlatforms: z.array(z.nativeEnum(Platform)).optional(),
         targetAudience: z.array(z.nativeEnum(AudienceType)).optional(),
         targetCategories: z.array(z.string()).optional(),
+        locations: z.array(z.string()).optional(),
+        promotionType: z.enum(["UGC", "CLIPPING", "POSTING"]).optional(),
         totalBudget: z.number().min(25000).optional(),
         payoutPer1KViews: z.number().positive().optional(),
         oauthRequired: z.boolean().optional(),
