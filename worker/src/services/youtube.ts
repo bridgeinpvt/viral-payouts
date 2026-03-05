@@ -1,35 +1,109 @@
-// YouTube Data API client for fetching video metrics
-// Requires YOUTUBE_API_KEY env var
+// YouTube Data API + YouTube Analytics API client for fetching video metrics.
+// Requires YOUTUBE_API_KEY env var for public data (fallback).
+// Accepts a per-creator accessToken to use YouTube Analytics API v2 for richer metrics.
 
 const YT_API_BASE = "https://www.googleapis.com/youtube/v3";
+const YT_ANALYTICS_BASE = "https://youtubeanalytics.googleapis.com/v2";
 
-export async function getVideoMetrics(videoUrl: string): Promise<{
+export async function getVideoMetrics(
+  videoUrl: string,
+  accessToken?: string
+): Promise<{
+  views: number;
+  likes: number;
+  comments: number;
+  watchTimeMinutes?: number;
+  avgViewPercent?: number;
+} | null> {
+  const videoId = extractVideoId(videoUrl);
+  if (!videoId) return null;
+
+  // Prefer YouTube Analytics API v2 when we have a creator OAuth token
+  if (accessToken) {
+    const analyticsResult = await fetchAnalyticsMetrics(videoId, accessToken);
+    if (analyticsResult) return analyticsResult;
+    // Fall through to public API on analytics error
+    console.warn(`[youtube] Analytics API failed for ${videoId}, falling back to public API`);
+  }
+
+  // Fallback: public YouTube Data API (API key only — standard metrics)
+  return fetchPublicMetrics(videoId);
+}
+
+async function fetchAnalyticsMetrics(
+  videoId: string,
+  accessToken: string
+): Promise<{
+  views: number;
+  likes: number;
+  comments: number;
+  watchTimeMinutes: number;
+  avgViewPercent: number;
+} | null> {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+
+    const url = new URL(`${YT_ANALYTICS_BASE}/reports`);
+    url.searchParams.set("ids", "channel==MINE");
+    url.searchParams.set("startDate", startDate!);
+    url.searchParams.set("endDate", today!);
+    url.searchParams.set("metrics", "views,likes,comments,estimatedMinutesWatched,averageViewPercentage");
+    url.searchParams.set("filters", `video==${videoId}`);
+    url.searchParams.set("dimensions", "video");
+
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) {
+      console.error(`[youtube] Analytics API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data = await response.json() as any;
+    const row = data.rows?.[0];
+    if (!row) return null;
+
+    // Row: [videoId, views, likes, comments, estimatedMinutesWatched, averageViewPercentage]
+    return {
+      views: row[1] ?? 0,
+      likes: row[2] ?? 0,
+      comments: row[3] ?? 0,
+      watchTimeMinutes: row[4] ?? 0,
+      avgViewPercent: row[5] ?? 0,
+    };
+  } catch (error) {
+    console.error("[youtube] Analytics API error:", error);
+    return null;
+  }
+}
+
+async function fetchPublicMetrics(videoId: string): Promise<{
   views: number;
   likes: number;
   comments: number;
 } | null> {
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) {
-    console.warn("No YouTube API key configured");
+    console.warn("[youtube] No YOUTUBE_API_KEY configured");
     return null;
   }
 
   try {
-    const videoId = extractVideoId(videoUrl);
-    if (!videoId) return null;
-
     const response = await fetch(
       `${YT_API_BASE}/videos?part=statistics&id=${videoId}&key=${apiKey}`
     );
 
     if (!response.ok) {
-      console.error(`YT API error: ${response.status} ${response.statusText}`);
+      console.error(`[youtube] Public API error: ${response.status} ${response.statusText}`);
       return null;
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const stats = data.items?.[0]?.statistics;
-
     if (!stats) return null;
 
     return {
@@ -38,7 +112,7 @@ export async function getVideoMetrics(videoUrl: string): Promise<{
       comments: parseInt(stats.commentCount ?? "0", 10),
     };
   } catch (error) {
-    console.error("YouTube API error:", error);
+    console.error("[youtube] Public API error:", error);
     return null;
   }
 }

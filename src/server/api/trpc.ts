@@ -6,6 +6,7 @@ import superjson from "superjson";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth";
 import { db } from "@/server/db";
+import { logger } from "@/lib/logger";
 
 type CreateContextOptions = {
   session: Session | null;
@@ -29,6 +30,8 @@ export const createTRPCContext = async () => {
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
   errorFormatter({ shape, error }) {
+    // Log all tRPC errors in development for easier debugging
+    logger.error(`[tRPC] Error on ${shape.data?.path ?? "unknown"}:`, error.message);
     return {
       ...shape,
       data: {

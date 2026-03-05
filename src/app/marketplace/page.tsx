@@ -58,15 +58,28 @@ function formatPayout(campaign: {
 }) {
   switch (campaign.type) {
     case "VIEW":
-      return `\u20B9${campaign.payoutPer1KViews ?? 0} per 1K views`;
+      return campaign.payoutPer1KViews
+        ? `\u20B9${campaign.payoutPer1KViews} per 1K views`
+        : "View-based payout";
     case "CLICK":
-      return `\u20B9${campaign.payoutPerClick ?? 0} per click`;
+      return campaign.payoutPerClick
+        ? `\u20B9${campaign.payoutPerClick} per click`
+        : "Per-click payout";
     case "CONVERSION":
-      return `\u20B9${campaign.payoutPerSale ?? 0} per sale`;
+      return campaign.payoutPerSale
+        ? `\u20B9${campaign.payoutPerSale} per sale`
+        : "Commission per sale";
     default:
-      return "";
+      return "Performance payout";
   }
 }
+
+function formatBudgetPool(totalBudget: number): string {
+  if (totalBudget >= 100_000) return `\u20B9${(totalBudget / 100_000).toFixed(1)}L pool`;
+  if (totalBudget >= 1_000) return `\u20B9${(totalBudget / 1_000).toFixed(1)}K pool`;
+  return `\u20B9${totalBudget} pool`;
+}
+
 
 function CampaignCardSkeleton() {
   return (
@@ -343,6 +356,9 @@ export default function MarketplacePage() {
                         </p>
                         <p className="mt-0.5 text-lg font-semibold">
                           {formatPayout(campaign)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {formatBudgetPool(campaign.totalBudget)}
                         </p>
                       </div>
 
