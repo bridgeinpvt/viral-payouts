@@ -59,6 +59,14 @@ export default function AdminCampaignDetailPage() {
     },
   });
 
+  const approveMutation = trpc.admin.approveCampaign.useMutation({
+    onSuccess: () => utils.admin.getCampaignOversight.invalidate({ id }),
+  });
+
+  const rejectMutation = trpc.admin.rejectCampaign.useMutation({
+    onSuccess: () => utils.admin.getCampaignOversight.invalidate({ id }),
+  });
+
   const freezeMutation = trpc.admin.freezeCreator.useMutation({
     onSuccess: () => {
       utils.admin.getCampaignOversight.invalidate({ id });
@@ -101,21 +109,42 @@ export default function AdminCampaignDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Input
-            placeholder="Pause reason..."
-            value={pauseReason}
-            onChange={(e) => setPauseReason(e.target.value)}
-            className="w-48"
-          />
-          <Button
-            variant="destructive"
-            disabled={!pauseReason || pauseMutation.isPending}
-            onClick={() =>
-              pauseMutation.mutate({ campaignId: id, reason: pauseReason })
-            }
-          >
-            {pauseMutation.isPending ? "Pausing..." : "Pause Campaign"}
-          </Button>
+          {campaign.status === "PENDING_REVIEW" ? (
+            <>
+              <Button
+                variant="default"
+                disabled={approveMutation.isPending}
+                onClick={() => approveMutation.mutate({ campaignId: id })}
+              >
+                {approveMutation.isPending ? "Approving..." : "Approve"}
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={rejectMutation.isPending}
+                onClick={() => rejectMutation.mutate({ campaignId: id })}
+              >
+                {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+              </Button>
+            </>
+          ) : campaign.status === "LIVE" ? (
+            <>
+              <Input
+                placeholder="Pause reason..."
+                value={pauseReason}
+                onChange={(e) => setPauseReason(e.target.value)}
+                className="w-48"
+              />
+              <Button
+                variant="destructive"
+                disabled={!pauseReason || pauseMutation.isPending}
+                onClick={() =>
+                  pauseMutation.mutate({ campaignId: id, reason: pauseReason })
+                }
+              >
+                {pauseMutation.isPending ? "Pausing..." : "Pause Campaign"}
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -124,6 +153,7 @@ export default function AdminCampaignDetailPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="creators">Creators</TabsTrigger>
           <TabsTrigger value="metrics">Metrics</TabsTrigger>
+          <TabsTrigger value="tracking">Tracking Links</TabsTrigger>
           <TabsTrigger value="reels">Reel Analytics</TabsTrigger>
           <TabsTrigger value="fraud">Fraud Flags</TabsTrigger>
         </TabsList>
@@ -552,6 +582,75 @@ export default function AdminCampaignDetailPage() {
                   </TableBody>
                 </Table>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tracking Links Tab */}
+        <TabsContent value="tracking">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tracking Links</CardTitle>
+              <CardDescription>
+                All generated tracking links and their performance.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Creator</TableHead>
+                    <TableHead>Platform</TableHead>
+                    <TableHead>Slug (URL)</TableHead>
+                    <TableHead className="text-right">Total Clicks</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {campaign.trackingLinks?.map((link: any) => (
+                    <TableRow key={link.id}>
+                      <TableCell className="font-medium">
+                        {link.creator?.displayName ?? link.creator?.user?.name ?? "Unknown"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{link.platform ?? "General"}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-mono text-xs">{link.slug}</span>
+                          <a
+                            href={`http://localhost:4002/go/${link.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-blue-500 hover:underline"
+                          >
+                            Test Link ↗
+                          </a>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {link.totalClicks?.toLocaleString() ?? 0}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={link.isActive ? "default" : "destructive"}>
+                          {link.isActive ? "Active" : "Disabled"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {new Date(link.createdAt).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!campaign.trackingLinks || campaign.trackingLinks.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                        No tracking links generated for this campaign yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>

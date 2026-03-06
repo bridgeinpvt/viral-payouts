@@ -94,6 +94,14 @@ export const adminRouter = createTRPCRouter({
           metrics: true,
           dailyAnalytics: { orderBy: { date: "desc" }, take: 30 },
           fraudFlags: { orderBy: { createdAt: "desc" } },
+          trackingLinks: {
+            include: {
+              creator: {
+                select: { id: true, name: true, creatorProfile: { select: { displayName: true } } },
+              },
+            },
+            orderBy: { totalClicks: "desc" },
+          },
         },
       });
 
@@ -201,6 +209,60 @@ export const adminRouter = createTRPCRouter({
       return await ctx.db.campaign.update({
         where: { id: input.campaignId },
         data: { status: "PAUSED" },
+      });
+    }),
+
+  // Approve campaign (Admin override for pending campaigns)
+  approveCampaign: adminProcedure
+    .input(z.object({ campaignId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await ctx.db.campaign.findUnique({
+        where: { id: input.campaignId },
+        include: { escrow: true },
+      });
+
+      if (!campaign) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+      }
+
+      if (campaign.status !== "PENDING_REVIEW") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only pending campaigns can be approved",
+        });
+      }
+
+      // If escrow is funded, it goes LIVE, else it goes to FUNDING
+      const nextStatus = campaign.escrow?.status === "LOCKED" ? "LIVE" : "FUNDING";
+
+      return await ctx.db.campaign.update({
+        where: { id: input.campaignId },
+        data: { status: nextStatus, publishedAt: nextStatus === "LIVE" ? new Date() : null },
+      });
+    }),
+
+  // Reject campaign (Admin override for pending campaigns)
+  rejectCampaign: adminProcedure
+    .input(z.object({ campaignId: z.string(), reason: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await ctx.db.campaign.findUnique({
+        where: { id: input.campaignId },
+      });
+
+      if (!campaign) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+      }
+
+      if (campaign.status !== "PENDING_REVIEW") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only pending campaigns can be rejected",
+        });
+      }
+
+      return await ctx.db.campaign.update({
+        where: { id: input.campaignId },
+        data: { status: "DRAFT" }, // Note: we can add a 'rejectionReason' field later, but returning to DRAFT is the standard flow
       });
     }),
 

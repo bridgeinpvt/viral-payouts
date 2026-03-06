@@ -7,7 +7,8 @@ const YT_ANALYTICS_BASE = "https://youtubeanalytics.googleapis.com/v2";
 
 export async function getVideoMetrics(
   videoUrl: string,
-  accessToken?: string
+  tokenPayload?: string,
+  creatorId?: string
 ): Promise<{
   views: number;
   likes: number;
@@ -18,9 +19,59 @@ export async function getVideoMetrics(
   const videoId = extractVideoId(videoUrl);
   if (!videoId) return null;
 
+  let accessToken = tokenPayload;
+  let refreshToken: string | undefined;
+  let expiresAt: number | undefined;
+
+  if (tokenPayload && tokenPayload.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(tokenPayload);
+      accessToken = parsed.accessToken;
+      refreshToken = parsed.refreshToken;
+      expiresAt = parsed.expiresAt;
+    } catch (e) {
+      // fallback to assuming it's a raw token string
+    }
+  }
+
   // Prefer YouTube Analytics API v2 when we have a creator OAuth token
   if (accessToken) {
-    const analyticsResult = await fetchAnalyticsMetrics(videoId, accessToken);
+    if (expiresAt && Date.now() > expiresAt - 5 * 60 * 1000 && refreshToken && creatorId) {
+      try {
+        const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: process.env.YOUTUBE_CLIENT_ID || "",
+            client_secret: process.env.YOUTUBE_CLIENT_SECRET || "",
+            refresh_token: refreshToken,
+            grant_type: "refresh_token",
+          }),
+        });
+
+        if (refreshResponse.ok) {
+          const data = (await refreshResponse.json()) as any;
+          accessToken = data.access_token;
+
+          const { db } = require("../db");
+          await db.creatorProfile.update({
+            where: { userId: creatorId },
+            data: {
+              youtubeAccessToken: JSON.stringify({
+                accessToken,
+                refreshToken,
+                expiresAt: Date.now() + data.expires_in * 1000
+              })
+            }
+          });
+          console.log(`[youtube] Refreshed YT access token for creator ${creatorId}`);
+        }
+      } catch (e) {
+        console.error("[youtube] Failed to refresh token", e);
+      }
+    }
+
+    const analyticsResult = await fetchAnalyticsMetrics(videoId, accessToken as string);
     if (analyticsResult) return analyticsResult;
     // Fall through to public API on analytics error
     console.warn(`[youtube] Analytics API failed for ${videoId}, falling back to public API`);

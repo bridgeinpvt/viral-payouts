@@ -497,6 +497,7 @@ export default function CampaignDetailPage() {
                       <TableHead>Tier</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Joined</TableHead>
+                      {campaign.type !== "VIEW" && <TableHead>Tracking</TableHead>}
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -543,6 +544,22 @@ export default function CampaignDetailPage() {
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(p.createdAt).toLocaleDateString()}
                         </TableCell>
+                        {campaign.type !== "VIEW" && (
+                          <TableCell className="text-xs max-w-[150px] truncate">
+                            {p.trackingLinks && p.trackingLinks.length > 0 ? (
+                              <div className="flex flex-col gap-1">
+                                {p.trackingLinks.map((link: any) => (
+                                  <div key={link.id} className="flex justify-between" title={`localhost:4002/go/${link.slug}`}>
+                                    <span className="truncate">{link.slug}</span>
+                                    <span className="text-muted-foreground ml-2 font-medium">{link.totalClicks}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right">
                           {p.status === "APPLIED" && (
                             <div className="flex items-center justify-end gap-2">

@@ -75,7 +75,7 @@ export async function syncViews(): Promise<void> {
           metrics = await getIGMetrics(postUrl, igToken);
         } else if (platform === "YOUTUBE") {
           // YouTube can fall back to public API with YOUTUBE_API_KEY — token is optional
-          metrics = await getYTMetrics(postUrl, ytToken);
+          metrics = await getYTMetrics(postUrl, ytToken, participation.creatorId);
         } else {
           console.log(
             `[view-sync] Unsupported platform for URL: ${postUrl} — skipping`

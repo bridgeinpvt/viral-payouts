@@ -90,8 +90,9 @@ function DashboardSkeleton() {
 export default function CreatorDashboardPage() {
   const analyticsQuery = trpc.analytics.getCreatorAnalytics.useQuery();
   const participationsQuery = trpc.campaign.getMyParticipations.useQuery();
+  const authQuery = trpc.auth.getCurrentUser.useQuery();
 
-  const isLoading = analyticsQuery.isLoading || participationsQuery.isLoading;
+  const isLoading = analyticsQuery.isLoading || participationsQuery.isLoading || authQuery.isLoading;
 
   if (isLoading) {
     return (
@@ -104,8 +105,9 @@ export default function CreatorDashboardPage() {
 
   const analytics = analyticsQuery.data;
   const participations = participationsQuery.data;
+  const user = authQuery.data;
 
-  if (!analytics) {
+  if (!analytics || !user) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Creator Dashboard</h1>
@@ -205,6 +207,62 @@ export default function CreatorDashboardPage() {
                 {t}
               </span>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Connected Accounts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Connected Accounts</CardTitle>
+          <CardDescription>
+            Connect your social media accounts to participate in oauth-required campaigns.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-100 text-pink-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>
+              </div>
+              <div>
+                <p className="font-medium">Instagram</p>
+                <p className="text-sm text-muted-foreground">
+                  {user.creatorProfile?.instagramAccessToken
+                    ? `Connected as @${user.creatorProfile.instagramHandle || "user"}`
+                    : "Not connected"}
+                </p>
+              </div>
+            </div>
+            {user.creatorProfile?.instagramAccessToken ? (
+              <Badge variant="default" className="bg-green-600">Connected</Badge>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/api/auth/instagram">Connect</Link>
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" /><path d="m10 15 5-3-5-3z" /></svg>
+              </div>
+              <div>
+                <p className="font-medium">YouTube</p>
+                <p className="text-sm text-muted-foreground">
+                  {user.creatorProfile?.youtubeAccessToken
+                    ? `Connected as ${user.creatorProfile.youtubeHandle || "user"}`
+                    : "Not connected"}
+                </p>
+              </div>
+            </div>
+            {user.creatorProfile?.youtubeAccessToken ? (
+              <Badge variant="default" className="bg-green-600">Connected</Badge>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/api/auth/youtube">Connect</Link>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

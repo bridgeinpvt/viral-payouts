@@ -8,6 +8,7 @@ import { syncViews } from "./crons/view-sync";
 import { aggregateDailyAnalytics } from "./crons/daily-analytics";
 import { executePayouts } from "./crons/payout-executor";
 import { detectFraud } from "./crons/fraud-detection";
+import { startTokenRefreshCron } from "./crons/token-refresh";
 
 const app = express();
 const PORT = process.env.WORKER_PORT || 4002;
@@ -25,6 +26,8 @@ app.use("/go", trackingRouter);
 // ==========================================
 // CRON JOBS
 // ==========================================
+
+startTokenRefreshCron();
 
 // Hourly: Sync view counts from IG/YT
 cron.schedule("0 * * * *", async () => {

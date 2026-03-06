@@ -142,7 +142,7 @@ async function createFraudFlag(params: {
         data: {
           severity: params.severity,
           description: params.description,
-          evidence: params.evidence,
+          evidence: params.evidence as any,
         },
       });
     }
@@ -155,7 +155,7 @@ async function createFraudFlag(params: {
       status: "DETECTED",
       severity: params.severity,
       description: params.description,
-      evidence: params.evidence,
+      evidence: params.evidence as any,
       campaignId: params.campaignId,
     },
   });

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import UAParser from "ua-parser-js";
+import { updateMetrics } from "../services/metrics";
 
 export const trackingRouter = Router();
 
@@ -62,9 +63,16 @@ trackingRouter.get("/:slug", async (req, res) => {
 
     // Update total clicks (only count non-fraud)
     if (!isFraud) {
-      await db.trackingLink.update({
-        where: { id: trackingLink.id },
-        data: { totalClicks: { increment: 1 } },
+      await db.$transaction([
+        db.trackingLink.update({
+          where: { id: trackingLink.id },
+          data: { totalClicks: { increment: 1 } },
+        }),
+      ]);
+
+      // Update campaign metrics so creator earns money
+      await updateMetrics(trackingLink.campaignId, trackingLink.creatorId, {
+        verifiedClicks: 1,
       });
     }
 
