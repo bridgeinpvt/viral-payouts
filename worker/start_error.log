@@ -1,0 +1,21 @@
+
+> viral-payouts-worker@1.0.0 dev
+> tsx watch src/index.ts
+
+D:\pmdnawaz1\nocage\viral-payouts\worker\node_modules\razorpay\dist\razorpay.js:34
+      throw new Error('`key_id` or `oauthToken` is mandatory');
+            ^
+
+Error: `key_id` or `oauthToken` is mandatory
+    at new Razorpay (D:\pmdnawaz1\nocage\viral-payouts\worker\node_modules\razorpay\dist\razorpay.js:34:13)
+    at Razorpay (D:\pmdnawaz1\nocage\viral-payouts\worker\src\services\razorpay.ts:3:18)
+    at Object.<anonymous> (D:\pmdnawaz1\nocage\viral-payouts\worker\src\services\razorpay.ts:15:23)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object.transformer (D:\pmdnawaz1\nocage\viral-payouts\worker\node_modules\tsx\dist\register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+    at Function._load (node:internal/modules/cjs/loader:1108:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+
+Node.js v22.14.0

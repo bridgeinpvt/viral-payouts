@@ -1,0 +1,3 @@
+Prisma schema loaded from prisma-worker.prisma
+Error: Could not resolve @prisma/client despite the installation that we just tried.
+Please try to install it by hand with npm i @prisma/client and rerun npx "prisma generate" 🙏.

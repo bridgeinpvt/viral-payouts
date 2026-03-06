@@ -1,0 +1,927 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PromotionType {
+  UGC
+  CLIPPING
+  POSTING
+}
+
+// ==========================================
+// AUTH MODELS (NextAuth compatible)
+// ==========================================
+
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?
+  access_token             String?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?
+  session_state            String?
+  refresh_token_expires_in Int?
+  user                     User    @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  user         User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model OTP {
+  id         String   @id @default(cuid())
+  identifier String
+  code       String
+  type       OTPType
+  expiresAt  DateTime
+  verified   Boolean  @default(false)
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, type])
+  @@index([expiresAt])
+}
+
+// ==========================================
+// USER MODEL
+// ==========================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  username      String?   @unique
+  phone         String?   @unique
+  phoneVerified DateTime?
+  countryCode   String?
+  password      String?
+  bio           String?
+
+  // Single role per user
+  role          UserRole?
+
+  // Admin flag
+  isAdmin       Boolean   @default(false)
+
+  // Status
+  isOnboarded   Boolean   @default(false)
+  isActive      Boolean   @default(true)
+
+  // Razorpay
+  razorpayCustomerId String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth relations
+  accounts      Account[]  @relation("UserAccounts")
+  sessions      Session[]  @relation("UserSessions")
+
+  // Brand relations
+  brandProfile  BrandProfile?  @relation("UserBrandProfile")
+  campaigns     Campaign[]     @relation("BrandCampaigns")
+
+  // Creator relations
+  creatorProfile    CreatorProfile?        @relation("UserCreatorProfile")
+  participations    CampaignParticipation[] @relation("CreatorParticipations")
+  savedCampaigns    SavedCampaign[]        @relation("UserSavedCampaigns")
+  trackingLinks     TrackingLink[]         @relation("CreatorTrackingLinks")
+  promoCodes        PromoCode[]            @relation("CreatorPromoCodes")
+
+  // Wallet relations
+  wallet            Wallet?              @relation("UserWallet")
+  transactionsFrom  Transaction[]        @relation("TransactionsFrom")
+  transactionsTo    Transaction[]        @relation("TransactionsTo")
+  payouts           Payout[]             @relation("UserPayouts")
+
+  // Notifications
+  notifications     Notification[]       @relation("UserNotifications")
+
+  @@index([email])
+  @@index([username])
+  @@index([phone])
+  @@index([role])
+}
+
+// ==========================================
+// BRAND PROFILE
+// ==========================================
+
+model BrandProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  companyName     String?
+  companyLogo     String?
+  website         String?
+  industry        String?
+  description     String?
+  gstin           String?
+  contactPerson   String?
+
+  // Verification (manual by admin)
+  isVerified      Boolean  @default(false)
+
+  // Stats
+  totalCampaigns  Int      @default(0)
+  totalSpent      Float    @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation("UserBrandProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ==========================================
+// CREATOR PROFILE
+// ==========================================
+
+model CreatorProfile {
+  id                  String       @id @default(cuid())
+  userId              String       @unique
+  displayName         String?
+  bio                 String?
+  profileImage        String?
+
+  // Niche, language, location
+  niche               String?
+  language            String?
+  location            String?
+
+  // Tier system
+  tier                CreatorTier  @default(BRONZE)
+  totalCampaigns      Int          @default(0)
+  totalEarnings       Float        @default(0)
+  totalViews          Int          @default(0)
+
+  // Social accounts (OAuth-connected)
+  instagramHandle     String?
+  instagramFollowers  Int?
+  instagramVerified   Boolean      @default(false)
+  instagramAccessToken String?
+  youtubeHandle       String?
+  youtubeSubscribers  Int?
+  youtubeVerified     Boolean      @default(false)
+  youtubeAccessToken  String?
+  twitterHandle       String?
+  twitterFollowers    Int?
+  twitterVerified     Boolean      @default(false)
+  linkedinHandle      String?
+
+  // Content preferences
+  contentCategories   String[]     @default([])
+  preferredPlatforms  Platform[]   @default([])
+
+  // Ratings
+  avgRating           Float?       @default(0)
+  reviewCount         Int          @default(0)
+  badges              String[]     @default([])
+
+  // Verification (manual by admin)
+  isVerified          Boolean      @default(false)
+
+  // Bank details for payouts
+  upiId               String?
+  bankAccountNumber   String?
+  bankIfsc            String?
+  bankAccountName     String?
+
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  user                User         @relation("UserCreatorProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tier])
+}
+
+// ==========================================
+// CAMPAIGN MODELS
+// ==========================================
+
+model Campaign {
+  id                String           @id @default(cuid())
+  brandId           String
+  slug              String           @unique
+
+  // Basic info
+  name              String
+  description       String?
+  coverImage        String?
+
+  // Campaign type: VIEW, CLICK, or CONVERSION
+  type              CampaignType
+
+  // Content details
+  productName       String?
+  campaignBrief     String?
+  contentGuidelines String?
+  assetsLink        String?
+  rules             String?
+
+  // Targeting
+  targetPlatforms   Platform[]       @default([])
+  targetAudience    AudienceType[]   @default([])
+  targetCategories  String[]         @default([])
+  locations         String[]         @default([])
+
+  // Budget
+  totalBudget       Float
+  spentBudget       Float            @default(0)
+  platformCommissionRate Float       @default(0.15)
+  promotionType     PromotionType?
+
+  // VIEW type fields
+  payoutPer1KViews  Float?
+  oauthRequired     Boolean          @default(false)
+
+  // CLICK type fields
+  payoutPerClick    Float?
+  landingPageUrl    String?
+
+  // CONVERSION type fields
+  payoutPerSale     Float?
+  promoCodeFormat   String?
+  maxPayoutPerCreator Float?
+
+  // Duration
+  startDate         DateTime
+  endDate           DateTime
+  duration          Int              // Days
+
+  // Status
+  status            CampaignStatus   @default(DRAFT)
+
+  // Stats
+  totalViews        Int              @default(0)
+  totalClicks       Int              @default(0)
+  totalConversions  Int              @default(0)
+  totalParticipants Int              @default(0)
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  publishedAt       DateTime?
+
+  // Relations
+  brand             User             @relation("BrandCampaigns", fields: [brandId], references: [id], onDelete: Cascade)
+  escrow            Escrow?          @relation("CampaignEscrow")
+  participations    CampaignParticipation[] @relation("CampaignParticipations")
+  savedBy           SavedCampaign[]  @relation("CampaignSavedBy")
+  media             CampaignMedia[]  @relation("CampaignMedia")
+  trackingLinks     TrackingLink[]   @relation("CampaignTrackingLinks")
+  promoCodes        PromoCode[]      @relation("CampaignPromoCodes")
+  viewSnapshots     ViewSnapshot[]   @relation("CampaignViewSnapshots")
+  clickEvents       ClickEvent[]     @relation("CampaignClickEvents")
+  conversionEvents  ConversionEvent[] @relation("CampaignConversionEvents")
+  metrics           CampaignMetrics[] @relation("CampaignMetricsEntries")
+  dailyAnalytics    CampaignDailyAnalytics[] @relation("CampaignDailyAnalyticsEntries")
+  fraudFlags        FraudFlag[]      @relation("CampaignFraudFlags")
+
+  @@index([brandId])
+  @@index([type])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([slug])
+}
+
+model CampaignMedia {
+  id          String   @id @default(cuid())
+  campaignId  String
+  type        MediaType
+  url         String
+  filename    String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  campaign    Campaign @relation("CampaignMedia", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+}
+
+// ==========================================
+// ESCROW
+// ==========================================
+
+model Escrow {
+  id              String       @id @default(cuid())
+  campaignId      String       @unique
+  brandWalletId   String
+  totalAmount     Float
+  releasedAmount  Float        @default(0)
+  commissionAmount Float       @default(0)
+  status          EscrowStatus @default(LOCKED)
+  lockedAt        DateTime     @default(now())
+  releasedAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  campaign        Campaign     @relation("CampaignEscrow", fields: [campaignId], references: [id], onDelete: Cascade)
+  brandWallet     Wallet       @relation("EscrowWallet", fields: [brandWalletId], references: [id])
+
+  @@index([brandWalletId])
+  @@index([status])
+}
+
+// ==========================================
+// CAMPAIGN PARTICIPATION (was CampaignSubmission)
+// ==========================================
+
+model CampaignParticipation {
+  id                String              @id @default(cuid())
+  campaignId        String
+  creatorId         String
+
+  // Status
+  status            ParticipationStatus @default(APPLIED)
+
+  // Content submission
+  contentUrl        String?
+  platform          Platform?
+  selectedPlatforms Platform[]          @default([])
+  caption           String?
+
+  // Tracking
+  // trackingLinkId removed
+  promoCodeId       String?
+
+  // Review
+  reviewNote        String?
+  reviewedAt        DateTime?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  approvedAt        DateTime?
+  submittedAt       DateTime?
+
+  // Relations
+  campaign          Campaign            @relation("CampaignParticipations", fields: [campaignId], references: [id], onDelete: Cascade)
+  creator           User                @relation("CreatorParticipations", fields: [creatorId], references: [id], onDelete: Cascade)
+  trackingLinks     TrackingLink[]      @relation("ParticipationTrackingLinks")
+  promoCode         PromoCode?          @relation("ParticipationPromoCode", fields: [promoCodeId], references: [id])
+  contentItems      ContentItem[]       @relation("ParticipationContent")
+  transactions      Transaction[]       @relation("ParticipationTransactions")
+
+  @@unique([campaignId, creatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([status])
+}
+
+model ContentItem {
+  id              String                @id @default(cuid())
+  participationId String
+  type            MediaType
+  url             String
+  thumbnailUrl    String?
+  createdAt       DateTime              @default(now())
+
+  participation   CampaignParticipation @relation("ParticipationContent", fields: [participationId], references: [id], onDelete: Cascade)
+
+  @@index([participationId])
+}
+
+// ==========================================
+// TRACKING & EVENTS
+// ==========================================
+
+model TrackingLink {
+  id              String   @id @default(cuid())
+  campaignId      String
+  creatorId       String
+  platform        Platform? // Platform this link is for (Instagram, YouTube, etc.)
+  slug            String   @unique
+  destinationUrl  String
+  totalClicks     Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  campaign        Campaign @relation("CampaignTrackingLinks", fields: [campaignId], references: [id], onDelete: Cascade)
+  creator         User     @relation("CreatorTrackingLinks", fields: [creatorId], references: [id], onDelete: Cascade)
+  clickEvents     ClickEvent[] @relation("TrackingLinkClickEvents")
+  
+  participationId String?
+  participation   CampaignParticipation? @relation("ParticipationTrackingLinks", fields: [participationId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, creatorId])
+  @@index([slug])
+}
+
+model PromoCode {
+  id              String   @id @default(cuid())
+  campaignId      String
+  creatorId       String
+  code            String   @unique
+  totalUses       Int      @default(0)
+  maxUses         Int?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  campaign        Campaign @relation("CampaignPromoCodes", fields: [campaignId], references: [id], onDelete: Cascade)
+  creator         User     @relation("CreatorPromoCodes", fields: [creatorId], references: [id], onDelete: Cascade)
+  conversions     ConversionEvent[] @relation("PromoCodeConversions")
+  participation   CampaignParticipation[] @relation("ParticipationPromoCode")
+
+  @@unique([campaignId, creatorId])
+}
+
+model ViewSnapshot {
+  id           String   @id @default(cuid())
+  campaignId   String
+  creatorId    String
+  platform     Platform
+  postUrl      String
+  viewCount    Int
+  likeCount    Int      @default(0)
+  commentCount Int      @default(0)
+  shareCount   Int      @default(0)
+  deltaViews   Int      @default(0)
+  isFlagged    Boolean  @default(false)
+  snapshotAt   DateTime @default(now())
+
+  campaign     Campaign @relation("CampaignViewSnapshots", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, creatorId, snapshotAt])
+  @@index([campaignId, snapshotAt])
+}
+
+model ClickEvent {
+  id             String   @id @default(cuid())
+  trackingLinkId String
+  campaignId     String
+  creatorId      String
+  ip             String
+  userAgent      String?
+  referer        String?
+  country        String?
+  isFraud        Boolean  @default(false)
+  fraudReason    String?
+  createdAt      DateTime @default(now())
+
+  trackingLink   TrackingLink @relation("TrackingLinkClickEvents", fields: [trackingLinkId], references: [id], onDelete: Cascade)
+  campaign       Campaign     @relation("CampaignClickEvents", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, creatorId, createdAt])
+  @@index([trackingLinkId, createdAt])
+  @@index([ip, createdAt])
+}
+
+model ConversionEvent {
+  id          String   @id @default(cuid())
+  campaignId  String
+  creatorId   String
+  promoCodeId String
+  orderId     String?
+  orderAmount Float?
+  isVerified  Boolean  @default(false)
+  isFraud     Boolean  @default(false)
+  fraudReason String?
+  createdAt   DateTime @default(now())
+
+  promoCode   PromoCode @relation("PromoCodeConversions", fields: [promoCodeId], references: [id], onDelete: Cascade)
+  campaign    Campaign  @relation("CampaignConversionEvents", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, creatorId, createdAt])
+  @@index([promoCodeId, createdAt])
+}
+
+// ==========================================
+// METRICS & ANALYTICS
+// ==========================================
+
+model CampaignMetrics {
+  id                  String    @id @default(cuid())
+  campaignId          String
+  creatorId           String
+  verifiedViews       Int       @default(0)
+  verifiedClicks      Int       @default(0)
+  verifiedConversions Int       @default(0)
+  earnedAmount        Float     @default(0)
+  paidAmount          Float     @default(0)
+  lastCalculatedAt    DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  campaign            Campaign  @relation("CampaignMetricsEntries", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, creatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+}
+
+model CampaignDailyAnalytics {
+  id           String   @id @default(cuid())
+  campaignId   String
+  date         DateTime @db.Date
+  views        Int      @default(0)
+  clicks       Int      @default(0)
+  conversions  Int      @default(0)
+  spend        Float    @default(0)
+  earnings     Float    @default(0)
+  newCreators  Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  campaign     Campaign @relation("CampaignDailyAnalyticsEntries", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date])
+  @@index([campaignId, date])
+}
+
+model PlatformDailyAnalytics {
+  id              String   @id @default(cuid())
+  date            DateTime @db.Date @unique
+  totalGMV        Float    @default(0)
+  totalRevenue    Float    @default(0)
+  totalPayouts    Float    @default(0)
+  activeCampaigns Int      @default(0)
+  activeCreators  Int      @default(0)
+  fraudRate       Float    @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([date])
+}
+
+// ==========================================
+// FRAUD
+// ==========================================
+
+model FraudFlag {
+  id           String          @id @default(cuid())
+  campaignId   String?
+  creatorId    String?
+  type         FraudFlagType
+  status       FraudFlagStatus @default(DETECTED)
+  severity     Int             @default(1) // 1-5
+  description  String
+  evidence     Json?
+  resolvedBy   String?
+  resolvedAt   DateTime?
+  resolvedNote String?
+  createdAt    DateTime        @default(now())
+
+  campaign     Campaign?       @relation("CampaignFraudFlags", fields: [campaignId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([type])
+}
+
+// ==========================================
+// SAVED CAMPAIGNS
+// ==========================================
+
+model SavedCampaign {
+  id          String   @id @default(cuid())
+  userId      String
+  campaignId  String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation("UserSavedCampaigns", fields: [userId], references: [id], onDelete: Cascade)
+  campaign    Campaign @relation("CampaignSavedBy", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([userId])
+  @@index([campaignId])
+}
+
+// ==========================================
+// WALLET & TRANSACTIONS
+// ==========================================
+
+model Wallet {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  type             WalletType
+
+  // Balances
+  availableBalance Float           @default(0)
+  pendingBalance   Float           @default(0)
+  escrowBalance    Float           @default(0) // For brand wallets: funds locked in escrow
+  lifetimeEarnings Float           @default(0)
+  totalWithdrawn   Float           @default(0)
+
+  // Razorpay
+  razorpayFundAccountId String?    // For creator payouts
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  user             User            @relation("UserWallet", fields: [userId], references: [id], onDelete: Cascade)
+  transactions     Transaction[]   @relation("WalletTransactions")
+  payouts          Payout[]        @relation("WalletPayouts")
+  paymentMethods   PaymentMethod[] @relation("WalletPaymentMethods")
+  escrows          Escrow[]        @relation("EscrowWallet")
+
+  @@index([userId])
+  @@index([type])
+}
+
+model Transaction {
+  id              String              @id @default(cuid())
+  walletId        String
+  fromUserId      String?
+  toUserId        String?
+  participationId String?
+  amount          Float
+  type            TransactionType
+  status          TransactionStatus   @default(PENDING)
+  description     String?
+  referenceId     String?
+  referenceType   String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  wallet          Wallet              @relation("WalletTransactions", fields: [walletId], references: [id], onDelete: Cascade)
+  fromUser        User?               @relation("TransactionsFrom", fields: [fromUserId], references: [id])
+  toUser          User?               @relation("TransactionsTo", fields: [toUserId], references: [id])
+  participation   CampaignParticipation? @relation("ParticipationTransactions", fields: [participationId], references: [id])
+
+  @@index([walletId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([participationId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PaymentMethod {
+  id              String              @id @default(cuid())
+  walletId        String
+  type            PaymentMethodType
+  details         Json
+  isPrimary       Boolean             @default(false)
+  isVerified      Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  wallet          Wallet              @relation("WalletPaymentMethods", fields: [walletId], references: [id], onDelete: Cascade)
+  payouts         Payout[]            @relation("PaymentMethodPayouts")
+
+  @@index([walletId])
+}
+
+model Payout {
+  id              String          @id @default(cuid())
+  walletId        String
+  paymentMethodId String
+  userId          String
+  amount          Float
+  status          PayoutStatus    @default(PENDING)
+
+  // Admin approval
+  approvalStatus  PayoutApprovalStatus @default(PENDING_APPROVAL)
+  approvedBy      String?
+  approvedAt      DateTime?
+
+  // TDS
+  tdsAmount       Float           @default(0)
+  netAmount       Float?
+
+  // Razorpay
+  razorpayPayoutId String?
+  transactionId   String?
+  processedAt     DateTime?
+  failedReason    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  wallet          Wallet          @relation("WalletPayouts", fields: [walletId], references: [id], onDelete: Cascade)
+  paymentMethod   PaymentMethod   @relation("PaymentMethodPayouts", fields: [paymentMethodId], references: [id])
+  user            User            @relation("UserPayouts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([paymentMethodId])
+  @@index([userId])
+  @@index([status])
+  @@index([approvalStatus])
+  @@index([createdAt])
+}
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String?
+  isRead      Boolean          @default(false)
+  actionUrl   String?
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+
+  user        User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum OTPType {
+  EMAIL_VERIFICATION
+  PHONE_VERIFICATION
+  LOGIN
+  PASSWORD_RESET
+}
+
+enum UserRole {
+  BRAND
+  CREATOR
+}
+
+enum CreatorTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+}
+
+enum CampaignType {
+  VIEW
+  CLICK
+  CONVERSION
+}
+
+enum CampaignStatus {
+  DRAFT
+  FUNDING
+  PENDING_REVIEW
+  LIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum Platform {
+  INSTAGRAM
+  YOUTUBE
+  TWITTER
+  LINKEDIN
+  TIKTOK
+}
+
+enum AudienceType {
+  BUSINESS
+  COLLEGE
+  EDUCATORS
+  GAMERS
+  TECH
+  ARTISTS
+  FASHION
+  BEAUTY
+  HEALTH_FITNESS
+  FOOD
+  TRAVEL
+  LIFESTYLE
+}
+
+enum ParticipationStatus {
+  APPLIED
+  APPROVED
+  ACTIVE
+  COMPLETED
+  REJECTED
+  FROZEN
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum WalletType {
+  BRAND
+  CREATOR
+}
+
+enum EscrowStatus {
+  LOCKED
+  PARTIALLY_RELEASED
+  FULLY_RELEASED
+  REFUNDED
+}
+
+enum TransactionType {
+  EARNING
+  WITHDRAWAL
+  BONUS
+  REFUND
+  CAMPAIGN_FUND
+  ESCROW_LOCK
+  ESCROW_RELEASE
+  PLATFORM_FEE
+}
+
+enum PaymentMethodType {
+  UPI
+  BANK_ACCOUNT
+  PAYPAL
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PayoutApprovalStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum FraudFlagType {
+  VIEW_SPIKE
+  CLICK_ANOMALY
+  CONVERSION_MISMATCH
+  BOT_DETECTED
+  IP_ABUSE
+}
+
+enum FraudFlagStatus {
+  DETECTED
+  INVESTIGATING
+  CONFIRMED
+  DISMISSED
+}
+
+enum NotificationType {
+  CAMPAIGN_APPROVED
+  CAMPAIGN_REJECTED
+  CAMPAIGN_LIVE
+  CAMPAIGN_COMPLETED
+  CAMPAIGN_PAUSED
+  CAMPAIGN_BUDGET_LOW
+
+  PARTICIPATION_RECEIVED
+  PARTICIPATION_APPROVED
+  PARTICIPATION_REJECTED
+  CONTENT_APPROVED
+
+  EARNING_CREDITED
+  PAYOUT_APPROVED
+  PAYOUT_PROCESSED
+  PAYOUT_FAILED
+
+  FRAUD_DETECTED
+  CREATOR_FROZEN
+
+  TIER_UPGRADED
+  BADGE_EARNED
+  MILESTONE_REACHED
+
+  SYSTEM_ANNOUNCEMENT
+}
