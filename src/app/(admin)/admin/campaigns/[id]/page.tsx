@@ -45,6 +45,13 @@ export default function AdminCampaignDetailPage() {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.admin.getCampaignOversight.useQuery({ id });
 
+  // Per-reel content analytics (reuses brand/analytics query — admin has access via protectedProcedure)
+  const { data: contentSnapshots } =
+    trpc.analytics.getCampaignContentSnapshots.useQuery(
+      { campaignId: id },
+      { enabled: !!id }
+    );
+
   const pauseMutation = trpc.admin.adminPauseCampaign.useMutation({
     onSuccess: () => {
       utils.admin.getCampaignOversight.invalidate({ id });
@@ -117,6 +124,7 @@ export default function AdminCampaignDetailPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="creators">Creators</TabsTrigger>
           <TabsTrigger value="metrics">Metrics</TabsTrigger>
+          <TabsTrigger value="reels">Reel Analytics</TabsTrigger>
           <TabsTrigger value="fraud">Fraud Flags</TabsTrigger>
         </TabsList>
 
@@ -466,6 +474,86 @@ export default function AdminCampaignDetailPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Reel Analytics Tab */}
+        <TabsContent value="reels">
+          <Card>
+            <CardHeader>
+              <CardTitle>Reel &amp; Short Analytics</CardTitle>
+              <CardDescription>Per-creator content performance — synced hourly</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!contentSnapshots || contentSnapshots.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">
+                  No content submitted yet or views haven&apos;t synced.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Creator</TableHead>
+                      <TableHead>Platform</TableHead>
+                      <TableHead className="text-right">Views</TableHead>
+                      <TableHead className="text-right">+Delta</TableHead>
+                      <TableHead className="text-right">Likes</TableHead>
+                      <TableHead className="text-right">Comments</TableHead>
+                      <TableHead className="text-right">Shares</TableHead>
+                      <TableHead>Last Synced</TableHead>
+                      <TableHead>Content</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contentSnapshots.map((snap, i) => {
+                      if (!snap) return null;
+                      return (
+                        <TableRow key={`${snap.creatorId}-${i}`}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {snap.creatorImage && (
+                                <img src={snap.creatorImage} alt="" className="h-7 w-7 rounded-full" />
+                              )}
+                              <div>
+                                <p className="text-sm font-medium">{snap.creatorName}</p>
+                                {snap.instagramHandle && (
+                                  <p className="text-xs text-muted-foreground">@{snap.instagramHandle}</p>
+                                )}
+                              </div>
+                              {snap.fraudFlags > 0 && (
+                                <Badge className="bg-red-100 text-red-700 text-[10px]">
+                                  ⚠ {snap.fraudFlags}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-[11px]">{snap.platform ?? "—"}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">{snap.currentViews.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">
+                            {snap.deltaViews > 0
+                              ? <span className="text-green-600">+{snap.deltaViews.toLocaleString()}</span>
+                              : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
+                          <TableCell className="text-right">{snap.likes.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">{snap.comments.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">{snap.shares.toLocaleString()}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {snap.lastSyncedAt ? new Date(snap.lastSyncedAt).toLocaleString() : "Not yet"}
+                          </TableCell>
+                          <TableCell>
+                            <a href={snap.postUrl} target="_blank" rel="noopener noreferrer">
+                              <Button variant="outline" size="sm">View</Button>
+                            </a>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Fraud Flags Tab */}

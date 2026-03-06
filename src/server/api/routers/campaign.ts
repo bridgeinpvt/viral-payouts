@@ -577,6 +577,61 @@ export const campaignRouter = createTRPCRouter({
         },
       });
 
+      // Send approval email notification to creator (fire-and-forget)
+      void ctx.db.user
+        .findUnique({
+          where: { id: participation.creatorId },
+          select: { email: true, name: true },
+        })
+        .then(async (creator) => {
+          if (!creator?.email) return;
+
+          const payoutLine =
+            campaign.type === "VIEW"
+              ? `₹${campaign.payoutPer1KViews ?? 0} per 1K views`
+              : campaign.type === "CLICK"
+                ? `₹${campaign.payoutPerClick ?? 0} per click`
+                : `₹${campaign.payoutPerSale ?? 0} per sale`;
+
+          const appUrl = process.env.NEXTAUTH_URL ?? "https://viralpayouts.com";
+
+          // Use Resend directly if configured; fall back to console in dev
+          const RESEND_API_KEY = process.env.RESEND_API_KEY;
+          if (RESEND_API_KEY) {
+            await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${RESEND_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                from: process.env.RESEND_FROM_EMAIL ?? "noreply@viralpayouts.com",
+                to: creator.email,
+                subject: `✅ You've been approved for "${campaign.name}"`,
+                html: `
+                  <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto;">
+                    <h2 style="color:#111;">🎉 You're approved!</h2>
+                    <p>Hi ${creator.name ?? "Creator"},</p>
+                    <p>Great news — you've been approved to participate in the <strong>${campaign.name}</strong> campaign.</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                      <tr><td style="padding:6px;color:#555;">Campaign</td><td style="padding:6px;font-weight:600;">${campaign.name}</td></tr>
+                      <tr><td style="padding:6px;color:#555;">Payout</td><td style="padding:6px;font-weight:600;">${payoutLine}</td></tr>
+                    </table>
+                    <p>Log in to view your campaign details and submit your content:</p>
+                    <a href="${appUrl}/creator/my-campaigns" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">View Campaign</a>
+                    <p style="margin-top:24px;color:#888;font-size:13px;">ViralPayouts · Influencer Performance Marketing</p>
+                  </div>
+                `,
+              }),
+            });
+          } else {
+            console.log(
+              `[DEV] Approval email to ${creator.email} for campaign "${campaign.name}" (payout: ${payoutLine})`
+            );
+          }
+        })
+        .catch((err) => console.warn("[approveParticipation] email error:", err));
+
       return updated;
     }),
 

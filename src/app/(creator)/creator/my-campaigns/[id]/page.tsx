@@ -83,6 +83,13 @@ export default function CreatorCampaignDetailPage() {
   const { data: participation, isLoading } =
     trpc.campaign.getMyParticipation.useQuery({ id });
 
+  // Per-reel snapshot data for this creator's campaign content
+  const { data: mySnapshots } =
+    trpc.analytics.getCreatorContentSnapshots.useQuery(
+      { participationId: id },
+      { enabled: !!id }
+    );
+
   const submitMutation = trpc.campaign.submitContent.useMutation({
     onSuccess: () => {
       utils.campaign.getMyParticipation.invalidate({ id });
@@ -478,6 +485,70 @@ export default function CreatorCampaignDetailPage() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Paid Out</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {/* Per-Reel Snapshot (VIEW campaigns) */}
+      {mySnapshots && mySnapshots.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Reel Performance</CardTitle>
+            <CardDescription>
+              Live analytics for your submitted content — updated hourly.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {mySnapshots.map((snap, i) => (
+                <div key={i} className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <a
+                      href={snap.postUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline truncate max-w-[60%]"
+                    >
+                      {snap.postUrl}
+                    </a>
+                    <div className="flex items-center gap-2">
+                      {snap.platform && (
+                        <Badge variant="secondary" className="text-[11px]">{snap.platform}</Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        Synced {snap.lastSyncedAt ? new Date(snap.lastSyncedAt).toLocaleString() : "not yet"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div className="rounded-lg bg-muted/50 p-3 text-center">
+                      <p className="text-xl font-bold">{snap.currentViews.toLocaleString("en-IN")}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Views</p>
+                      {snap.deltaViews > 0 && (
+                        <p className="text-[10px] text-green-600 font-medium">+{snap.deltaViews.toLocaleString()} recent</p>
+                      )}
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3 text-center">
+                      <p className="text-xl font-bold">{snap.likes.toLocaleString("en-IN")}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Likes</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3 text-center">
+                      <p className="text-xl font-bold">{snap.comments.toLocaleString("en-IN")}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Comments</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3 text-center">
+                      <p className="text-xl font-bold">{snap.shares.toLocaleString("en-IN")}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Shares</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3 text-center">
+                      <p className="text-xl font-bold">
+                        {snap.currentViews > 0 ? ((snap.likes / snap.currentViews) * 100).toFixed(1) : "0"}%
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Engagement</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

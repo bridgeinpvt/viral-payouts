@@ -3,6 +3,7 @@ import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { OTPType, UserRole, WalletType } from "@prisma/client";
+import { sendOTPEmail, sendOTPSms } from "@/lib/otp-service";
 
 function generateOTP(): string {
   if (process.env.NODE_ENV === "development") {
@@ -60,8 +61,16 @@ export const authRouter = createTRPCRouter({
         data: { identifier: email, code, type, expiresAt },
       });
 
-      if (process.env.NODE_ENV === "development") {
-        console.log(`OTP for ${email}: ${code}`);
+      // Deliver OTP via email (Resend or Firebase extension)
+      try {
+        await sendOTPEmail(email, code);
+      } catch (deliveryError) {
+        // Clean up the OTP record if delivery fails — don't leave a dangling code
+        await ctx.db.oTP.delete({ where: { id: otp.id } });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to send verification email. Please try again.",
+        });
       }
 
       return { success: true, otpId: otp.id };
@@ -100,8 +109,16 @@ export const authRouter = createTRPCRouter({
         data: { identifier: phone, code, type, expiresAt },
       });
 
-      if (process.env.NODE_ENV === "development") {
-        console.log(`OTP for +${countryCode} ${phone}: ${code}`);
+      // Deliver OTP via SMS (Twilio or Firebase extension)
+      try {
+        await sendOTPSms(phone, countryCode, code);
+      } catch (deliveryError) {
+        // Clean up the OTP record if delivery fails
+        await ctx.db.oTP.delete({ where: { id: otp.id } });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to send verification SMS. Please try again.",
+        });
       }
 
       return { success: true, otpId: otp.id };

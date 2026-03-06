@@ -71,6 +71,20 @@ export default function CampaignDetailPage() {
   const { data: campaign, isLoading } =
     trpc.campaign.getBrandCampaignDetail.useQuery({ id });
 
+  // Per-reel content analytics (ViewSnapshots per creator content URL)
+  const { data: contentSnapshots } =
+    trpc.analytics.getCampaignContentSnapshots.useQuery(
+      { campaignId: id },
+      { enabled: !!id }
+    );
+
+  // Conversion events for CONVERSION-type campaigns (brand visibility)
+  const { data: conversionEvents } =
+    trpc.analytics.getConversionEvents.useQuery(
+      { campaignId: id },
+      { enabled: !!id && campaign?.type === "CONVERSION" }
+    );
+
   const [rejectReason, setRejectReason] = useState("");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
@@ -267,6 +281,9 @@ export default function CampaignDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="assets">Assets</TabsTrigger>
+          {campaign.type === "CONVERSION" && (
+            <TabsTrigger value="conversions">Conversions</TabsTrigger>
+          )}
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -787,6 +804,64 @@ export default function CampaignDetailPage() {
           </Card>
         </TabsContent>
 
+        {/* Conversions Tab — Only for CONVERSION campaigns */}
+        {campaign.type === "CONVERSION" && (
+          <TabsContent value="conversions" className="space-y-6 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Promo Code Redemptions</CardTitle>
+                <CardDescription>
+                  Real-time conversion events from creator promo code usage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!conversionEvents || conversionEvents.length === 0 ? (
+                  <p className="text-center py-8 text-muted-foreground">
+                    No conversions tracked yet. When a customer uses a creator&apos;s promo code, it will appear here.
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Creator</TableHead>
+                        <TableHead>Promo Code</TableHead>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {conversionEvents.map((ev) => (
+                        <TableRow key={ev.id}>
+                          <TableCell className="font-medium">{ev.creatorName}</TableCell>
+                          <TableCell>
+                            <span className="font-mono text-sm">{ev.promoCode}</span>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{ev.orderId}</TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(ev.orderAmount)}
+                          </TableCell>
+                          <TableCell>
+                            {ev.isVerified ? (
+                              <Badge className="bg-green-100 text-green-700 border-green-200">Verified</Badge>
+                            ) : (
+                              <Badge variant="secondary">Pending</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {new Date(ev.createdAt).toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-6 mt-4">
           {/* Summary Metrics */}
@@ -883,6 +958,119 @@ export default function CampaignDetailPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(m.paidAmount)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Per-Reel / Short Analytics */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Reel &amp; Short Analytics</CardTitle>
+              <CardDescription>
+                Live view counts per creator content — synced hourly
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!contentSnapshots || contentSnapshots.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">
+                  No content submitted yet, or views haven&apos;t been synced. Check back after the first hourly sync.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Creator</TableHead>
+                      <TableHead>Platform</TableHead>
+                      <TableHead className="text-right">Views</TableHead>
+                      <TableHead className="text-right">+Last Hour</TableHead>
+                      <TableHead className="text-right">Likes</TableHead>
+                      <TableHead className="text-right">Comments</TableHead>
+                      <TableHead className="text-right">Shares</TableHead>
+                      <TableHead>Last Synced</TableHead>
+                      <TableHead>Content</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contentSnapshots.map((snap, i) => {
+                      if (!snap) return null;
+                      const viewGrowth =
+                        snap.previousViews > 0
+                          ? (((snap.currentViews - snap.previousViews) / snap.previousViews) * 100).toFixed(1)
+                          : null;
+                      return (
+                        <TableRow key={`${snap.creatorId}-${i}`}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {snap.creatorImage && (
+                                <img
+                                  src={snap.creatorImage}
+                                  alt=""
+                                  className="h-7 w-7 rounded-full object-cover"
+                                />
+                              )}
+                              <div>
+                                <p className="text-sm font-medium">{snap.creatorName}</p>
+                                {snap.instagramHandle && (
+                                  <p className="text-xs text-muted-foreground">
+                                    @{snap.instagramHandle}
+                                  </p>
+                                )}
+                              </div>
+                              {snap.fraudFlags > 0 && (
+                                <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] ml-1">
+                                  ⚠ {snap.fraudFlags} flag{snap.fraudFlags > 1 ? "s" : ""}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-[11px]">
+                              {snap.platform ?? "—"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatNumber(snap.currentViews)}
+                            {viewGrowth && (
+                              <span className="block text-[10px] text-muted-foreground">
+                                {Number(viewGrowth) >= 0 ? "+" : ""}{viewGrowth}%
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {snap.deltaViews > 0 ? (
+                              <span className="text-green-600 font-medium">+{formatNumber(snap.deltaViews)}</span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatNumber(snap.likes)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatNumber(snap.comments)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatNumber(snap.shares)}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {snap.lastSyncedAt
+                              ? new Date(snap.lastSyncedAt).toLocaleString()
+                              : "Not yet"}
+                          </TableCell>
+                          <TableCell>
+                            <a
+                              href={snap.postUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button variant="outline" size="sm">View</Button>
+                            </a>
                           </TableCell>
                         </TableRow>
                       );
