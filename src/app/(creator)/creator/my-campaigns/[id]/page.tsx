@@ -211,53 +211,133 @@ export default function CreatorCampaignDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Instructions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Instructions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {campaign.campaignBrief && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Campaign Brief
-                </p>
-                <p className="text-sm whitespace-pre-wrap">
-                  {campaign.campaignBrief}
-                </p>
-              </div>
-            )}
-            {campaign.contentGuidelines && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Content Guidelines
-                </p>
-                <p className="text-sm whitespace-pre-wrap">
-                  {campaign.contentGuidelines}
-                </p>
-              </div>
-            )}
-            {campaign.rules && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Rules
-                </p>
-                <p className="text-sm whitespace-pre-wrap">{campaign.rules}</p>
-              </div>
-            )}
-            {!campaign.campaignBrief &&
-              !campaign.contentGuidelines &&
-              !campaign.rules && (
-                <p className="text-sm text-muted-foreground">
-                  No specific instructions provided.
-                </p>
+        {/* Instructions & Assets (Only visible if approved or active) */}
+        {(participation.status === "APPROVED" || participation.status === "ACTIVE" || participation.status === "COMPLETED") ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Instructions & Assets</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {campaign.campaignBrief && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    Campaign Brief
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {campaign.campaignBrief}
+                  </p>
+                </div>
               )}
-          </CardContent>
-        </Card>
+              {campaign.contentGuidelines && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    Content Guidelines
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {campaign.contentGuidelines}
+                  </p>
+                </div>
+              )}
+              {campaign.rules && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    Rules
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap">{campaign.rules}</p>
+                </div>
+              )}
+
+              {campaign.assetsLink && (
+                <div className="pt-2">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Campaign Assets
+                  </p>
+                  <Button variant="secondary" className="w-full sm:w-auto" asChild>
+                    <a href={campaign.assetsLink} target="_blank" rel="noopener noreferrer">
+                      View Brand Assets
+                    </a>
+                  </Button>
+                </div>
+              )}
+
+              {!campaign.campaignBrief &&
+                !campaign.contentGuidelines &&
+                !campaign.rules &&
+                !campaign.assetsLink && (
+                  <p className="text-sm text-muted-foreground">
+                    No specific instructions provided.
+                  </p>
+                )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Application Pending</CardTitle>
+              <CardDescription>
+                Your application is currently under review by the brand.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm space-y-4">
+                <p>
+                  The brand is reviewing your profile to ensure it aligns with their target audience and campaign goals.
+                </p>
+                <div className="rounded-lg bg-muted p-4 border flex items-center gap-3">
+                  <div className="flex bg-background h-8 w-8 rounded-full items-center justify-center font-semibold text-muted-foreground border">
+                    ⏳
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">What happens next?</p>
+                    <p className="text-xs text-muted-foreground">You will be notified via email once approved. Campaign instructions, tracking links, and submission forms will unlock here.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
+      {/* Creator Journey Timeline (If Approved) */}
+      {(participation.status === "APPROVED" || participation.status === "ACTIVE") && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-lg">Your Campaign Journey</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-0 justify-between relative">
+              <div className="hidden sm:block absolute top-4 left-0 right-0 h-0.5 bg-border -z-10" />
+
+              <div className="flex flex-col items-center flex-1 text-center relative z-10">
+                <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm mb-2 shadow-sm">1</div>
+                <p className="text-sm font-medium">Review Guidelines</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Read the brief and download brand assets above.</p>
+              </div>
+
+              <div className="flex flex-col items-center flex-1 text-center relative z-10">
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.trackingLinks?.length ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}>2</div>
+                <p className="text-sm font-medium">Get Tracking Link</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Generate your unique promotion link below.</p>
+              </div>
+
+              <div className="flex flex-col items-center flex-1 text-center relative z-10">
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.contentUrl ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}>3</div>
+                <p className="text-sm font-medium">Create & Post</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Create content following rules and publish it.</p>
+              </div>
+
+              <div className="flex flex-col items-center flex-1 text-center relative z-10">
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.status === 'ACTIVE' ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}>4</div>
+                <p className="text-sm font-medium">Submit Content</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Input your post URL to start tracking views.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tracking Link (CLICK campaigns) */}
-      {campaign.type === "CLICK" && (
+      {(participation.status === "APPROVED" || participation.status === "ACTIVE" || participation.status === "COMPLETED") && campaign.type === "CLICK" && (
         <Card>
           <CardHeader>
             <CardTitle>Tracking Links</CardTitle>
@@ -342,7 +422,7 @@ export default function CreatorCampaignDetailPage() {
       )}
 
       {/* Promo Code (CONVERSION campaigns) */}
-      {campaign.type === "CONVERSION" && promoCode && (
+      {(participation.status === "APPROVED" || participation.status === "ACTIVE" || participation.status === "COMPLETED") && campaign.type === "CONVERSION" && promoCode && (
         <Card>
           <CardHeader>
             <CardTitle>Your Promo Code</CardTitle>
