@@ -5,22 +5,22 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { db } from "./db";
 import bcrypt from "bcryptjs";
 
-const isLocalhost = process.env.NODE_ENV === 'development';
+const isLocalhost = process.env.NODE_ENV === "development";
 
 const getCookieConfig = () => {
   if (isLocalhost) {
     return {
       httpOnly: true,
-      sameSite: 'lax' as const,
-      path: '/',
+      sameSite: "lax" as const,
+      path: "/",
       secure: false,
     };
   }
 
   return {
     httpOnly: true,
-    sameSite: 'lax' as const,
-    path: '/',
+    sameSite: "lax" as const,
+    path: "/",
     secure: true,
   };
 };
@@ -53,72 +53,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password,
+        );
 
         if (!isValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-          isAdmin: user.isAdmin,
-          isOnboarded: user.isOnboarded,
-        };
-      },
-    }),
-    CredentialsProvider({
-      id: "email-otp",
-      name: "Email OTP",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        otpId: { label: "OTP ID", type: "text" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.otpId) {
-          return null;
-        }
-
-        const user = await db.user.findUnique({
-          where: { email: credentials.email },
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-          isAdmin: user.isAdmin,
-          isOnboarded: user.isOnboarded,
-        };
-      },
-    }),
-    CredentialsProvider({
-      id: "phone-otp",
-      name: "Phone OTP",
-      credentials: {
-        phone: { label: "Phone", type: "text" },
-        countryCode: { label: "Country Code", type: "text" },
-        otpId: { label: "OTP ID", type: "text" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.phone || !credentials?.otpId) {
-          return null;
-        }
-
-        const user = await db.user.findUnique({
-          where: { phone: credentials.phone },
-        });
-
-        if (!user) {
           return null;
         }
 
@@ -160,7 +100,7 @@ export const authOptions: NextAuthOptions = {
     newUser: "/onboarding",
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, account }) {
       if (user) {
         token.userId = user.id;
       }
@@ -178,6 +118,7 @@ export const authOptions: NextAuthOptions = {
               role: true,
               isAdmin: true,
               isOnboarded: true,
+              phoneVerified: true,
             },
           });
 
@@ -189,6 +130,9 @@ export const authOptions: NextAuthOptions = {
             token.role = dbUser.role;
             token.isAdmin = dbUser.isAdmin;
             token.isOnboarded = dbUser.isOnboarded;
+            token.phoneVerified = dbUser.phoneVerified;
+            token.needsPhoneVerification =
+              account?.provider === "google" && !dbUser.phoneVerified;
           }
         }
       }
@@ -203,6 +147,19 @@ export const authOptions: NextAuthOptions = {
         session.user.isOnboarded = token.isOnboarded!;
       }
       return session;
+    },
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const dbUser = await db.user.findUnique({
+          where: { email: user.email! },
+          select: { phoneVerified: true },
+        });
+
+        if (!dbUser?.phoneVerified) {
+          return "/verify-phone";
+        }
+      }
+      return true;
     },
     async redirect({ url, baseUrl }) {
       if (url.startsWith("/")) {

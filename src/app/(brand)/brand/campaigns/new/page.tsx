@@ -9,7 +9,7 @@ import {
 } from "@prisma/client";
 import { trpc } from "@/trpc/client";
 
-type PromotionType = "UGC" | "CLIPPING" | "POSTING";
+type PromotionType = "PAID" | "ORGANIC";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
