@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   APPLIED: "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -62,16 +63,16 @@ export default function CreatorCampaignDetailPage() {
   const generateLinkMutation = trpc.campaign.generateTrackingLink.useMutation({
     onSuccess: () => {
       utils.campaign.getMyParticipation.invalidate({ id });
-      alert("Tracking link generated successfully!");
+      toast.success("Tracking link generated successfully!");
     },
     onError: (error) => {
-      alert(error.message || "Failed to generate tracking link.");
+      toast.error(error.message || "Failed to generate tracking link.");
     },
   });
 
   function handleGenerateLink() {
     if (!platform) {
-      alert("Please select a platform first.");
+      toast.error("Please select a platform first.");
       return;
     }
     generateLinkMutation.mutate({
@@ -87,7 +88,7 @@ export default function CreatorCampaignDetailPage() {
   const { data: mySnapshots } =
     trpc.analytics.getCreatorContentSnapshots.useQuery(
       { participationId: id },
-      { enabled: !!id }
+      { enabled: !!id },
     );
 
   const submitMutation = trpc.campaign.submitContent.useMutation({
@@ -95,10 +96,12 @@ export default function CreatorCampaignDetailPage() {
       utils.campaign.getMyParticipation.invalidate({ id });
       setContentUrl("");
       setCaption("");
-      alert("Content submitted successfully!");
+      toast.success("Content submitted successfully!");
     },
     onError: (error) => {
-      alert(error.message || "Failed to submit content. Please try again.");
+      toast.error(
+        error.message || "Failed to submit content. Please try again.",
+      );
     },
   });
 
@@ -212,7 +215,9 @@ export default function CreatorCampaignDetailPage() {
         </Card>
 
         {/* Instructions & Assets (Only visible if approved or active) */}
-        {(participation.status === "APPROVED" || participation.status === "ACTIVE" || participation.status === "COMPLETED") ? (
+        {participation.status === "APPROVED" ||
+        participation.status === "ACTIVE" ||
+        participation.status === "COMPLETED" ? (
           <Card>
             <CardHeader>
               <CardTitle>Instructions & Assets</CardTitle>
@@ -243,7 +248,9 @@ export default function CreatorCampaignDetailPage() {
                   <p className="text-sm font-medium text-muted-foreground mb-1">
                     Rules
                   </p>
-                  <p className="text-sm whitespace-pre-wrap">{campaign.rules}</p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {campaign.rules}
+                  </p>
                 </div>
               )}
 
@@ -252,8 +259,16 @@ export default function CreatorCampaignDetailPage() {
                   <p className="text-sm font-medium text-muted-foreground mb-2">
                     Campaign Assets
                   </p>
-                  <Button variant="secondary" className="w-full sm:w-auto" asChild>
-                    <a href={campaign.assetsLink} target="_blank" rel="noopener noreferrer">
+                  <Button
+                    variant="secondary"
+                    className="w-full sm:w-auto"
+                    asChild
+                  >
+                    <a
+                      href={campaign.assetsLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       View Brand Assets
                     </a>
                   </Button>
@@ -281,7 +296,8 @@ export default function CreatorCampaignDetailPage() {
             <CardContent>
               <div className="text-sm space-y-4">
                 <p>
-                  The brand is reviewing your profile to ensure it aligns with their target audience and campaign goals.
+                  The brand is reviewing your profile to ensure it aligns with
+                  their target audience and campaign goals.
                 </p>
                 <div className="rounded-lg bg-muted p-4 border flex items-center gap-3">
                   <div className="flex bg-background h-8 w-8 rounded-full items-center justify-center font-semibold text-muted-foreground border">
@@ -289,7 +305,11 @@ export default function CreatorCampaignDetailPage() {
                   </div>
                   <div>
                     <p className="font-medium text-sm">What happens next?</p>
-                    <p className="text-xs text-muted-foreground">You will be notified via email once approved. Campaign instructions, tracking links, and submission forms will unlock here.</p>
+                    <p className="text-xs text-muted-foreground">
+                      You will be notified via email once approved. Campaign
+                      instructions, tracking links, and submission forms will
+                      unlock here.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -299,7 +319,8 @@ export default function CreatorCampaignDetailPage() {
       </div>
 
       {/* Creator Journey Timeline (If Approved) */}
-      {(participation.status === "APPROVED" || participation.status === "ACTIVE") && (
+      {(participation.status === "APPROVED" ||
+        participation.status === "ACTIVE") && (
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader>
             <CardTitle className="text-lg">Your Campaign Journey</CardTitle>
@@ -309,27 +330,49 @@ export default function CreatorCampaignDetailPage() {
               <div className="hidden sm:block absolute top-4 left-0 right-0 h-0.5 bg-border -z-10" />
 
               <div className="flex flex-col items-center flex-1 text-center relative z-10">
-                <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm mb-2 shadow-sm">1</div>
+                <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm mb-2 shadow-sm">
+                  1
+                </div>
                 <p className="text-sm font-medium">Review Guidelines</p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Read the brief and download brand assets above.</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">
+                  Read the brief and download brand assets above.
+                </p>
               </div>
 
               <div className="flex flex-col items-center flex-1 text-center relative z-10">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.trackingLinks?.length ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}>2</div>
+                <div
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.trackingLinks?.length ? "bg-primary text-primary-foreground" : "bg-background border text-muted-foreground"}`}
+                >
+                  2
+                </div>
                 <p className="text-sm font-medium">Get Tracking Link</p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Generate your unique promotion link below.</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">
+                  Generate your unique promotion link below.
+                </p>
               </div>
 
               <div className="flex flex-col items-center flex-1 text-center relative z-10">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.contentUrl ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}>3</div>
+                <div
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.contentUrl ? "bg-primary text-primary-foreground" : "bg-background border text-muted-foreground"}`}
+                >
+                  3
+                </div>
                 <p className="text-sm font-medium">Create & Post</p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Create content following rules and publish it.</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">
+                  Create content following rules and publish it.
+                </p>
               </div>
 
               <div className="flex flex-col items-center flex-1 text-center relative z-10">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.status === 'ACTIVE' ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}>4</div>
+                <div
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.status === "ACTIVE" ? "bg-primary text-primary-foreground" : "bg-background border text-muted-foreground"}`}
+                >
+                  4
+                </div>
                 <p className="text-sm font-medium">Submit Content</p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Input your post URL to start tracking views.</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">
+                  Input your post URL to start tracking views.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -337,186 +380,210 @@ export default function CreatorCampaignDetailPage() {
       )}
 
       {/* Tracking Link (CLICK campaigns) */}
-      {(participation.status === "APPROVED" || participation.status === "ACTIVE" || participation.status === "COMPLETED") && campaign.type === "CLICK" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tracking Links</CardTitle>
-            <CardDescription>
-              Generate unique tracking links for each platform to track performance accurately.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Link Generator */}
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="w-full sm:w-[200px] space-y-2">
-                <label className="text-sm font-medium">Select Platform</label>
-                <Select
-                  value={platform}
-                  onValueChange={(val) => setPlatform(val as Platform)}
+      {(participation.status === "APPROVED" ||
+        participation.status === "ACTIVE" ||
+        participation.status === "COMPLETED") &&
+        campaign.type === "CLICK" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Tracking Links</CardTitle>
+              <CardDescription>
+                Generate unique tracking links for each platform to track
+                performance accurately.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Link Generator */}
+              <div className="flex flex-col sm:flex-row gap-3 items-end">
+                <div className="w-full sm:w-[200px] space-y-2">
+                  <label className="text-sm font-medium">Select Platform</label>
+                  <Select
+                    value={platform}
+                    onValueChange={(val) => setPlatform(val as Platform)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(platformLabels).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={handleGenerateLink}
+                  disabled={!platform || generateLinkMutation.isPending}
+                  className="w-full sm:w-auto"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(platformLabels).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {generateLinkMutation.isPending
+                    ? "Generating..."
+                    : "Generate Link"}
+                </Button>
               </div>
-              <Button
-                onClick={handleGenerateLink}
-                disabled={!platform || generateLinkMutation.isPending}
-                className="w-full sm:w-auto"
-              >
-                {generateLinkMutation.isPending ? "Generating..." : "Generate Link"}
-              </Button>
-            </div>
 
-            {/* Links List */}
-            {participation.trackingLinks && participation.trackingLinks.length > 0 ? (
-              <div className="space-y-3 pt-2">
-                <h4 className="text-sm font-medium text-muted-foreground">Your Active Links</h4>
-                {participation.trackingLinks.map((link) => {
-                  const linkUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/go/${link.slug}`;
-                  const platformName = link.platform
-                    ? platformLabels[link.platform as Platform]
-                    : "General";
+              {/* Links List */}
+              {participation.trackingLinks &&
+              participation.trackingLinks.length > 0 ? (
+                <div className="space-y-3 pt-2">
+                  <h4 className="text-sm font-medium text-muted-foreground">
+                    Your Active Links
+                  </h4>
+                  {participation.trackingLinks.map((link) => {
+                    const linkUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/go/${link.slug}`;
+                    const platformName = link.platform
+                      ? platformLabels[link.platform as Platform]
+                      : "General";
 
-                  return (
-                    <div key={link.id} className="rounded-lg border bg-card p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{platformName}</Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {link.totalClicks} clicks
-                          </span>
+                    return (
+                      <div
+                        key={link.id}
+                        className="rounded-lg border bg-card p-3 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{platformName}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {link.totalClicks} clicks
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8"
+                            onClick={() => handleCopy(linkUrl, link.id)}
+                          >
+                            {copied === link.id ? "Copied!" : "Copy URL"}
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8"
-                          onClick={() => handleCopy(linkUrl, link.id)}
-                        >
-                          {copied === link.id ? "Copied!" : "Copy URL"}
-                        </Button>
+                        <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-2">
+                          <code className="text-xs flex-1 truncate">
+                            {linkUrl}
+                          </code>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-2">
-                        <code className="text-xs flex-1 truncate">{linkUrl}</code>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-6 border rounded-lg border-dashed">
-                <p className="text-sm text-muted-foreground">
-                  No tracking links generated yet. Create one above to start promoting!
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-6 border rounded-lg border-dashed">
+                  <p className="text-sm text-muted-foreground">
+                    No tracking links generated yet. Create one above to start
+                    promoting!
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
       {/* Promo Code (CONVERSION campaigns) */}
-      {(participation.status === "APPROVED" || participation.status === "ACTIVE" || participation.status === "COMPLETED") && campaign.type === "CONVERSION" && promoCode && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Promo Code</CardTitle>
-            <CardDescription>
-              Share this code with your audience for conversions to be tracked.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 rounded-md border bg-muted px-4 py-2.5 font-mono text-lg font-semibold tracking-wider">
-                {promoCode.code}
+      {(participation.status === "APPROVED" ||
+        participation.status === "ACTIVE" ||
+        participation.status === "COMPLETED") &&
+        campaign.type === "CONVERSION" &&
+        promoCode && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Promo Code</CardTitle>
+              <CardDescription>
+                Share this code with your audience for conversions to be
+                tracked.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 rounded-md border bg-muted px-4 py-2.5 font-mono text-lg font-semibold tracking-wider">
+                  {promoCode.code}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => handleCopy(promoCode.code, "code")}
+                >
+                  {copied === "code" ? "Copied!" : "Copy"}
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => handleCopy(promoCode.code, "code")}
-              >
-                {copied === "code" ? "Copied!" : "Copy"}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Total uses: <span className="font-medium">{promoCode.totalUses}</span>
-            </p>
-          </CardContent>
-        </Card>
-      )}
+              <p className="text-sm text-muted-foreground mt-2">
+                Total uses:{" "}
+                <span className="font-medium">{promoCode.totalUses}</span>
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Content Submission */}
       {(participation.status === "APPROVED" ||
         participation.status === "ACTIVE") && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Submit Content</CardTitle>
-              <CardDescription>
-                Submit the URL of your published content for verification.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {participation.contentUrl && (
-                <div className="rounded-md border bg-muted/50 p-3">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Previously submitted
-                  </p>
-                  <a
-                    href={participation.contentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary underline break-all"
-                  >
-                    {participation.contentUrl}
-                  </a>
-                  {participation.platform && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      ({platformLabels[participation.platform as Platform] ?? participation.platform})
-                    </span>
-                  )}
-                </div>
-              )}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Input
-                  placeholder="https://instagram.com/p/..."
-                  value={contentUrl}
-                  onChange={(e) => setContentUrl(e.target.value)}
-                  className="flex-1"
-                />
-                <Select
-                  value={platform}
-                  onValueChange={(val) => setPlatform(val as Platform)}
+        <Card>
+          <CardHeader>
+            <CardTitle>Submit Content</CardTitle>
+            <CardDescription>
+              Submit the URL of your published content for verification.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {participation.contentUrl && (
+              <div className="rounded-md border bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground mb-1">
+                  Previously submitted
+                </p>
+                <a
+                  href={participation.contentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary underline break-all"
                 >
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="Platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(platformLabels).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {participation.contentUrl}
+                </a>
+                {participation.platform && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    (
+                    {platformLabels[participation.platform as Platform] ??
+                      participation.platform}
+                    )
+                  </span>
+                )}
               </div>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3">
               <Input
-                placeholder="Caption or notes (optional)"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
+                placeholder="https://instagram.com/p/..."
+                value={contentUrl}
+                onChange={(e) => setContentUrl(e.target.value)}
+                className="flex-1"
               />
-              <Button
-                onClick={handleSubmitContent}
-                disabled={submitMutation.isPending}
+              <Select
+                value={platform}
+                onValueChange={(val) => setPlatform(val as Platform)}
               >
-                {submitMutation.isPending ? "Submitting..." : "Submit Content"}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(platformLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Input
+              placeholder="Caption or notes (optional)"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+            />
+            <Button
+              onClick={handleSubmitContent}
+              disabled={submitMutation.isPending}
+            >
+              {submitMutation.isPending ? "Submitting..." : "Submit Content"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Metrics */}
       {metrics && (
@@ -593,38 +660,66 @@ export default function CreatorCampaignDetailPage() {
                     </a>
                     <div className="flex items-center gap-2">
                       {snap.platform && (
-                        <Badge variant="secondary" className="text-[11px]">{snap.platform}</Badge>
+                        <Badge variant="secondary" className="text-[11px]">
+                          {snap.platform}
+                        </Badge>
                       )}
                       <span className="text-xs text-muted-foreground">
-                        Synced {snap.lastSyncedAt ? new Date(snap.lastSyncedAt).toLocaleString() : "not yet"}
+                        Synced{" "}
+                        {snap.lastSyncedAt
+                          ? new Date(snap.lastSyncedAt).toLocaleString()
+                          : "not yet"}
                       </span>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
-                      <p className="text-xl font-bold">{snap.currentViews.toLocaleString("en-IN")}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Views</p>
+                      <p className="text-xl font-bold">
+                        {snap.currentViews.toLocaleString("en-IN")}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Views
+                      </p>
                       {snap.deltaViews > 0 && (
-                        <p className="text-[10px] text-green-600 font-medium">+{snap.deltaViews.toLocaleString()} recent</p>
+                        <p className="text-[10px] text-green-600 font-medium">
+                          +{snap.deltaViews.toLocaleString()} recent
+                        </p>
                       )}
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
-                      <p className="text-xl font-bold">{snap.likes.toLocaleString("en-IN")}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Likes</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/50 p-3 text-center">
-                      <p className="text-xl font-bold">{snap.comments.toLocaleString("en-IN")}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Comments</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/50 p-3 text-center">
-                      <p className="text-xl font-bold">{snap.shares.toLocaleString("en-IN")}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Shares</p>
+                      <p className="text-xl font-bold">
+                        {snap.likes.toLocaleString("en-IN")}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Likes
+                      </p>
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
                       <p className="text-xl font-bold">
-                        {snap.currentViews > 0 ? ((snap.likes / snap.currentViews) * 100).toFixed(1) : "0"}%
+                        {snap.comments.toLocaleString("en-IN")}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Engagement</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Comments
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3 text-center">
+                      <p className="text-xl font-bold">
+                        {snap.shares.toLocaleString("en-IN")}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Shares
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3 text-center">
+                      <p className="text-xl font-bold">
+                        {snap.currentViews > 0
+                          ? ((snap.likes / snap.currentViews) * 100).toFixed(1)
+                          : "0"}
+                        %
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Engagement
+                      </p>
                     </div>
                   </div>
                 </div>

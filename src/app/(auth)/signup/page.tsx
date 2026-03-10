@@ -67,7 +67,11 @@ export default function SignupPage() {
     onError: (error) => toast.error(error.message),
   });
 
-  const verifyOTP = trpc.auth.verifyOTPCode.useMutation();
+  const verifyOTP = trpc.auth.verifyOTPCode.useMutation({
+    onError: (error) => {
+      toast.error(error.message || "Verification failed");
+    },
+  });
   const register = trpc.auth.register.useMutation();
 
   const handleVerifyEmailOTP = async () => {

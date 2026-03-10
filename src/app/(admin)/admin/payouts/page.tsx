@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -28,7 +29,7 @@ function formatCurrency(amount: number): string {
 }
 
 function getApprovalBadgeVariant(
-  status: string
+  status: string,
 ): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case "APPROVED":
@@ -45,7 +46,7 @@ function getApprovalBadgeVariant(
 export default function AdminPayoutsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>(
-    {}
+    {},
   );
   const [showRejectInput, setShowRejectInput] = useState<string | null>(null);
 
@@ -59,12 +60,23 @@ export default function AdminPayoutsPage() {
     onSuccess: () => {
       utils.admin.getPendingPayouts.invalidate();
     },
+    onError: (err) => {
+      toast.error(err.message);
+    },
   });
 
   const rejectMutation = trpc.admin.rejectPayout.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       utils.admin.getPendingPayouts.invalidate();
       setShowRejectInput(null);
+      setRejectReasons((prev) => {
+        const next = { ...prev };
+        delete next[variables.payoutId];
+        return next;
+      });
+    },
+    onError: (err) => {
+      toast.error(err.message);
     },
   });
 
@@ -72,6 +84,9 @@ export default function AdminPayoutsPage() {
     onSuccess: () => {
       utils.admin.getPendingPayouts.invalidate();
       setSelectedIds(new Set());
+    },
+    onError: (err) => {
+      toast.error(err.message);
     },
   });
 
@@ -203,9 +218,7 @@ export default function AdminPayoutsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={getApprovalBadgeVariant(
-                          payout.approvalStatus
-                        )}
+                        variant={getApprovalBadgeVariant(payout.approvalStatus)}
                       >
                         {payout.approvalStatus}
                       </Badge>

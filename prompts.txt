@@ -1,0 +1,2 @@
+
+For forgot password, we need to send otps for both email and phone and verify them, then new password, confirm password workflow is applied

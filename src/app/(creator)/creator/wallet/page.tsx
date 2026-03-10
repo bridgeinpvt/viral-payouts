@@ -31,12 +31,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 
 function formatCurrency(amount: number): string {
   return `\u20B9${amount.toLocaleString("en-IN")}`;
 }
 
-function getStatusColor(status: string): "default" | "secondary" | "destructive" | "outline" {
+function getStatusColor(
+  status: string,
+): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case "COMPLETED":
     case "APPROVED":
@@ -124,6 +127,10 @@ export default function CreatorWalletPage() {
       utils.wallet.getPayouts.invalidate();
       setWithdrawAmount("");
       setSelectedPaymentMethod("");
+      toast.success("Withdrawal request submitted successfully!");
+    },
+    onError: (err) => {
+      toast.error(err.message);
     },
   });
 
@@ -132,6 +139,10 @@ export default function CreatorWalletPage() {
       utils.wallet.getCreatorWallet.invalidate();
       setShowAddPayment(false);
       resetPaymentForm();
+      toast.success("Payment method added successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message);
     },
   });
 
@@ -169,9 +180,7 @@ export default function CreatorWalletPage() {
 
   function handleAddPaymentMethod() {
     const details: Record<string, string> =
-      paymentType === "UPI"
-        ? { upiId }
-        : { accountNumber, ifsc, accountName };
+      paymentType === "UPI" ? { upiId } : { accountNumber, ifsc, accountName };
 
     addPaymentMethodMutation.mutate({
       type: paymentType,
@@ -254,9 +263,7 @@ export default function CreatorWalletPage() {
                 {showAddPayment ? "Cancel" : "Add Payment Method"}
               </Button>
             </div>
-            <CardDescription>
-              Manage your payout destinations.
-            </CardDescription>
+            <CardDescription>Manage your payout destinations.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {showAddPayment && (
@@ -274,9 +281,7 @@ export default function CreatorWalletPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="UPI">UPI</SelectItem>
-                      <SelectItem value="BANK_ACCOUNT">
-                        Bank Account
-                      </SelectItem>
+                      <SelectItem value="BANK_ACCOUNT">Bank Account</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -361,8 +366,7 @@ export default function CreatorWalletPage() {
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-            ) : wallet?.paymentMethods &&
-              wallet.paymentMethods.length > 0 ? (
+            ) : wallet?.paymentMethods && wallet.paymentMethods.length > 0 ? (
               <div className="space-y-3">
                 {wallet.paymentMethods.map((method) => (
                   <div
@@ -464,11 +468,6 @@ export default function CreatorWalletPage() {
                 {withdrawMutation.error.message}
               </p>
             )}
-            {withdrawMutation.isSuccess && (
-              <p className="text-sm text-green-600">
-                Withdrawal request submitted successfully.
-              </p>
-            )}
           </CardFooter>
         </Card>
       </div>
@@ -511,9 +510,7 @@ export default function CreatorWalletPage() {
                         {getTransactionTypeLabel(tx.type)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {tx.description}
-                    </TableCell>
+                    <TableCell className="text-sm">{tx.description}</TableCell>
                     <TableCell
                       className={`text-right text-sm font-medium ${
                         tx.type === "EARNING" ||

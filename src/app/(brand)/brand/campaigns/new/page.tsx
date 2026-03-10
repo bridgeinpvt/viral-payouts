@@ -2,11 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  CampaignType,
-  Platform,
-  AudienceType,
-} from "@prisma/client";
+import { CampaignType, Platform, AudienceType } from "@prisma/client";
 import { trpc } from "@/trpc/client";
 
 type PromotionType = "PAID" | "ORGANIC";
@@ -43,7 +39,11 @@ const LOCATIONS = [
   "Global",
 ];
 
-const CAMPAIGN_TYPES: { value: CampaignType; label: string; description: string }[] = [
+const CAMPAIGN_TYPES: {
+  value: CampaignType;
+  label: string;
+  description: string;
+}[] = [
   {
     value: "VIEW",
     label: "View-based",
@@ -61,7 +61,11 @@ const CAMPAIGN_TYPES: { value: CampaignType; label: string; description: string 
   },
 ];
 
-const PROMOTION_TYPES: { value: PromotionType; label: string; description: string }[] = [
+const PROMOTION_TYPES: {
+  value: PromotionType;
+  label: string;
+  description: string;
+}[] = [
   {
     value: "PAID",
     label: "Paid Promotion",
@@ -206,7 +210,10 @@ export default function CreateCampaignPage() {
     if (form.type === "VIEW") {
       const payout = parseFloat(form.payoutPer1KViews) || 0;
       if (payout === 0) return null;
-      return { label: "Estimated Views", value: Math.floor((budget / payout) * 1000) };
+      return {
+        label: "Estimated Views",
+        value: Math.floor((budget / payout) * 1000),
+      };
     }
     if (form.type === "CLICK") {
       const payout = parseFloat(form.payoutPerClick) || 0;
@@ -216,10 +223,19 @@ export default function CreateCampaignPage() {
     if (form.type === "CONVERSION") {
       const payout = parseFloat(form.payoutPerSale) || 0;
       if (payout === 0) return null;
-      return { label: "Estimated Conversions", value: Math.floor(budget / payout) };
+      return {
+        label: "Estimated Conversions",
+        value: Math.floor(budget / payout),
+      };
     }
     return null;
-  }, [form.totalBudget, form.type, form.payoutPer1KViews, form.payoutPerClick, form.payoutPerSale]);
+  }, [
+    form.totalBudget,
+    form.type,
+    form.payoutPer1KViews,
+    form.payoutPerClick,
+    form.payoutPerSale,
+  ]);
 
   function canProceed(): boolean {
     if (step === 1) {
@@ -265,7 +281,7 @@ export default function CreateCampaignPage() {
       </div>
       {/* Step Indicator */}
       <div className="flex items-center gap-2">
-        {[1, 2, 3].map((s) => (
+        {[1, 2, 3, 4].map((s) => (
           <div key={s} className="flex items-center gap-2 flex-1">
             <div
               className={`h-2 rounded-full flex-1 transition-colors ${s <= step ? "bg-primary" : "bg-muted"}`}
@@ -276,16 +292,16 @@ export default function CreateCampaignPage() {
 
       {/* Step 1: Basics */}
       {step === 1 && (
-        <Card >
+        <Card>
           <CardHeader>
             <CardTitle className="text-xl">Campaign Basics</CardTitle>
-            <CardDescription >
+            <CardDescription>
               Define the core details of your campaign to get started.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="name" >Campaign Name</Label>
+              <Label htmlFor="name">Campaign Name</Label>
               <Input
                 id="name"
                 className="focus-visible:ring-primary"
@@ -296,12 +312,24 @@ export default function CreateCampaignPage() {
             </div>
 
             <div className="space-y-3">
-              <Label >Campaign Goal</Label>
+              <Label>Campaign Goal</Label>
               <div className="grid gap-3">
                 {[
-                  { value: "VIEW", label: "Brand Awareness", desc: "Maximize your reach and get your brand seen by new audiences." },
-                  { value: "CONVERSION", label: "Sales & Conversions", desc: "Drive sales and actions on your website or store." },
-                  { value: "CLICK", label: "Engagement", desc: "Increase likes, comments, shares and community interaction." }
+                  {
+                    value: "VIEW",
+                    label: "Brand Awareness",
+                    desc: "Maximize your reach and get your brand seen by new audiences.",
+                  },
+                  {
+                    value: "CONVERSION",
+                    label: "Sales & Conversions",
+                    desc: "Drive sales and actions on your website or store.",
+                  },
+                  {
+                    value: "CLICK",
+                    label: "Engagement",
+                    desc: "Increase likes, comments, shares and community interaction.",
+                  },
                 ].map((ct) => (
                   <label
                     key={ct.value}
@@ -312,14 +340,14 @@ export default function CreateCampaignPage() {
                       name="type"
                       value={ct.value}
                       checked={form.type === ct.value}
-                      onChange={() => updateForm({ type: ct.value as CampaignType })}
+                      onChange={() =>
+                        updateForm({ type: ct.value as CampaignType })
+                      }
                       className="mt-1"
                     />
                     <div>
                       <div className="font-medium">{ct.label}</div>
-                      <div className="text-sm">
-                        {ct.desc}
-                      </div>
+                      <div className="text-sm">{ct.desc}</div>
                     </div>
                   </label>
                 ))}
@@ -327,7 +355,7 @@ export default function CreateCampaignPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" >Description</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 className="focus-visible:ring-primary min-h-[120px]"
@@ -350,18 +378,24 @@ export default function CreateCampaignPage() {
                   className="focus-visible:ring-primary min-h-[100px]"
                   placeholder="Explain the overarching goal, product details, and any background information the creator needs..."
                   value={form.campaignBrief}
-                  onChange={(e) => updateForm({ campaignBrief: e.target.value })}
+                  onChange={(e) =>
+                    updateForm({ campaignBrief: e.target.value })
+                  }
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="contentGuidelines">Content Guidelines (Optional)</Label>
+                <Label htmlFor="contentGuidelines">
+                  Content Guidelines (Optional)
+                </Label>
                 <Textarea
                   id="contentGuidelines"
                   className="focus-visible:ring-primary min-h-[100px]"
                   placeholder="Specify what should be in the video (e.g., show product in first 3 seconds, mention specific features)..."
                   value={form.contentGuidelines}
-                  onChange={(e) => updateForm({ contentGuidelines: e.target.value })}
+                  onChange={(e) =>
+                    updateForm({ contentGuidelines: e.target.value })
+                  }
                 />
               </div>
 
@@ -386,7 +420,10 @@ export default function CreateCampaignPage() {
                   value={form.assetsLink}
                   onChange={(e) => updateForm({ assetsLink: e.target.value })}
                 />
-                <p className="text-xs text-muted-foreground">Provide a link to logos, product images, or B-roll for creators to use.</p>
+                <p className="text-xs text-muted-foreground">
+                  Provide a link to logos, product images, or B-roll for
+                  creators to use.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -400,16 +437,16 @@ export default function CreateCampaignPage() {
 
       {/* Step 2: Audience */}
       {step === 2 && (
-        <Card >
+        <Card>
           <CardHeader>
             <CardTitle className="text-xl">Demographics & Location</CardTitle>
-            <CardDescription >
+            <CardDescription>
               Select the audience demographics you want to reach
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-3">
-              <Label >Audience Categories</Label>
+              <Label>Audience Categories</Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {AUDIENCES.map((audience) => (
                   <label
@@ -420,14 +457,16 @@ export default function CreateCampaignPage() {
                       checked={form.targetAudience.includes(audience.value)}
                       onCheckedChange={() => toggleAudience(audience.value)}
                     />
-                    <span className="text-sm font-medium">{audience.label}</span>
+                    <span className="text-sm font-medium">
+                      {audience.label}
+                    </span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="space-y-3">
-              <Label >Target Platforms</Label>
+              <Label>Target Platforms</Label>
               <div className="flex flex-wrap gap-4">
                 {PLATFORMS.map((platform) => (
                   <label
@@ -445,7 +484,7 @@ export default function CreateCampaignPage() {
             </div>
 
             <div className="space-y-3">
-              <Label >Target Locations</Label>
+              <Label>Target Locations</Label>
               <div className="flex flex-wrap gap-4">
                 {LOCATIONS.map((location) => (
                   <label
@@ -463,7 +502,7 @@ export default function CreateCampaignPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate" >Start Date</Label>
+                <Label htmlFor="startDate">Start Date</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -473,7 +512,7 @@ export default function CreateCampaignPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate" >End Date</Label>
+                <Label htmlFor="endDate">End Date</Label>
                 <Input
                   id="endDate"
                   type="date"
@@ -488,7 +527,6 @@ export default function CreateCampaignPage() {
                 Campaign duration: {duration} day{duration !== 1 ? "s" : ""}
               </p>
             )}
-
           </CardContent>
           <CardFooter className="justify-between">
             <Button variant="outline" onClick={() => setStep(1)}>
@@ -503,29 +541,44 @@ export default function CreateCampaignPage() {
 
       {/* Step 3: Budget & Optimization */}
       {step === 3 && (
-        <Card >
+        <Card>
           <CardHeader>
             <CardTitle className="text-xl">Budget & Optimization</CardTitle>
-            <CardDescription >
+            <CardDescription>
               Set the total budget and promotion constraints.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-
             <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-              <h3 className="font-semibold text-primary mb-2">AI Budget Recommendation</h3>
+              <h3 className="font-semibold text-primary mb-2">
+                AI Budget Recommendation
+              </h3>
               <p className="text-sm">
-                Based on your selected Target Audience and location constraints, our AI suggests a budget of around ₹20,000 to ₹40,000 for optimal reach and saturation.
+                Based on your selected Target Audience and location constraints,
+                our AI suggests a budget of around ₹20,000 to ₹40,000 for
+                optimal reach and saturation.
               </p>
             </div>
 
             <div className="space-y-3">
-              <Label >Promotion Type</Label>
+              <Label>Promotion Type</Label>
               <div className="grid gap-3">
                 {[
-                  { value: "UGC", label: "User Generated Content (UGC)", desc: "Creators will create videos using face and product/service (explanation, showcasing, etc)." },
-                  { value: "CLIPPING", label: "Clipping", desc: "Using viral hooks and then creating a viral video for brand and creators." },
-                  { value: "POSTING", label: "Posting", desc: "Post product/service images for brands and creators so that they get views." }
+                  {
+                    value: "UGC",
+                    label: "User Generated Content (UGC)",
+                    desc: "Creators will create videos using face and product/service (explanation, showcasing, etc).",
+                  },
+                  {
+                    value: "CLIPPING",
+                    label: "Clipping",
+                    desc: "Using viral hooks and then creating a viral video for brand and creators.",
+                  },
+                  {
+                    value: "POSTING",
+                    label: "Posting",
+                    desc: "Post product/service images for brands and creators so that they get views.",
+                  },
                 ].map((pt) => (
                   <label
                     key={pt.value}
@@ -536,14 +589,14 @@ export default function CreateCampaignPage() {
                       name="promotionType"
                       value={pt.value}
                       checked={form.promotionType === pt.value}
-                      onChange={() => updateForm({ promotionType: pt.value as PromotionType })}
+                      onChange={() =>
+                        updateForm({ promotionType: pt.value as PromotionType })
+                      }
                       className="mt-1"
                     />
                     <div>
                       <div className="font-medium">{pt.label}</div>
-                      <div className="text-sm">
-                        {pt.desc}
-                      </div>
+                      <div className="text-sm">{pt.desc}</div>
                     </div>
                   </label>
                 ))}
@@ -551,8 +604,10 @@ export default function CreateCampaignPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="totalBudget" >Total Budget Allocation (INR)</Label>
-              <p className="text-xs pb-2">Automatically adjust bids in real-time to maximize ROAS.</p>
+              <Label htmlFor="totalBudget">Total Budget Allocation (INR)</Label>
+              <p className="text-xs pb-2">
+                Automatically adjust bids in real-time to maximize ROAS.
+              </p>
               <Input
                 id="totalBudget"
                 type="number"
@@ -565,9 +620,7 @@ export default function CreateCampaignPage() {
               />
               {parseFloat(form.totalBudget) > 0 &&
                 parseFloat(form.totalBudget) < 25000 && (
-                  <p className="text-sm">
-                    Minimum budget is 25,000 INR
-                  </p>
+                  <p className="text-sm">Minimum budget is 25,000 INR</p>
                 )}
             </div>
 
@@ -592,7 +645,9 @@ export default function CreateCampaignPage() {
                     <div className="text-lg font-bold text-primary">~₹15.4</div>
                   </div>
                 </div>
-                <p className="text-xs text-center">Your budget is optimized for maximum conversions.</p>
+                <p className="text-xs text-center">
+                  Your budget is optimized for maximum conversions.
+                </p>
               </div>
             )}
           </CardContent>
@@ -600,11 +655,8 @@ export default function CreateCampaignPage() {
             <Button variant="outline" onClick={() => setStep(2)}>
               Back
             </Button>
-            <Button
-              disabled={createMutation.isPending || !canProceed()}
-              onClick={handleSubmit}
-            >
-              {createMutation.isPending ? "Creating..." : "Create Campaign"}
+            <Button disabled={!canProceed()} onClick={() => setStep(4)}>
+              Review Campaign
             </Button>
           </CardFooter>
         </Card>
@@ -612,18 +664,16 @@ export default function CreateCampaignPage() {
 
       {/* Step 4: Review & Launch */}
       {step === 4 && (
-        <Card >
+        <Card>
           <CardHeader>
             <CardTitle className="text-xl">Review & Create</CardTitle>
-            <CardDescription >
+            <CardDescription>
               Review your campaign details before creating
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {error && (
-              <div className="rounded-lg border p-4 text-sm">
-                {error}
-              </div>
+              <div className="rounded-lg border p-4 text-sm">{error}</div>
             )}
 
             <div className="space-y-4">
@@ -663,9 +713,7 @@ export default function CreateCampaignPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm">Locations</p>
-                  <p className="font-medium">
-                    {form.locations.join(", ")}
-                  </p>
+                  <p className="font-medium">{form.locations.join(", ")}</p>
                 </div>
                 <div>
                   <p className="text-sm">Duration</p>
@@ -701,9 +749,7 @@ export default function CreateCampaignPage() {
                 </div>
                 <div>
                   <p className="text-sm">Promotion Type</p>
-                  <p className="text-xl font-bold">
-                    {form.promotionType}
-                  </p>
+                  <p className="text-xl font-bold">{form.promotionType}</p>
                 </div>
               </div>
             </div>
@@ -712,10 +758,7 @@ export default function CreateCampaignPage() {
             <Button variant="outline" onClick={() => setStep(3)}>
               Back
             </Button>
-            <Button
-              disabled={createMutation.isPending}
-              onClick={handleSubmit}
-            >
+            <Button disabled={createMutation.isPending} onClick={handleSubmit}>
               {createMutation.isPending ? "Creating..." : "Create Campaign"}
             </Button>
           </CardFooter>

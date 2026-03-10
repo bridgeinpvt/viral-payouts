@@ -15,7 +15,7 @@ export const escrowRouter = createTRPCRouter({
       z.object({
         campaignId: z.string(),
         amount: z.number().positive(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const campaign = await ctx.db.campaign.findUnique({
@@ -38,11 +38,17 @@ export const escrowRouter = createTRPCRouter({
       });
 
       if (!wallet || wallet.type !== WalletType.BRAND) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Brand wallet not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Brand wallet not found",
+        });
       }
 
       if (wallet.availableBalance < input.amount) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Insufficient balance" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Insufficient balance",
+        });
       }
 
       // Check if escrow already exists
@@ -115,7 +121,10 @@ export const escrowRouter = createTRPCRouter({
       }
 
       // Only brand owner or admin can view escrow
-      if (escrow.campaign.brandId !== ctx.session.user.id && !ctx.session.user.isAdmin) {
+      if (
+        escrow.campaign.brandId !== ctx.session.user.id &&
+        !ctx.session.user.isAdmin
+      ) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
       }
 
@@ -131,9 +140,9 @@ export const escrowRouter = createTRPCRouter({
           z.object({
             creatorId: z.string(),
             amount: z.number().positive(),
-          })
+          }),
         ),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const escrow = await ctx.db.escrow.findUnique({
@@ -146,7 +155,10 @@ export const escrowRouter = createTRPCRouter({
       }
 
       if (escrow.status === "FULLY_RELEASED" || escrow.status === "REFUNDED") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Escrow already fully released or refunded" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Escrow already fully released or refunded",
+        });
       }
 
       const totalRelease = input.releases.reduce((sum, r) => sum + r.amount, 0);
@@ -168,7 +180,15 @@ export const escrowRouter = createTRPCRouter({
           where: { userId: release.creatorId },
         });
 
-        if (!creatorWallet) continue;
+        if (!creatorWallet) {
+          console.error(
+            `[releaseEscrow] Creator wallet not found for user ${release.creatorId}, amount: ₹${release.amount}`,
+          );
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Creator wallet not found for one or more recipients. Please ensure all creators have a registered wallet.`,
+          });
+        }
 
         operations.push(
           ctx.db.wallet.update({
@@ -177,7 +197,7 @@ export const escrowRouter = createTRPCRouter({
               availableBalance: { increment: release.amount },
               lifetimeEarnings: { increment: release.amount },
             },
-          })
+          }),
         );
 
         operations.push(
@@ -192,7 +212,7 @@ export const escrowRouter = createTRPCRouter({
               referenceId: escrow.id,
               referenceType: "escrow",
             },
-          })
+          }),
         );
 
         // Update campaign metrics
@@ -203,13 +223,15 @@ export const escrowRouter = createTRPCRouter({
               creatorId: release.creatorId,
             },
             data: { paidAmount: { increment: release.amount } },
-          })
+          }),
         );
       }
 
       const newReleasedAmount = escrow.releasedAmount + totalRelease;
       const newStatus =
-        newReleasedAmount >= escrow.totalAmount ? "FULLY_RELEASED" : "PARTIALLY_RELEASED";
+        newReleasedAmount >= escrow.totalAmount
+          ? "FULLY_RELEASED"
+          : "PARTIALLY_RELEASED";
 
       operations.push(
         ctx.db.escrow.update({
@@ -219,7 +241,7 @@ export const escrowRouter = createTRPCRouter({
             status: newStatus,
             ...(newStatus === "FULLY_RELEASED" && { releasedAt: new Date() }),
           },
-        })
+        }),
       );
 
       // Deduct from brand wallet escrow balance
@@ -227,7 +249,7 @@ export const escrowRouter = createTRPCRouter({
         ctx.db.wallet.update({
           where: { id: escrow.brandWalletId },
           data: { escrowBalance: { decrement: totalRelease } },
-        })
+        }),
       );
 
       await ctx.db.$transaction(operations);
@@ -250,7 +272,10 @@ export const escrowRouter = createTRPCRouter({
 
       const refundAmount = escrow.totalAmount - escrow.releasedAmount;
       if (refundAmount <= 0) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "No funds to refund" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No funds to refund",
+        });
       }
 
       await ctx.db.$transaction([

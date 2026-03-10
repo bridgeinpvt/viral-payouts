@@ -9,6 +9,7 @@ import { aggregateDailyAnalytics } from "./crons/daily-analytics";
 import { executePayouts } from "./crons/payout-executor";
 import { detectFraud } from "./crons/fraud-detection";
 import { startTokenRefreshCron } from "./crons/token-refresh";
+import { completeExpiredCampaigns } from "./crons/campaign-completer";
 
 const app = express();
 const PORT = process.env.WORKER_PORT || 4002;
@@ -70,6 +71,17 @@ cron.schedule("30 * * * *", async () => {
     console.log("[CRON] Fraud detection completed.");
   } catch (err) {
     console.error("[CRON] Fraud detection failed:", err);
+  }
+});
+
+// Daily at 3 AM: Complete expired campaigns
+cron.schedule("0 3 * * *", async () => {
+  console.log("[CRON] Running campaign completer...");
+  try {
+    await completeExpiredCampaigns();
+    console.log("[CRON] Campaign completer completed.");
+  } catch (err) {
+    console.error("[CRON] Campaign completer failed:", err);
   }
 });
 

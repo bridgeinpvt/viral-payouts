@@ -31,7 +31,7 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.AUTH_GOOGLE_ID!,
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     CredentialsProvider({
       id: "email-password",
@@ -94,7 +94,7 @@ export const authOptions: NextAuthOptions = {
       options: getCookieConfig(),
     },
   },
-  useSecureCookies: false,
+  useSecureCookies: process.env.NODE_ENV === "production",
   pages: {
     signIn: "/login",
     newUser: "/onboarding",

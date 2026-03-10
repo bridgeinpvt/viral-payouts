@@ -1,5 +1,20 @@
 import { db } from "../db";
 
+const FRAUD_THRESHOLDS = {
+  clickBurst: parseInt(process.env.FRAUD_CLICK_BURST_THRESHOLD ?? "50", 10),
+  ipAbuse: parseInt(process.env.FRAUD_IP_ABUSE_THRESHOLD ?? "20", 10),
+  conversionRatio: parseFloat(
+    process.env.FRAUD_CONVERSION_RATIO_THRESHOLD ?? "0.5",
+  ),
+  conversionMismatch: parseFloat(
+    process.env.FRAUD_CONVERSION_MISMATCH_THRESHOLD ?? "0.3",
+  ),
+  minConversionsForMismatch: parseInt(
+    process.env.FRAUD_MIN_CONVERSIONS ?? "10",
+    10,
+  ),
+};
+
 /**
  * Check for click fraud on a tracking link (burst detection, IP abuse)
  */
@@ -21,7 +36,7 @@ export async function checkClickFraud(trackingLinkId: string): Promise<void> {
     },
   });
 
-  if (recentClicks > 50) {
+  if (recentClicks > FRAUD_THRESHOLDS.clickBurst) {
     await createFraudFlag({
       type: "CLICK_ANOMALY",
       campaignId: link.campaignId,
@@ -42,7 +57,7 @@ export async function checkClickFraud(trackingLinkId: string): Promise<void> {
     _count: true,
     having: {
       ip: {
-        _count: { gt: 20 },
+        _count: { gt: FRAUD_THRESHOLDS.ipAbuse },
       },
     },
   });
@@ -66,7 +81,7 @@ export async function checkViewSpike(
   campaignId: string,
   creatorId: string,
   currentViews: number,
-  previousViews: number
+  previousViews: number,
 ): Promise<void> {
   if (previousViews === 0) return;
 
@@ -90,7 +105,7 @@ export async function checkViewSpike(
  */
 export async function checkConversionMismatch(
   campaignId: string,
-  creatorId: string
+  creatorId: string,
 ): Promise<void> {
   const metrics = await db.campaignMetrics.findUnique({
     where: { campaignId_creatorId: { campaignId, creatorId } },
@@ -98,15 +113,26 @@ export async function checkConversionMismatch(
 
   if (!metrics || metrics.verifiedClicks === 0) return;
 
-  const conversionRate = metrics.verifiedConversions / metrics.verifiedClicks;
+  const conversionRate =
+    metrics.verifiedClicks > 0
+      ? metrics.verifiedConversions / metrics.verifiedClicks
+      : 0;
 
   // Flag if conversion rate is unusually high (>30%)
-  if (conversionRate > 0.3 && metrics.verifiedConversions > 10) {
+  if (
+    conversionRate > FRAUD_THRESHOLDS.conversionMismatch &&
+    metrics.verifiedConversions > FRAUD_THRESHOLDS.minConversionsForMismatch
+  ) {
     await createFraudFlag({
       type: "CONVERSION_MISMATCH",
       campaignId,
       creatorId,
-      severity: conversionRate > 0.7 ? 5 : conversionRate > 0.5 ? 4 : 3,
+      severity:
+        conversionRate > 0.7
+          ? 5
+          : conversionRate > FRAUD_THRESHOLDS.conversionRatio
+            ? 4
+            : 3,
       description: `Unusually high conversion rate: ${Math.round(conversionRate * 100)}% (${metrics.verifiedConversions}/${metrics.verifiedClicks})`,
       evidence: {
         clicks: metrics.verifiedClicks,
@@ -118,7 +144,12 @@ export async function checkConversionMismatch(
 }
 
 async function createFraudFlag(params: {
-  type: "VIEW_SPIKE" | "CLICK_ANOMALY" | "CONVERSION_MISMATCH" | "BOT_DETECTED" | "IP_ABUSE";
+  type:
+    | "VIEW_SPIKE"
+    | "CLICK_ANOMALY"
+    | "CONVERSION_MISMATCH"
+    | "BOT_DETECTED"
+    | "IP_ABUSE";
   campaignId: string;
   creatorId: string;
   severity: number;

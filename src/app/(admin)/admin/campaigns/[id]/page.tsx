@@ -13,12 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -28,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 function formatCurrency(amount: number): string {
   return `₹${amount.toLocaleString("en-IN")}`;
@@ -49,7 +45,7 @@ export default function AdminCampaignDetailPage() {
   const { data: contentSnapshots } =
     trpc.analytics.getCampaignContentSnapshots.useQuery(
       { campaignId: id },
-      { enabled: !!id }
+      { enabled: !!id },
     );
 
   const pauseMutation = trpc.admin.adminPauseCampaign.useMutation({
@@ -61,10 +57,12 @@ export default function AdminCampaignDetailPage() {
 
   const approveMutation = trpc.admin.approveCampaign.useMutation({
     onSuccess: () => utils.admin.getCampaignOversight.invalidate({ id }),
+    onError: (err) => toast.error(err.message),
   });
 
   const rejectMutation = trpc.admin.rejectCampaign.useMutation({
     onSuccess: () => utils.admin.getCampaignOversight.invalidate({ id }),
+    onError: (err) => toast.error(err.message),
   });
 
   const freezeMutation = trpc.admin.freezeCreator.useMutation({
@@ -243,7 +241,10 @@ export default function AdminCampaignDetailPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Remaining</span>
                       <span className="font-medium">
-                        {formatCurrency((campaign.escrow.totalAmount ?? 0) - (campaign.escrow.releasedAmount ?? 0))}
+                        {formatCurrency(
+                          (campaign.escrow.totalAmount ?? 0) -
+                            (campaign.escrow.releasedAmount ?? 0),
+                        )}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -269,9 +270,9 @@ export default function AdminCampaignDetailPage() {
                 {formatCurrency(campaign.totalBudget)} spent (
                 {campaign.totalBudget > 0
                   ? (
-                    (campaign.spentBudget / campaign.totalBudget) *
-                    100
-                  ).toFixed(1)
+                      (campaign.spentBudget / campaign.totalBudget) *
+                      100
+                    ).toFixed(1)
                   : 0}
                 %)
               </CardDescription>
@@ -285,7 +286,7 @@ export default function AdminCampaignDetailPage() {
                       campaign.totalBudget > 0
                         ? (campaign.spentBudget / campaign.totalBudget) * 100
                         : 0,
-                      100
+                      100,
                     )}%`,
                   }}
                 />
@@ -320,7 +321,9 @@ export default function AdminCampaignDetailPage() {
                       <TableCell>
                         <div>
                           <p className="font-medium">
-                            {p.creator?.displayName ?? p.creator?.user?.name ?? "Unknown"}
+                            {p.creator?.displayName ??
+                              p.creator?.user?.name ??
+                              "Unknown"}
                           </p>
                           {p.creator?.tier && (
                             <Badge variant="outline" className="mt-1">
@@ -336,7 +339,10 @@ export default function AdminCampaignDetailPage() {
                         {p.trackingLinks && p.trackingLinks.length > 0 ? (
                           <div className="flex flex-col gap-1">
                             {p.trackingLinks.map((link: any) => (
-                              <div key={link.id} className="flex justify-between text-xs">
+                              <div
+                                key={link.id}
+                                className="flex justify-between text-xs"
+                              >
                                 <span className="truncate" title={link.slug}>
                                   {link.slug} ({link.platform ?? "Gen"})
                                 </span>
@@ -400,12 +406,15 @@ export default function AdminCampaignDetailPage() {
                   ))}
                   {(!campaign.participations ||
                     campaign.participations.length === 0) && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          No participations found
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
+                        No participations found
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -434,7 +443,9 @@ export default function AdminCampaignDetailPage() {
                   {campaign.metrics?.map((m: any) => (
                     <TableRow key={m.id}>
                       <TableCell className="font-medium">
-                        {m.creator?.displayName ?? m.creator?.user?.name ?? "Unknown"}
+                        {m.creator?.displayName ??
+                          m.creator?.user?.name ??
+                          "Unknown"}
                       </TableCell>
                       <TableCell className="text-right">
                         {m.totalViews?.toLocaleString() ?? 0}
@@ -452,7 +463,10 @@ export default function AdminCampaignDetailPage() {
                   ))}
                   {(!campaign.metrics || campaign.metrics.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
                         No metrics data available
                       </TableCell>
                     </TableRow>
@@ -511,7 +525,9 @@ export default function AdminCampaignDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Reel &amp; Short Analytics</CardTitle>
-              <CardDescription>Per-creator content performance — synced hourly</CardDescription>
+              <CardDescription>
+                Per-creator content performance — synced hourly
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {!contentSnapshots || contentSnapshots.length === 0 ? (
@@ -541,12 +557,20 @@ export default function AdminCampaignDetailPage() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {snap.creatorImage && (
-                                <img src={snap.creatorImage} alt="" className="h-7 w-7 rounded-full" />
+                                <img
+                                  src={snap.creatorImage}
+                                  alt=""
+                                  className="h-7 w-7 rounded-full"
+                                />
                               )}
                               <div>
-                                <p className="text-sm font-medium">{snap.creatorName}</p>
+                                <p className="text-sm font-medium">
+                                  {snap.creatorName}
+                                </p>
                                 {snap.instagramHandle && (
-                                  <p className="text-xs text-muted-foreground">@{snap.instagramHandle}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    @{snap.instagramHandle}
+                                  </p>
                                 )}
                               </div>
                               {snap.fraudFlags > 0 && (
@@ -557,23 +581,45 @@ export default function AdminCampaignDetailPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary" className="text-[11px]">{snap.platform ?? "—"}</Badge>
+                            <Badge variant="secondary" className="text-[11px]">
+                              {snap.platform ?? "—"}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="text-right font-medium">{snap.currentViews.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-medium">
+                            {snap.currentViews.toLocaleString()}
+                          </TableCell>
                           <TableCell className="text-right">
-                            {snap.deltaViews > 0
-                              ? <span className="text-green-600">+{snap.deltaViews.toLocaleString()}</span>
-                              : <span className="text-muted-foreground">—</span>}
+                            {snap.deltaViews > 0 ? (
+                              <span className="text-green-600">
+                                +{snap.deltaViews.toLocaleString()}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </TableCell>
-                          <TableCell className="text-right">{snap.likes.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">{snap.comments.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">{snap.shares.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">
+                            {snap.likes.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {snap.comments.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {snap.shares.toLocaleString()}
+                          </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {snap.lastSyncedAt ? new Date(snap.lastSyncedAt).toLocaleString() : "Not yet"}
+                            {snap.lastSyncedAt
+                              ? new Date(snap.lastSyncedAt).toLocaleString()
+                              : "Not yet"}
                           </TableCell>
                           <TableCell>
-                            <a href={snap.postUrl} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" size="sm">View</Button>
+                            <a
+                              href={snap.postUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button variant="outline" size="sm">
+                                View
+                              </Button>
                             </a>
                           </TableCell>
                         </TableRow>
@@ -611,10 +657,14 @@ export default function AdminCampaignDetailPage() {
                   {campaign.trackingLinks?.map((link: any) => (
                     <TableRow key={link.id}>
                       <TableCell className="font-medium">
-                        {link.creator?.displayName ?? link.creator?.user?.name ?? "Unknown"}
+                        {link.creator?.displayName ??
+                          link.creator?.user?.name ??
+                          "Unknown"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{link.platform ?? "General"}</Badge>
+                        <Badge variant="outline">
+                          {link.platform ?? "General"}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -633,7 +683,9 @@ export default function AdminCampaignDetailPage() {
                         {link.totalClicks?.toLocaleString() ?? 0}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={link.isActive ? "default" : "destructive"}>
+                        <Badge
+                          variant={link.isActive ? "default" : "destructive"}
+                        >
                           {link.isActive ? "Active" : "Disabled"}
                         </Badge>
                       </TableCell>
@@ -642,9 +694,13 @@ export default function AdminCampaignDetailPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(!campaign.trackingLinks || campaign.trackingLinks.length === 0) && (
+                  {(!campaign.trackingLinks ||
+                    campaign.trackingLinks.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center py-6 text-muted-foreground"
+                      >
                         No tracking links generated for this campaign yet.
                       </TableCell>
                     </TableRow>
@@ -742,21 +798,24 @@ export default function AdminCampaignDetailPage() {
                           )}
                         {(flag.status === "CONFIRMED" ||
                           flag.status === "DISMISSED") && (
-                            <span className="text-sm text-muted-foreground">
-                              Resolved
-                            </span>
-                          )}
+                          <span className="text-sm text-muted-foreground">
+                            Resolved
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
                   {(!campaign.fraudFlags ||
                     campaign.fraudFlags.length === 0) && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          No fraud flags
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
+                        No fraud flags
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

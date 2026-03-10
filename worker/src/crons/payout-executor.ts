@@ -39,17 +39,23 @@ export async function executePayouts(): Promise<void> {
       });
 
       if (!payout.paymentMethod) {
-        console.error(`[payout-executor] No payment method for payout ${payout.id}`);
+        console.error(
+          `[payout-executor] No payment method for payout ${payout.id}`,
+        );
         await db.payout.update({
           where: { id: payout.id },
-          data: { status: "FAILED", failedReason: "No payment method configured" },
+          data: {
+            status: "FAILED",
+            failedReason: "No payment method configured",
+          },
         });
         continue;
       }
 
       // Execute via Razorpay
       const razorpayPayout = await createPayout({
-        fundAccountId: payout.paymentMethod.details as string,
+        fundAccountId: (payout.paymentMethod.details as Record<string, string>)
+          .fundAccountId,
         amount: payout.netAmount ?? payout.amount,
         referenceId: payout.id,
         narration: `Payout for ${payout.user.name ?? "creator"}`,
@@ -81,14 +87,17 @@ export async function executePayouts(): Promise<void> {
         });
       }
 
-      console.log(`[payout-executor] Payout ${payout.id} completed: ₹${payout.netAmount ?? payout.amount}`);
+      console.log(
+        `[payout-executor] Payout ${payout.id} completed: ₹${payout.netAmount ?? payout.amount}`,
+      );
     } catch (error) {
       console.error(`[payout-executor] Failed payout ${payout.id}:`, error);
       await db.payout.update({
         where: { id: payout.id },
         data: {
           status: "FAILED",
-          failedReason: error instanceof Error ? error.message : "Unknown error",
+          failedReason:
+            error instanceof Error ? error.message : "Unknown error",
         },
       });
     }

@@ -8,6 +8,48 @@ import {
 import { TRPCError } from "@trpc/server";
 import { WalletType } from "@prisma/client";
 
+const bankAccountDetailsSchema = z.object({
+  fundAccountId: z.string().min(1, "Fund account ID is required"),
+  accountHolderName: z.string().min(1, "Account holder name is required"),
+  bankName: z.string().min(1, "Bank name is required"),
+  accountNumber: z.string().min(1, "Account number is required"),
+  ifscCode: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code"),
+});
+
+const upiDetailsSchema = z.object({
+  fundAccountId: z.string().min(1, "Fund account ID is required"),
+  vpa: z.string().regex(/^[\w.-]+@[\w.-]+$/, "Invalid UPI address"),
+});
+
+const paypalDetailsSchema = z.object({
+  email: z.string().email("Invalid PayPal email"),
+});
+
+const basePaymentMethodSchema = z.object({
+  isPrimary: z.boolean().default(false),
+});
+
+const bankAccountSchema = basePaymentMethodSchema.extend({
+  type: z.literal("BANK_ACCOUNT"),
+  details: bankAccountDetailsSchema,
+});
+
+const upiSchema = basePaymentMethodSchema.extend({
+  type: z.literal("UPI"),
+  details: upiDetailsSchema,
+});
+
+const paypalSchema = basePaymentMethodSchema.extend({
+  type: z.literal("PAYPAL"),
+  details: paypalDetailsSchema,
+});
+
+const paymentMethodDetailsSchema = z.discriminatedUnion("type", [
+  bankAccountSchema,
+  upiSchema,
+  paypalSchema,
+]);
+
 export const walletRouter = createTRPCRouter({
   // ==========================================
   // BRAND WALLET
@@ -37,7 +79,10 @@ export const walletRouter = createTRPCRouter({
     const escrows = await ctx.db.escrow.findMany({
       where: { brandWalletId: wallet.id, status: "LOCKED" },
     });
-    const totalEscrowLocked = escrows.reduce((sum, e) => sum + e.totalAmount - e.releasedAmount, 0);
+    const totalEscrowLocked = escrows.reduce(
+      (sum, e) => sum + e.totalAmount - e.releasedAmount,
+      0,
+    );
 
     return { ...wallet, totalEscrowLocked };
   }),
@@ -49,7 +94,7 @@ export const walletRouter = createTRPCRouter({
         amount: z.number().min(1000),
         razorpayPaymentId: z.string(),
         razorpayOrderId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const wallet = await ctx.db.wallet.findUnique({
@@ -57,7 +102,10 @@ export const walletRouter = createTRPCRouter({
       });
 
       if (!wallet || wallet.type !== WalletType.BRAND) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Brand wallet not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Brand wallet not found",
+        });
       }
 
       const [updatedWallet] = await ctx.db.$transaction([
@@ -120,7 +168,10 @@ export const walletRouter = createTRPCRouter({
     });
 
     if (!wallet) {
-      const type = ctx.session.user.role === "BRAND" ? WalletType.BRAND : WalletType.CREATOR;
+      const type =
+        ctx.session.user.role === "BRAND"
+          ? WalletType.BRAND
+          : WalletType.CREATOR;
       return await ctx.db.wallet.create({
         data: {
           userId: ctx.session.user.id,
@@ -142,8 +193,19 @@ export const walletRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(100).default(20),
         cursor: z.string().optional(),
-        type: z.enum(["EARNING", "WITHDRAWAL", "BONUS", "REFUND", "CAMPAIGN_FUND", "ESCROW_LOCK", "ESCROW_RELEASE", "PLATFORM_FEE"]).optional(),
-      })
+        type: z
+          .enum([
+            "EARNING",
+            "WITHDRAWAL",
+            "BONUS",
+            "REFUND",
+            "CAMPAIGN_FUND",
+            "ESCROW_LOCK",
+            "ESCROW_RELEASE",
+            "PLATFORM_FEE",
+          ])
+          .optional(),
+      }),
     )
     .query(async ({ ctx, input }) => {
       const wallet = await ctx.db.wallet.findUnique({
@@ -174,7 +236,7 @@ export const walletRouter = createTRPCRouter({
       let nextCursor: string | undefined;
       if (transactions.length > input.limit) {
         const next = transactions.pop();
-        nextCursor = next!.id;
+        nextCursor = next?.id;
       }
 
       return { transactions, nextCursor };
@@ -185,8 +247,10 @@ export const walletRouter = createTRPCRouter({
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(20),
-        status: z.enum(["PENDING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"]).optional(),
-      })
+        status: z
+          .enum(["PENDING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"])
+          .optional(),
+      }),
     )
     .query(async ({ ctx, input }) => {
       const wallet = await ctx.db.wallet.findUnique({
@@ -212,7 +276,7 @@ export const walletRouter = createTRPCRouter({
       z.object({
         amount: z.number().min(100),
         paymentMethodId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const wallet = await ctx.db.wallet.findUnique({
@@ -221,16 +285,27 @@ export const walletRouter = createTRPCRouter({
       });
 
       if (!wallet || wallet.type !== WalletType.CREATOR) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Creator wallet not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Creator wallet not found",
+        });
       }
 
       if (wallet.availableBalance < input.amount) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Insufficient balance" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Insufficient balance",
+        });
       }
 
-      const paymentMethod = wallet.paymentMethods.find((pm) => pm.id === input.paymentMethodId);
+      const paymentMethod = wallet.paymentMethods.find(
+        (pm) => pm.id === input.paymentMethodId,
+      );
       if (!paymentMethod) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Payment method not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Payment method not found",
+        });
       }
 
       // Calculate TDS (10% for amounts > ₹20,000 per financial year)
@@ -250,8 +325,11 @@ export const walletRouter = createTRPCRouter({
             approvalStatus: "PENDING_APPROVAL",
           },
         }),
-        ctx.db.wallet.update({
-          where: { id: wallet.id },
+        ctx.db.wallet.updateMany({
+          where: {
+            id: wallet.id,
+            availableBalance: { gte: input.amount },
+          },
           data: {
             availableBalance: { decrement: input.amount },
             pendingBalance: { increment: input.amount },
@@ -269,25 +347,29 @@ export const walletRouter = createTRPCRouter({
         }),
       ]);
 
+      if (!payout) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Insufficient balance",
+        });
+      }
+
       return payout;
     }),
 
   // Add payment method
   addPaymentMethod: protectedProcedure
-    .input(
-      z.object({
-        type: z.enum(["BANK_ACCOUNT", "UPI", "PAYPAL"]),
-        details: z.record(z.string()),
-        isPrimary: z.boolean().default(false),
-      })
-    )
+    .input(paymentMethodDetailsSchema)
     .mutation(async ({ ctx, input }) => {
       let wallet = await ctx.db.wallet.findUnique({
         where: { userId: ctx.session.user.id },
       });
 
       if (!wallet) {
-        const type = ctx.session.user.role === "BRAND" ? WalletType.BRAND : WalletType.CREATOR;
+        const type =
+          ctx.session.user.role === "BRAND"
+            ? WalletType.BRAND
+            : WalletType.CREATOR;
         wallet = await ctx.db.wallet.create({
           data: {
             userId: ctx.session.user.id,
@@ -323,7 +405,7 @@ export const walletRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         isPrimary: z.boolean().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const wallet = await ctx.db.wallet.findUnique({
@@ -335,9 +417,14 @@ export const walletRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Wallet not found" });
       }
 
-      const paymentMethod = wallet.paymentMethods.find((pm) => pm.id === input.id);
+      const paymentMethod = wallet.paymentMethods.find(
+        (pm) => pm.id === input.id,
+      );
       if (!paymentMethod) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Payment method not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Payment method not found",
+        });
       }
 
       if (input.isPrimary) {
@@ -366,9 +453,14 @@ export const walletRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Wallet not found" });
       }
 
-      const paymentMethod = wallet.paymentMethods.find((pm) => pm.id === input.id);
+      const paymentMethod = wallet.paymentMethods.find(
+        (pm) => pm.id === input.id,
+      );
       if (!paymentMethod) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Payment method not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Payment method not found",
+        });
       }
 
       const pendingPayouts = await ctx.db.payout.count({

@@ -32,7 +32,7 @@ function generateSlug(name: string): string {
 function generatePromoCode(format?: string | null): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const random = Array.from({ length: 6 }, () =>
-    chars.charAt(Math.floor(Math.random() * chars.length))
+    chars.charAt(Math.floor(Math.random() * chars.length)),
   ).join("");
   return format ? format.replace("{{CODE}}", random) : random;
 }
@@ -77,7 +77,7 @@ export const campaignRouter = createTRPCRouter({
         // Step 3: Budget
         totalBudget: z.number().min(25000),
         platformCommissionRate: z.number().min(0).max(1).optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const slug = generateSlug(input.name);
@@ -149,7 +149,7 @@ export const campaignRouter = createTRPCRouter({
         startDate: z.coerce.date().optional(),
         endDate: z.coerce.date().optional(),
         duration: z.number().int().positive().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
@@ -182,10 +182,15 @@ export const campaignRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
       }
 
-      if (!campaign.name || !campaign.totalBudget || campaign.totalBudget < 25000) {
+      if (
+        !campaign.name ||
+        !campaign.totalBudget ||
+        campaign.totalBudget < 25000
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Please complete all required fields. Minimum budget is ₹25,000",
+          message:
+            "Please complete all required fields. Minimum budget is ₹25,000",
         });
       }
 
@@ -315,7 +320,9 @@ export const campaignRouter = createTRPCRouter({
       where: { brandId: ctx.session.user.id },
       orderBy: { createdAt: "desc" },
       include: {
-        escrow: { select: { totalAmount: true, releasedAmount: true, status: true } },
+        escrow: {
+          select: { totalAmount: true, releasedAmount: true, status: true },
+        },
         _count: { select: { participations: true } },
       },
     });
@@ -334,7 +341,11 @@ export const campaignRouter = createTRPCRouter({
               name: true,
               image: true,
               brandProfile: {
-                select: { companyName: true, companyLogo: true, isVerified: true },
+                select: {
+                  companyName: true,
+                  companyLogo: true,
+                  isVerified: true,
+                },
               },
             },
           },
@@ -344,7 +355,10 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Campaign not found",
+        });
       }
 
       return campaign;
@@ -402,7 +416,7 @@ export const campaignRouter = createTRPCRouter({
       z.object({
         campaignId: z.string(),
         creatorId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const campaign = await ctx.db.campaign.findUnique({
@@ -503,7 +517,9 @@ export const campaignRouter = createTRPCRouter({
 
   // Approve participation (brand)
   approveParticipation: brandProcedure
-    .input(z.object({ participationId: z.string(), note: z.string().optional() }))
+    .input(
+      z.object({ participationId: z.string(), note: z.string().optional() }),
+    )
     .mutation(async ({ ctx, input }) => {
       const participation = await ctx.db.campaignParticipation.findUnique({
         where: { id: input.participationId },
@@ -511,11 +527,21 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!participation) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Participation not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Participation not found",
+        });
       }
 
       if (participation.campaign.brandId !== ctx.session.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+      }
+
+      if (participation.campaign.status !== CampaignStatus.LIVE) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only approve participation for live campaigns",
+        });
       }
 
       if (participation.status !== ParticipationStatus.APPLIED) {
@@ -605,7 +631,8 @@ export const campaignRouter = createTRPCRouter({
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                from: process.env.RESEND_FROM_EMAIL ?? "noreply@viralpayouts.com",
+                from:
+                  process.env.RESEND_FROM_EMAIL ?? "noreply@viralpayouts.com",
                 to: creator.email,
                 subject: `✅ You've been approved for "${campaign.name}"`,
                 html: `
@@ -626,11 +653,13 @@ export const campaignRouter = createTRPCRouter({
             });
           } else {
             console.log(
-              `[DEV] Approval email to ${creator.email} for campaign "${campaign.name}" (payout: ${payoutLine})`
+              `[DEV] Approval email to ${creator.email} for campaign "${campaign.name}" (payout: ${payoutLine})`,
             );
           }
         })
-        .catch((err) => console.warn("[approveParticipation] email error:", err));
+        .catch((err) =>
+          console.warn("[approveParticipation] email error:", err),
+        );
 
       return updated;
     }),
@@ -645,7 +674,10 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!participation) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Participation not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Participation not found",
+        });
       }
 
       if (participation.campaign.brandId !== ctx.session.user.id) {
@@ -672,9 +704,9 @@ export const campaignRouter = createTRPCRouter({
             type: z.nativeEnum(MediaType),
             url: z.string().url(),
             filename: z.string().optional(),
-          })
+          }),
         ),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const campaign = await ctx.db.campaign.findUnique({
@@ -700,7 +732,7 @@ export const campaignRouter = createTRPCRouter({
               sortOrder: startingSortOrder + idx,
             },
           });
-        })
+        }),
       );
 
       return newMedia;
@@ -716,7 +748,7 @@ export const campaignRouter = createTRPCRouter({
       z.object({
         campaignId: z.string(),
         platforms: z.array(z.nativeEnum(Platform)),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const campaign = await ctx.db.campaign.findUnique({
@@ -768,7 +800,7 @@ export const campaignRouter = createTRPCRouter({
         contentUrl: z.string().url(),
         platform: z.nativeEnum(Platform),
         caption: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const participation = await ctx.db.campaignParticipation.findUnique({
@@ -804,9 +836,11 @@ export const campaignRouter = createTRPCRouter({
   // Get creator's participations
   getMyParticipations: creatorProcedure
     .input(
-      z.object({
-        status: z.nativeEnum(ParticipationStatus).optional(),
-      }).optional()
+      z
+        .object({
+          status: z.nativeEnum(ParticipationStatus).optional(),
+        })
+        .optional(),
     )
     .query(async ({ ctx, input }) => {
       return await ctx.db.campaignParticipation.findMany({
@@ -864,7 +898,10 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!participation || participation.creatorId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Participation not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Participation not found",
+        });
       }
 
       // Get metrics for this participation
@@ -887,7 +924,7 @@ export const campaignRouter = createTRPCRouter({
       z.object({
         participationId: z.string(),
         platform: z.nativeEnum(Platform),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const participation = await ctx.db.campaignParticipation.findUnique({
@@ -964,14 +1001,16 @@ export const campaignRouter = createTRPCRouter({
   // Get marketplace campaigns (public — no auth required)
   getMarketplaceCampaigns: publicProcedure
     .input(
-      z.object({
-        type: z.nativeEnum(CampaignType).optional(),
-        platform: z.nativeEnum(Platform).optional(),
-        category: z.string().optional(),
-        search: z.string().optional(),
-        cursor: z.string().optional(),
-        limit: z.number().min(1).max(50).default(20),
-      }).optional()
+      z
+        .object({
+          type: z.nativeEnum(CampaignType).optional(),
+          platform: z.nativeEnum(Platform).optional(),
+          category: z.string().optional(),
+          search: z.string().optional(),
+          cursor: z.string().optional(),
+          limit: z.number().min(1).max(50).default(20),
+        })
+        .optional(),
     )
     .query(async ({ ctx, input }) => {
       const where: Record<string, unknown> = {
@@ -1002,7 +1041,11 @@ export const campaignRouter = createTRPCRouter({
               name: true,
               image: true,
               brandProfile: {
-                select: { companyName: true, companyLogo: true, isVerified: true },
+                select: {
+                  companyName: true,
+                  companyLogo: true,
+                  isVerified: true,
+                },
               },
             },
           },

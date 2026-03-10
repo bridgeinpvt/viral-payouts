@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -29,7 +30,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const FRAUD_STATUSES = ["DETECTED", "INVESTIGATING", "CONFIRMED", "DISMISSED"] as const;
+const FRAUD_STATUSES = [
+  "DETECTED",
+  "INVESTIGATING",
+  "CONFIRMED",
+  "DISMISSED",
+] as const;
 const FRAUD_TYPES = [
   "VIEW_SPIKE",
   "CLICK_ANOMALY",
@@ -44,7 +50,9 @@ function getSeverityColor(severity: number): string {
   return "bg-yellow-500 text-white";
 }
 
-function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+function getStatusVariant(
+  status: string,
+): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case "CONFIRMED":
       return "destructive";
@@ -72,7 +80,12 @@ export default function FraudMonitoringPage() {
     limit: number;
   } = { limit: 50 };
 
-  if (statusFilter !== "all") queryParams.status = statusFilter as "DETECTED" | "INVESTIGATING" | "CONFIRMED" | "DISMISSED";
+  if (statusFilter !== "all")
+    queryParams.status = statusFilter as
+      | "DETECTED"
+      | "INVESTIGATING"
+      | "CONFIRMED"
+      | "DISMISSED";
   if (typeFilter !== "all") queryParams.type = typeFilter;
   if (minSeverity !== "all") queryParams.minSeverity = parseInt(minSeverity);
 
@@ -81,10 +94,17 @@ export default function FraudMonitoringPage() {
   const resolveMutation = trpc.admin.resolveFraudFlag.useMutation({
     onSuccess: () => {
       utils.admin.getFraudFlags.invalidate();
+      toast.success("Fraud flag resolved");
+    },
+    onError: (err) => {
+      toast.error(err.message);
     },
   });
 
-  function handleResolve(flagId: string, status: "INVESTIGATING" | "CONFIRMED" | "DISMISSED") {
+  function handleResolve(
+    flagId: string,
+    status: "INVESTIGATING" | "CONFIRMED" | "DISMISSED",
+  ) {
     resolveMutation.mutate({
       flagId,
       status,

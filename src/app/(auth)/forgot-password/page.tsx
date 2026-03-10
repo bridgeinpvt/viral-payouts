@@ -49,6 +49,7 @@ export default function ForgotPasswordPage() {
 
   const sendEmailOTP = trpc.auth.sendEmailOTP.useMutation({
     onSuccess: () => {
+      setStep("verify");
       toast.success("Code sent to email");
     },
     onError: (e) => toast.error(e.message),
@@ -120,7 +121,6 @@ export default function ForgotPasswordPage() {
                 className="w-full"
                 onClick={() => {
                   sendEmailOTP.mutate({ email, type: OTPType.PASSWORD_RESET });
-                  setStep("verify");
                 }}
                 disabled={!email || sendEmailOTP.isPending}
               >

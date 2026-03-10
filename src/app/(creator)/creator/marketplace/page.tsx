@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/trpc/client";
 import { CampaignType, Platform } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const typeLabels: Record<CampaignType, string> = {
   VIEW: "Views",
@@ -49,7 +50,7 @@ function formatPayout(
     payoutPer1KViews?: number | null;
     payoutPerClick?: number | null;
     payoutPerSale?: number | null;
-  }
+  },
 ) {
   switch (type) {
     case "VIEW":
@@ -65,10 +66,10 @@ export default function CreatorMarketplacePage() {
   const utils = trpc.useUtils();
 
   const [typeFilter, setTypeFilter] = useState<CampaignType | undefined>(
-    undefined
+    undefined,
   );
   const [platformFilter, setPlatformFilter] = useState<Platform | undefined>(
-    undefined
+    undefined,
   );
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -88,8 +89,17 @@ export default function CreatorMarketplacePage() {
       },
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor,
-      }
+      },
     );
+
+  useEffect(() => {
+    utils.campaign.getMarketplaceCampaigns.invalidate();
+  }, [
+    typeFilter,
+    platformFilter,
+    search,
+    utils.campaign.getMarketplaceCampaigns,
+  ]);
 
   const applyMutation = trpc.campaign.applyToCampaign.useMutation({
     onSuccess: (_data, variables) => {
@@ -98,12 +108,15 @@ export default function CreatorMarketplacePage() {
       }
       utils.campaign.getMarketplaceCampaigns.invalidate();
     },
+    onError: (err) => {
+      toast.error(err.message);
+    },
   });
 
   function handleApply(campaignId: string) {
     const platform = selectedPlatforms[campaignId];
     if (!platform) {
-      alert("Please select a platform before applying.");
+      toast.error("Please select a platform before applying.");
       return;
     }
     setApplyingId(campaignId);
@@ -111,10 +124,7 @@ export default function CreatorMarketplacePage() {
       { campaignId, platforms: [platform] },
       {
         onSettled: () => setApplyingId(null),
-        onError: (error) => {
-          alert(error.message || "Failed to apply. Please try again.");
-        },
-      }
+      },
     );
   }
 
@@ -251,7 +261,10 @@ export default function CreatorMarketplacePage() {
                           {campaign.brand.brandProfile?.companyName ??
                             campaign.brand.name}
                           {campaign.brand.brandProfile?.isVerified && (
-                            <span className="ml-1 text-blue-500" title="Verified">
+                            <span
+                              className="ml-1 text-blue-500"
+                              title="Verified"
+                            >
                               &#10003;
                             </span>
                           )}

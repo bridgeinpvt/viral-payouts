@@ -17,12 +17,16 @@ export default function OnboardingPage() {
     if (status === "authenticated" && session?.user) {
       const role = session.user.role;
       if (session.user.isOnboarded) {
-        router.push(role === "BRAND" ? "/brand/dashboard" : "/creator/dashboard");
+        router.push(
+          role === "BRAND" ? "/brand/dashboard" : "/creator/dashboard",
+        );
       } else {
-        router.push(role === "BRAND" ? "/brand/onboarding" : "/creator/onboarding");
+        router.push(
+          role === "BRAND" ? "/brand/onboarding" : "/creator/onboarding",
+        );
       }
     }
-  }, [status, session, router]);
+  }, [status, session]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">

@@ -1,6 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { verifyWebhookSignature } from "@/lib/razorpay";
+import { z } from "zod";
+
+const razorpayEventSchema = z.object({
+  event: z.string(),
+  payload: z.object({
+    payment: z
+      .object({
+        entity: z.object({
+          order_id: z.string().optional(),
+          amount: z.number().optional(),
+          notes: z
+            .object({
+              userId: z.string().optional(),
+              walletId: z.string().optional(),
+            })
+            .optional(),
+        }),
+      })
+      .optional(),
+    payout: z
+      .object({
+        entity: z.object({
+          reference_id: z.string().optional(),
+          id: z.string().optional(),
+          failure_reason: z.string().optional(),
+        }),
+      })
+      .optional(),
+  }),
+});
+
+type RazorpayEvent = z.infer<typeof razorpayEventSchema>;
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,28 +43,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    const event = JSON.parse(body);
+    const rawEvent = JSON.parse(body);
+    const event = razorpayEventSchema.parse(rawEvent);
     const eventType = event.event;
 
     switch (eventType) {
       case "payment.captured": {
-        await handlePaymentCaptured(event.payload.payment.entity);
+        if (event.payload.payment?.entity) {
+          await handlePaymentCaptured(event.payload.payment.entity);
+        }
         break;
       }
       case "payout.processed": {
-        await handlePayoutProcessed(event.payload.payout.entity);
+        if (event.payload.payout?.entity) {
+          await handlePayoutProcessed(event.payload.payout.entity);
+        }
         break;
       }
       case "payout.failed": {
-        await handlePayoutFailed(event.payload.payout.entity);
+        if (event.payload.payout?.entity) {
+          await handlePayoutFailed(event.payload.payout.entity);
+        }
         break;
       }
     }
 
     return NextResponse.json({ status: "ok" });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("Razorpay webhook validation error:", error.errors);
+      return NextResponse.json(
+        { error: "Invalid webhook payload" },
+        { status: 400 },
+      );
+    }
     console.error("Razorpay webhook error:", error);
-    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Webhook processing failed" },
+      { status: 500 },
+    );
   }
 }
 

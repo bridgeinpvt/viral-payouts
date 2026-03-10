@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { trpc } from "@/trpc/client";
+import { toast } from "sonner";
 import {
   Card,
   CardHeader,
@@ -46,7 +47,10 @@ const TRANSACTION_TYPE_LABELS: Record<string, string> = {
   PLATFORM_FEE: "Platform Fee",
 };
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+const STATUS_VARIANT: Record<
+  string,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
   COMPLETED: "default",
   PENDING: "outline",
   FAILED: "destructive",
@@ -117,7 +121,9 @@ export default function BrandWalletPage() {
     try {
       const loaded = await loadRazorpayScript();
       if (!loaded) {
-        alert("Failed to load Razorpay. Please check your internet connection.");
+        toast.error(
+          "Failed to load Razorpay. Please check your internet connection.",
+        );
         setIsProcessing(false);
         return;
       }
@@ -129,7 +135,7 @@ export default function BrandWalletPage() {
       });
 
       if (!response.ok) {
-        alert("Failed to create payment order. Please try again.");
+        toast.error("Failed to create payment order. Please try again.");
         setIsProcessing(false);
         return;
       }
@@ -154,7 +160,9 @@ export default function BrandWalletPage() {
               razorpayOrderId: response.razorpay_order_id,
             });
           } catch {
-            alert("Payment received but recording failed. Please contact support.");
+            toast.error(
+              "Payment received but recording failed. Please contact support.",
+            );
           }
           setIsProcessing(false);
         },
@@ -171,13 +179,14 @@ export default function BrandWalletPage() {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch {
-      alert("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
       setIsProcessing(false);
     }
   }, [amount, wallet?.id, recordFunding]);
 
   const availableBalance = wallet?.availableBalance ?? 0;
-  const escrowBalance = wallet?.escrowBalance ?? (wallet as any)?.totalEscrowLocked ?? 0;
+  const escrowBalance =
+    wallet?.escrowBalance ?? (wallet as any)?.totalEscrowLocked ?? 0;
   const totalBalance = availableBalance + escrowBalance;
 
   return (
@@ -294,9 +303,7 @@ export default function BrandWalletPage() {
       <Card>
         <CardHeader>
           <CardTitle>Transaction History</CardTitle>
-          <CardDescription>
-            Your recent wallet transactions.
-          </CardDescription>
+          <CardDescription>Your recent wallet transactions.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -352,8 +359,9 @@ export default function BrandWalletPage() {
                         {tx.description || "-"}
                       </TableCell>
                       <TableCell
-                        className={`text-right font-medium ${isCredit ? "text-green-600" : "text-red-600"
-                          }`}
+                        className={`text-right font-medium ${
+                          isCredit ? "text-green-600" : "text-red-600"
+                        }`}
                       >
                         {isCredit ? "+" : "-"}
                         {formatCurrency(Math.abs(tx.amount))}
