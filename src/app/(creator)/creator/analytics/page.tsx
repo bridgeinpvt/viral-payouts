@@ -298,6 +298,18 @@ export default function CreatorAnalyticsPage() {
         </CardContent>
       </Card>
 
+      {/* Instagram Insights note — per-reel reach/saves/avgWatchTime are visible on your campaign detail page */}
+      {data?.metrics && data.metrics.some((m) => m.campaign.type === "VIEW") && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Instagram Insights</CardTitle>
+            <CardDescription>
+              Reach, saves, and average watch time are tracked per reel. Visit your active campaign detail page to see per-content metrics synced from Instagram.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       {/* Recent Earnings Timeline */}
       <Card>
         <CardHeader>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth";
 import { db } from "@/server/db";
+import { encryptToken } from "@/lib/token-crypto";
 
 export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
@@ -13,16 +14,16 @@ export async function GET(request: Request) {
     const code = searchParams.get("code");
     const error = searchParams.get("error");
     const redirectUri = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/instagram/callback`;
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
     if (error) {
-        const errorReason = searchParams.get("error_reason");
         const errorDescription = searchParams.get("error_description");
-        console.error("Instagram auth error:", error, errorReason, errorDescription);
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/creator/dashboard?error=instagram_auth_failed`);
+        console.error("Instagram auth error:", error, errorDescription);
+        return NextResponse.redirect(`${baseUrl}/creator/dashboard?error=instagram_auth_failed`);
     }
 
     if (!code) {
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/creator/dashboard?error=missing_code`);
+        return NextResponse.redirect(`${baseUrl}/creator/dashboard?error=missing_code`);
     }
 
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
@@ -30,11 +31,11 @@ export async function GET(request: Request) {
 
     if (!clientId || !clientSecret) {
         console.error("Missing INSTAGRAM_CLIENT_ID or INSTAGRAM_CLIENT_SECRET");
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/creator/dashboard?error=server_configuration_error`);
+        return NextResponse.redirect(`${baseUrl}/creator/dashboard?error=server_configuration_error`);
     }
 
     try {
-        // 1. Exchange the code for a short-lived access token
+        // 1. Exchange code for short-lived token via Facebook Login endpoint
         const tokenFormData = new FormData();
         tokenFormData.append("client_id", clientId);
         tokenFormData.append("client_secret", clientSecret);
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
         tokenFormData.append("redirect_uri", redirectUri);
         tokenFormData.append("code", code);
 
-        const tokenResponse = await fetch("https://api.instagram.com/oauth/access_token", {
+        const tokenResponse = await fetch("https://graph.facebook.com/v18.0/oauth/access_token", {
             method: "POST",
             body: tokenFormData,
         });
@@ -50,61 +51,86 @@ export async function GET(request: Request) {
         if (!tokenResponse.ok) {
             const errorData = await tokenResponse.json();
             console.error("Failed to fetch short-lived token:", errorData);
-            return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/creator/dashboard?error=token_exchange_failed`);
+            return NextResponse.redirect(`${baseUrl}/creator/dashboard?error=token_exchange_failed`);
         }
 
         const tokenData = await tokenResponse.json();
         const shortLivedToken = tokenData.access_token;
-        const userId = tokenData.user_id; // Instagram User ID
 
-        // 2. Exchange short-lived token for a long-lived token (valid for 60 days)
-        const longLivedUrl = new URL("https://graph.instagram.com/access_token");
-        longLivedUrl.searchParams.append("grant_type", "ig_exchange_token");
+        // 2. Exchange short-lived token for a long-lived token (~60 days)
+        const longLivedUrl = new URL("https://graph.facebook.com/v18.0/oauth/access_token");
+        longLivedUrl.searchParams.append("grant_type", "fb_exchange_token");
+        longLivedUrl.searchParams.append("client_id", clientId);
         longLivedUrl.searchParams.append("client_secret", clientSecret);
-        longLivedUrl.searchParams.append("access_token", shortLivedToken);
+        longLivedUrl.searchParams.append("fb_exchange_token", shortLivedToken);
 
-        const longLivedResponse = await fetch(longLivedUrl.toString(), {
-            method: "GET",
-        });
+        const longLivedResponse = await fetch(longLivedUrl.toString(), { method: "GET" });
 
         if (!longLivedResponse.ok) {
             const errorData = await longLivedResponse.json();
             console.error("Failed to fetch long-lived token:", errorData);
-            return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/creator/dashboard?error=long_lived_token_failed`);
+            return NextResponse.redirect(`${baseUrl}/creator/dashboard?error=long_lived_token_failed`);
         }
 
         const longLivedData = await longLivedResponse.json();
         const longLivedToken = longLivedData.access_token;
+        const expiresIn: number = longLivedData.expires_in ?? 5184000; // default 60 days
 
-        // 3. Fetch basic user profile from Instagram (optional, but good to store the handle)
-        const profileUrl = new URL("https://graph.instagram.com/me");
-        profileUrl.searchParams.append("fields", "id,username");
-        profileUrl.searchParams.append("access_token", longLivedToken);
+        // 3. Resolve Instagram Business Account ID via Facebook Pages
+        let instagramUserId: string | null = null;
 
-        let instagramHandle = null;
         try {
-            const profileResponse = await fetch(profileUrl.toString());
-            if (profileResponse.ok) {
-                const profileData = await profileResponse.json();
-                instagramHandle = profileData.username;
+            const pagesResponse = await fetch(
+                `https://graph.facebook.com/v18.0/me/accounts?access_token=${longLivedToken}`
+            );
+            if (pagesResponse.ok) {
+                const pagesData = await pagesResponse.json();
+                const firstPage = pagesData?.data?.[0];
+                if (firstPage?.id) {
+                    const igAccountResponse = await fetch(
+                        `https://graph.facebook.com/v18.0/${firstPage.id}?fields=instagram_business_account&access_token=${longLivedToken}`
+                    );
+                    if (igAccountResponse.ok) {
+                        const igAccountData = await igAccountResponse.json();
+                        instagramUserId = igAccountData?.instagram_business_account?.id ?? null;
+                    }
+                }
             }
         } catch (e) {
-            console.error("Failed to fetch Instagram profile:", e);
+            console.error("Failed to resolve Instagram Business Account ID:", e);
         }
 
-        // 4. Save to database
+        // 4. Fetch Instagram username
+        let instagramHandle: string | null = null;
+
+        if (instagramUserId) {
+            try {
+                const profileResponse = await fetch(
+                    `https://graph.facebook.com/v18.0/${instagramUserId}?fields=username&access_token=${longLivedToken}`
+                );
+                if (profileResponse.ok) {
+                    const profileData = await profileResponse.json();
+                    instagramHandle = profileData.username ?? null;
+                }
+            } catch (e) {
+                console.error("Failed to fetch Instagram profile:", e);
+            }
+        }
+
+        // 5. Save to database — token is encrypted at rest
         await db.creatorProfile.update({
             where: { userId: session.user.id },
             data: {
-                instagramAccessToken: longLivedToken,
+                instagramAccessToken: encryptToken(longLivedToken),
+                instagramTokenExpiresAt: new Date(Date.now() + expiresIn * 1000),
+                ...(instagramUserId ? { instagramUserId } : {}),
                 ...(instagramHandle ? { instagramHandle } : {}),
             },
         });
 
-        // 5. Redirect back to dashboard on success
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/creator/dashboard?success=instagram_connected`);
+        return NextResponse.redirect(`${baseUrl}/creator/dashboard?success=instagram_connected`);
     } catch (error) {
         console.error("Error during Instagram OAuth callback:", error);
-        return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/creator/dashboard?error=internal_server_error`);
+        return NextResponse.redirect(`${baseUrl}/creator/dashboard?error=internal_server_error`);
     }
 }

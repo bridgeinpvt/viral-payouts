@@ -61,6 +61,8 @@ export async function syncViews(): Promise<void> {
           comments: number;
           saves?: number;
           shares?: number;
+          reach?: number;
+          avgWatchTime?: number | null;
           watchTimeMinutes?: number;
           avgViewPercent?: number;
         } | null = null;
@@ -117,6 +119,9 @@ export async function syncViews(): Promise<void> {
             commentCount: metrics.comments,
             shareCount: metrics.shares ?? 0,
             deltaViews,
+            reach: metrics.reach ?? null,
+            saves: metrics.saves ?? null,
+            avgWatchTime: metrics.avgWatchTime ?? null,
             snapshotAt: new Date(),
           },
         });

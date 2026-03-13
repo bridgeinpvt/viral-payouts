@@ -380,6 +380,9 @@ export const analyticsRouter = createTRPCRouter({
             likes: latest?.likeCount ?? 0,
             comments: latest?.commentCount ?? 0,
             shares: latest?.shareCount ?? 0,
+            reach: latest?.reach ?? null,
+            saves: latest?.saves ?? null,
+            avgWatchTime: latest?.avgWatchTime ?? null,
             lastSyncedAt: latest?.snapshotAt ?? null,
             fraudFlags: fraudFlagCount,
           };
@@ -451,10 +454,98 @@ export const analyticsRouter = createTRPCRouter({
           likes: latest.likeCount ?? 0,
           comments: latest.commentCount ?? 0,
           shares: latest.shareCount ?? 0,
+          reach: latest.reach ?? null,
+          saves: latest.saves ?? null,
+          avgWatchTime: latest.avgWatchTime ?? null,
           lastSyncedAt: latest.snapshotAt,
         },
       ];
     }),
+
+  // ==========================================
+  // ADMIN: CREATOR INSIGHTS (token health + snapshots + fraud)
+  // ==========================================
+
+  getAdminCreatorInsights: adminProcedure
+    .input(z.object({ campaignId: z.string(), creatorId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const [participation, snapshots, fraudFlags, creatorProfile] = await Promise.all([
+        ctx.db.campaignParticipation.findUnique({
+          where: { campaignId_creatorId: { campaignId: input.campaignId, creatorId: input.creatorId } },
+          select: { platform: true, contentUrl: true, status: true },
+        }),
+        ctx.db.viewSnapshot.findMany({
+          where: { campaignId: input.campaignId, creatorId: input.creatorId },
+          orderBy: { snapshotAt: "desc" },
+          take: 50,
+        }),
+        ctx.db.fraudFlag.findMany({
+          where: { campaignId: input.campaignId, creatorId: input.creatorId },
+          orderBy: { createdAt: "desc" },
+        }),
+        ctx.db.creatorProfile.findUnique({
+          where: { userId: input.creatorId },
+          select: { instagramTokenExpiresAt: true },
+        }),
+      ]);
+
+      const expiresAt = creatorProfile?.instagramTokenExpiresAt ?? null;
+      const daysUntilExpiry = expiresAt
+        ? Math.floor((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : null;
+
+      return {
+        participation,
+        snapshots,
+        fraudFlags,
+        tokenHealth: {
+          instagramTokenExpiresAt: expiresAt,
+          daysUntilExpiry,
+          needsRefresh: daysUntilExpiry !== null && daysUntilExpiry <= 15,
+        },
+      };
+    }),
+
+  // ==========================================
+  // ADMIN: TOKEN HEALTH OVERVIEW
+  // ==========================================
+
+  getAdminTokenHealth: adminProcedure.query(async ({ ctx }) => {
+    const creators = await ctx.db.creatorProfile.findMany({
+      where: { instagramAccessToken: { not: null } },
+      select: {
+        userId: true,
+        displayName: true,
+        instagramHandle: true,
+        instagramTokenExpiresAt: true,
+        user: { select: { name: true } },
+      },
+    });
+
+    return creators.map((c) => {
+      const expiresAt = c.instagramTokenExpiresAt;
+      const daysUntilExpiry = expiresAt
+        ? Math.floor((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : null;
+      const status =
+        daysUntilExpiry === null
+          ? "UNKNOWN"
+          : daysUntilExpiry < 0
+          ? "EXPIRED"
+          : daysUntilExpiry <= 15
+          ? "EXPIRING_SOON"
+          : "OK";
+
+      return {
+        userId: c.userId,
+        name: c.displayName ?? c.user?.name ?? c.userId,
+        instagramHandle: c.instagramHandle,
+        tokenExpiresAt: expiresAt,
+        daysUntilExpiry,
+        status,
+      };
+    });
+  }),
 
   // ==========================================
   // BRAND: CONVERSION EVENTS LIST

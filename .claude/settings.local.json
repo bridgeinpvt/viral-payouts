@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /d/pmdnawaz1/nocage/viral-payouts/src/server/api/routers -type f -name \"*.ts\" | xargs ls -lh)",
+      "Bash(find /d/pmdnawaz1/nocage/viral-payouts/src/app -type f -name \"page.tsx\" | xargs grep -l \"analytics\\\\|Analytics\" | head -5)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx prisma migrate dev --name add_instagram_insights_fields 2>&1)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx prisma validate 2>&1)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx tsc --noEmit --skipLibCheck 2>&1 | head -50)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx prisma generate 2>&1)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx tsc --noEmit --skipLibCheck 2>&1 | grep -E \"\\(instagram|reach|saves|avgWatch|tokenExpires|view-sync|token-refresh|analytics\\\\.ts\\)\" | head -30)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx tsc --noEmit --skipLibCheck 2>&1 | grep -E \"error TS\" | grep -v \"auth\\\\.ts|payouts/page|signup|analytics/page\\\\.|marketplace|my-campaigns|wallet/page\" | head -20)",
+      "Bash(ls \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" | grep -i \"IMPLEMENT\\\\|webhook\\\\|meta\" 2>/dev/null; ls \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\\\\docs\" 2>/dev/null; find \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" -name \"*.md\" -not -path \"*/node_modules/*\" 2>/dev/null | head -10)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx tsc --noEmit --skipLibCheck 2>&1 | grep -E \"token-crypto|webhook|token-refresh|instagram\\\\.ts|view-sync\" | head -20)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx tsc --noEmit --skipLibCheck 2>&1 | grep \"error TS\" | wc -l)",
+      "Bash(cd \"D:\\\\pmdnawaz1\\\\nocage\\\\viral-payouts\" && npx tsc --noEmit --skipLibCheck 2>&1 | grep \"error TS\")"
+    ]
+  }
+}

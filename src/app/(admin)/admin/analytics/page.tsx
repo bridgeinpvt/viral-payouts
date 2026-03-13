@@ -36,8 +36,16 @@ function StatSkeleton() {
   );
 }
 
+function TokenHealthBadge({ status }: { status: string }) {
+  if (status === "OK") return <Badge className="bg-green-100 text-green-700 border-green-200">OK</Badge>;
+  if (status === "EXPIRING_SOON") return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Expiring Soon</Badge>;
+  if (status === "EXPIRED") return <Badge className="bg-red-100 text-red-700 border-red-200">Expired</Badge>;
+  return <Badge variant="secondary">Unknown</Badge>;
+}
+
 export default function AdminAnalyticsPage() {
   const { data, isLoading } = trpc.analytics.getAdminAnalytics.useQuery();
+  const { data: tokenHealth, isLoading: tokenHealthLoading } = trpc.analytics.getAdminTokenHealth.useQuery();
 
   if (isLoading || !data) {
     return (
@@ -259,6 +267,62 @@ export default function AdminAnalyticsPage() {
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      {/* Instagram Token Health */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Instagram Token Health</CardTitle>
+          <CardDescription>
+            OAuth token expiry status for creators with Instagram connected
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {tokenHealthLoading ? (
+            <Skeleton className="h-40" />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Creator</TableHead>
+                  <TableHead>Instagram Handle</TableHead>
+                  <TableHead>Token Expiry</TableHead>
+                  <TableHead className="text-right">Days Left</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tokenHealth && tokenHealth.length > 0 ? (
+                  tokenHealth.map((creator) => (
+                    <TableRow key={creator.userId}>
+                      <TableCell className="font-medium">{creator.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {creator.instagramHandle ? `@${creator.instagramHandle}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {creator.tokenExpiresAt
+                          ? new Date(creator.tokenExpiresAt).toLocaleDateString("en-IN")
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {creator.daysUntilExpiry !== null ? creator.daysUntilExpiry : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <TokenHealthBadge status={creator.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      No creators with Instagram connected
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

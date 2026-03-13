@@ -1009,6 +1009,9 @@ export default function CampaignDetailPage() {
                       <TableHead className="text-right">Likes</TableHead>
                       <TableHead className="text-right">Comments</TableHead>
                       <TableHead className="text-right">Shares</TableHead>
+                      <TableHead className="text-right">Reach</TableHead>
+                      <TableHead className="text-right">Saves</TableHead>
+                      <TableHead className="text-right">Avg Watch</TableHead>
                       <TableHead>Last Synced</TableHead>
                       <TableHead>Content</TableHead>
                     </TableRow>
@@ -1074,6 +1077,17 @@ export default function CampaignDetailPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             {formatNumber(snap.shares)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {snap.reach != null ? formatNumber(snap.reach) : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {snap.saves != null ? formatNumber(snap.saves) : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {snap.avgWatchTime != null
+                              ? `${(snap.avgWatchTime / 1000).toFixed(1)}s`
+                              : <span className="text-muted-foreground">—</span>}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {snap.lastSyncedAt

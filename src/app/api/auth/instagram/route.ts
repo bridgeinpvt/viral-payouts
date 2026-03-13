@@ -20,19 +20,13 @@ export async function GET(request: Request) {
         );
     }
 
-    // Instagram Display API authorization URL (or Instagram Graph API depending on app type)
-    // For creator/business accounts fetching insights, we need the Instagram Graph API via Facebook Login.
-    // Standard consumer IG apps use instagram.com/oauth/authorize.
-    // We assume a standard Facebook Login flow with scopes for instagram_basic, instagram_manage_insights, pages_show_list, pages_read_engagement.
-    // Since the scope isn't exactly specified, let's use the standard IG basic display for now or FB login.
-    // The implementation plan says "redirects user to https://api.instagram.com/oauth/authorize with user_profile,user_media scopes", which implies Instagram Basic Display API.
-
-    const authUrl = new URL("https://api.instagram.com/oauth/authorize");
+    // Use Facebook Login (Instagram Graph API) to get instagram_business_manage_insights scope.
+    // This allows fetching richer metrics like reach and avg watch time from the Graph API.
+    const authUrl = new URL("https://graph.facebook.com/v18.0/dialog/oauth");
     authUrl.searchParams.append("client_id", clientId);
     authUrl.searchParams.append("redirect_uri", redirectUri);
-    authUrl.searchParams.append("scope", "user_profile,user_media");
+    authUrl.searchParams.append("scope", "instagram_business_manage_insights,pages_show_list,pages_read_engagement");
     authUrl.searchParams.append("response_type", "code");
-    // Pass user ID as state to link securely (or just use NextAuth session in callback)
     authUrl.searchParams.append("state", session.user.id);
 
     return NextResponse.redirect(authUrl.toString());

@@ -192,6 +192,8 @@ model CreatorProfile {
   instagramFollowers  Int?
   instagramVerified   Boolean      @default(false)
   instagramAccessToken String?
+  instagramUserId          String?
+  instagramTokenExpiresAt  DateTime?
   youtubeHandle       String?
   youtubeSubscribers  Int?
   youtubeVerified     Boolean      @default(false)
@@ -470,6 +472,10 @@ model ViewSnapshot {
   shareCount   Int      @default(0)
   deltaViews   Int      @default(0)
   isFlagged    Boolean  @default(false)
+  reach        Int?
+  saves        Int?
+  avgWatchTime Float?
+  completionRate Float?
   snapshotAt   DateTime @default(now())
 
   campaign     Campaign @relation("CampaignViewSnapshots", fields: [campaignId], references: [id], onDelete: Cascade)

@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { db } from "../db";
+import { decryptToken, encryptToken, isEncrypted } from "../lib/token-crypto";
 
 export function startTokenRefreshCron() {
     // Run daily at 02:00 AM
@@ -14,21 +15,22 @@ export function startTokenRefreshCron() {
 }
 
 async function refreshInstagramTokens() {
-    // Find creators whose instagramAccessToken is populated.
-    // We should ideally track when the token was last refreshed, but since Meta's /refresh_access_token 
-    // can be called before it expires (and unexpired tokens will just be extended), we can fetch all or just those 
-    // that haven't been refreshed in the last 50 days. As a V1, we'll try to refresh all tokens we have.
-    // In a large system, we'd add `instagramTokenUpdatedAt` to CreatorProfile and filter by `< 10 days ago`.
+    // Only refresh tokens expiring within the next 15 days (but not already expired).
+    const fifteenDaysFromNow = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
 
     const creators = await db.creatorProfile.findMany({
         where: {
             instagramAccessToken: { not: null },
+            instagramTokenExpiresAt: {
+                lte: fifteenDaysFromNow,
+                gte: new Date(),
+            },
         },
         select: {
             id: true,
             userId: true,
             instagramAccessToken: true,
-            updatedAt: true,
+            instagramTokenExpiresAt: true,
         },
     });
 
@@ -36,25 +38,32 @@ async function refreshInstagramTokens() {
     let failureCount = 0;
 
     for (const creator of creators) {
-        // Optimization: only refresh if the profile was last updated more than 45 days ago.
-        // However, since updatedAt changes on ANY profile update, it's safer to just refresh the token 
-        // if it's older than 45 days. Since we don't have exactly when the token was acquired, 
-        // we'll attempt refresh. The Graph API will return a new token (or same token with extended life).
-
-        // To be safe and polite to rate limits, let's just attempt it for all right now, 
-        // or log that we are doing it. It's a daily cron, but we don't want to hit Meta API 
-        // for active users every day if not needed.
-        // Let's pretend it's fine for our small scale, or check if we should do it weekly.
-
         try {
-            const url = new URL("https://graph.instagram.com/refresh_access_token");
-            url.searchParams.append("grant_type", "ig_refresh_token");
-            url.searchParams.append("access_token", creator.instagramAccessToken as string);
+            const storedToken = creator.instagramAccessToken as string;
+            const plainToken = isEncrypted(storedToken)
+                ? decryptToken(storedToken)
+                : storedToken;
+
+            if (!plainToken) {
+                console.warn(`[token-refresh] Could not decrypt token for user ${creator.userId} — skipping`);
+                failureCount++;
+                continue;
+            }
+
+            // Facebook User Access Tokens (from Facebook Login) are refreshed via fb_exchange_token.
+            // Instagram User Access Tokens (from Instagram Business Login) use ig_refresh_token on graph.instagram.com.
+            // We use Facebook Login, so use the Facebook endpoint.
+            const url = new URL("https://graph.facebook.com/oauth/access_token");
+            url.searchParams.append("grant_type", "fb_exchange_token");
+            url.searchParams.append("client_id", process.env.INSTAGRAM_CLIENT_ID!);
+            url.searchParams.append("client_secret", process.env.INSTAGRAM_CLIENT_SECRET!);
+            url.searchParams.append("fb_exchange_token", plainToken);
 
             const response = await fetch(url.toString(), { method: "GET" });
 
             if (!response.ok) {
-                console.warn(`[token-refresh] Failed to refresh IG token for user ${creator.userId}: ${response.status}`);
+                const errBody = await response.text();
+                console.warn(`[token-refresh] Failed to refresh FB token for user ${creator.userId}: ${response.status} ${errBody}`);
                 failureCount++;
                 continue;
             }
@@ -64,7 +73,10 @@ async function refreshInstagramTokens() {
             if (data && data.access_token) {
                 await db.creatorProfile.update({
                     where: { userId: creator.userId },
-                    data: { instagramAccessToken: data.access_token },
+                    data: {
+                        instagramAccessToken: encryptToken(data.access_token),
+                        instagramTokenExpiresAt: new Date(Date.now() + (data.expires_in ?? 5184000) * 1000),
+                    },
                 });
                 successCount++;
             } else {
