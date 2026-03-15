@@ -1,5 +1,5 @@
-import { db } from "../db";
-import { CampaignStatus } from "@prisma/client";
+import { db } from '../db';
+import { CampaignStatus } from '@prisma/client';
 
 export async function completeExpiredCampaigns(): Promise<void> {
   const now = new Date();
@@ -19,12 +19,12 @@ export async function completeExpiredCampaigns(): Promise<void> {
   });
 
   if (expiredCampaigns.length === 0) {
-    console.log("[campaign-completer] No expired campaigns to complete");
+    console.log('[campaign-completer] No expired campaigns to complete');
     return;
   }
 
   console.log(
-    `[campaign-completer] Marking ${expiredCampaigns.length} campaigns as COMPLETED`,
+    `[campaign-completer] Marking ${expiredCampaigns.length} campaigns as COMPLETED`
   );
 
   await db.campaign.updateMany({
@@ -39,6 +39,6 @@ export async function completeExpiredCampaigns(): Promise<void> {
   });
 
   console.log(
-    `[campaign-completer] Completed ${expiredCampaigns.length} campaigns`,
+    `[campaign-completer] Completed ${expiredCampaigns.length} campaigns`
   );
 }

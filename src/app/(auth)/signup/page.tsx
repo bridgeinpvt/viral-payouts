@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Rocket,
   Mail,
@@ -24,10 +24,10 @@ import {
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
-} from "lucide-react";
-import { toast } from "sonner";
-import { trpc } from "@/trpc/client";
-import { OTPType } from "@prisma/client";
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { trpc } from '@/trpc/client';
+import { OTPType } from '@prisma/client';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -35,26 +35,26 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [countryCode] = useState("91");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [countryCode] = useState('91');
 
   const [emailOtpSent, setEmailOtpSent] = useState(false);
-  const [emailOtp, setEmailOtp] = useState("");
-  const [emailOtpId, setEmailOtpId] = useState("");
+  const [emailOtp, setEmailOtp] = useState('');
+  const [emailOtpId, setEmailOtpId] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
 
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
-  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState('');
   const [phoneVerified, setPhoneVerified] = useState(false);
 
   const sendEmailOTP = trpc.auth.sendEmailOTP.useMutation({
     onSuccess: (data) => {
       setEmailOtpId(data.otpId);
       setEmailOtpSent(true);
-      toast.success("Code sent to your email");
+      toast.success('Code sent to your email');
     },
     onError: (error) => toast.error(error.message),
   });
@@ -62,14 +62,14 @@ export default function SignupPage() {
   const sendPhoneOTP = trpc.auth.sendPhoneOTP.useMutation({
     onSuccess: () => {
       setPhoneOtpSent(true);
-      toast.success("OTP sent to your phone");
+      toast.success('OTP sent to your phone');
     },
     onError: (error) => toast.error(error.message),
   });
 
   const verifyOTP = trpc.auth.verifyOTPCode.useMutation({
     onError: (error) => {
-      toast.error(error.message || "Verification failed");
+      toast.error(error.message || 'Verification failed');
     },
   });
   const register = trpc.auth.register.useMutation();
@@ -84,10 +84,10 @@ export default function SignupPage() {
       if (result.success) {
         setEmailOtpId(result.otpId);
         setEmailVerified(true);
-        toast.success("Email verified!");
+        toast.success('Email verified!');
       }
     } catch (error: any) {
-      toast.error(error.message || "Invalid code");
+      toast.error(error.message || 'Invalid code');
     }
   };
 
@@ -101,21 +101,21 @@ export default function SignupPage() {
       });
       if (result.success) {
         setPhoneVerified(true);
-        toast.success("Phone verified!");
+        toast.success('Phone verified!');
       }
     } catch (error: any) {
-      toast.error(error.message || "Invalid OTP");
+      toast.error(error.message || 'Invalid OTP');
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailVerified) {
-      toast.error("Verify your email");
+      toast.error('Verify your email');
       return;
     }
     if (!phoneVerified) {
-      toast.error("Verify your phone");
+      toast.error('Verify your phone');
       return;
     }
 
@@ -129,28 +129,28 @@ export default function SignupPage() {
         name,
         emailOtpId,
       });
-      const result = await signIn("email-password", {
+      const result = await signIn('email-password', {
         email,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        router.push("/login");
+        router.push('/login');
       } else {
-        toast.success("Welcome to Viral Payouts!");
-        router.push("/");
+        toast.success('Welcome to Viral Payouts!');
+        router.push('/');
         router.refresh();
       }
     } catch (error: any) {
-      toast.error(error.message || "Registration failed");
+      toast.error(error.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignup = () => {
-    signIn("google", { callbackUrl: "/" });
+    signIn('google', { callbackUrl: '/' });
   };
 
   return (
@@ -244,7 +244,7 @@ export default function SignupPage() {
                       placeholder="9876543210"
                       value={phone}
                       onChange={(e) =>
-                        setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+                        setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
                       }
                       className="flex-1"
                       required
@@ -287,9 +287,9 @@ export default function SignupPage() {
                       {sendEmailOTP.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : emailOtpSent ? (
-                        "Resend"
+                        'Resend'
                       ) : (
-                        "Send"
+                        'Send'
                       )}
                     </Button>
                   )}
@@ -301,7 +301,7 @@ export default function SignupPage() {
                       value={emailOtp}
                       onChange={(e) =>
                         setEmailOtp(
-                          e.target.value.replace(/\D/g, "").slice(0, 6),
+                          e.target.value.replace(/\D/g, '').slice(0, 6)
                         )
                       }
                       maxLength={6}
@@ -314,7 +314,7 @@ export default function SignupPage() {
                       {verifyOTP.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        "Verify"
+                        'Verify'
                       )}
                     </Button>
                   </div>
@@ -345,9 +345,9 @@ export default function SignupPage() {
                       {sendPhoneOTP.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : phoneOtpSent ? (
-                        "Resend"
+                        'Resend'
                       ) : (
-                        "Send"
+                        'Send'
                       )}
                     </Button>
                   )}
@@ -359,7 +359,7 @@ export default function SignupPage() {
                       value={phoneOtp}
                       onChange={(e) =>
                         setPhoneOtp(
-                          e.target.value.replace(/\D/g, "").slice(0, 6),
+                          e.target.value.replace(/\D/g, '').slice(0, 6)
                         )
                       }
                       maxLength={6}
@@ -372,7 +372,7 @@ export default function SignupPage() {
                       {verifyOTP.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        "Verify"
+                        'Verify'
                       )}
                     </Button>
                   </div>
@@ -409,7 +409,7 @@ export default function SignupPage() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Min 6 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -454,7 +454,7 @@ export default function SignupPage() {
 
           <div className="mt-4 pt-4 border-t text-center">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
+              Already have an account?{' '}
               <Link href="/login" className="text-primary hover:underline">
                 Sign in
               </Link>

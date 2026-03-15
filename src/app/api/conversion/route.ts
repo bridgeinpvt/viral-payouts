@@ -18,8 +18,8 @@
  *   - Signs the response 204 (no content) to prevent leaking data to pixel callers
  */
 
-import { type NextRequest, NextResponse } from "next/server";
-import { db } from "@/server/db";
+import { type NextRequest, NextResponse } from 'next/server';
+import { db } from '@/server/db';
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute per IP
@@ -44,9 +44,9 @@ function isRateLimited(ip: string): boolean {
 }
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Cache-Control": "no-store",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Cache-Control': 'no-store',
 };
 
 export async function OPTIONS() {
@@ -54,7 +54,7 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
 
   if (isRateLimited(ip)) {
     return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
@@ -62,9 +62,9 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
 
-  const code = searchParams.get("code")?.toUpperCase().trim();
-  const orderId = searchParams.get("order_id")?.trim() ?? undefined;
-  const amountStr = searchParams.get("amount");
+  const code = searchParams.get('code')?.toUpperCase().trim();
+  const orderId = searchParams.get('order_id')?.trim() ?? undefined;
+  const amountStr = searchParams.get('amount');
   const orderAmount = amountStr ? parseFloat(amountStr) : undefined;
 
   if (!code) {
@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
     if (
       !promoCode ||
       !promoCode.isActive ||
-      promoCode.campaign.status !== "LIVE" ||
-      promoCode.campaign.type !== "CONVERSION"
+      promoCode.campaign.status !== 'LIVE' ||
+      promoCode.campaign.type !== 'CONVERSION'
     ) {
       return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
     }
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
   } catch (err) {
     // Never expose internal errors to callers (pixel requests)
-    console.error("[conversion-postback] Error:", err);
+    console.error('[conversion-postback] Error:', err);
     return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
   }
 }

@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { trpc } from "@/trpc/client";
+import Link from 'next/link';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   DollarSign,
   Megaphone,
@@ -30,16 +30,16 @@ import {
   Crown,
   ArrowRight,
   Plus,
-} from "lucide-react";
+} from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -48,27 +48,27 @@ function formatCurrency(amount: number): string {
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString("en-IN");
+  return n.toLocaleString('en-IN');
 }
 
 function statusVariant(
   status: string
-): "default" | "secondary" | "destructive" | "outline" {
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status?.toUpperCase()) {
-    case "ACTIVE":
-    case "LIVE":
-      return "default";
-    case "PAUSED":
-      return "secondary";
-    case "DRAFT":
-      return "outline";
-    case "COMPLETED":
-    case "ENDED":
-      return "secondary";
-    case "CANCELLED":
-      return "destructive";
+    case 'ACTIVE':
+    case 'LIVE':
+      return 'default';
+    case 'PAUSED':
+      return 'secondary';
+    case 'DRAFT':
+      return 'outline';
+    case 'COMPLETED':
+    case 'ENDED':
+      return 'secondary';
+    case 'CANCELLED':
+      return 'destructive';
     default:
-      return "outline";
+      return 'outline';
   }
 }
 
@@ -136,27 +136,27 @@ function KpiCards({
 
   const kpis = [
     {
-      label: "Total Spend",
+      label: 'Total Spend',
       value: formatCurrency(summary?.totalSpent ?? 0),
       description: `of ${formatCurrency(summary?.totalBudget ?? 0)} budget`,
       icon: DollarSign,
     },
     {
-      label: "Active Campaigns",
+      label: 'Active Campaigns',
       value: formatNumber(summary?.liveCampaigns ?? 0),
       description: `${formatNumber(summary?.totalCampaigns ?? 0)} total campaigns`,
       icon: Megaphone,
     },
     {
-      label: "Total Conversions",
+      label: 'Total Conversions',
       value: formatNumber(summary?.totalConversions ?? 0),
       description: `${formatNumber(summary?.totalClicks ?? 0)} clicks · ${formatNumber(summary?.totalViews ?? 0)} views`,
       icon: BarChart3,
     },
     {
-      label: "ROI",
+      label: 'ROI',
       value: `${(Number(summary?.roi ?? 0) * 100).toFixed(1)}%`,
-      description: "Return on investment",
+      description: 'Return on investment',
       icon: TrendingUp,
     },
   ];
@@ -197,7 +197,11 @@ interface CampaignRow {
   slug?: string;
   startDate: string;
   endDate: string;
-  escrow?: { totalAmount: number; releasedAmount: number; status: string } | null;
+  escrow?: {
+    totalAmount: number;
+    releasedAmount: number;
+    status: string;
+  } | null;
   _count?: { participations: number };
 }
 
@@ -268,10 +272,7 @@ function CampaignStatusWidget({
                         {campaign.name}
                       </Link>
                       <div className="mt-1">
-                        <Progress
-                          value={spentPercent}
-                          className="h-1.5 w-24"
-                        />
+                        <Progress value={spentPercent} className="h-1.5 w-24" />
                       </div>
                     </TableCell>
                     <TableCell>
@@ -360,7 +361,7 @@ function TopCreators({
                       Creator {creator.creatorId.slice(0, 8)}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatNumber(creator.verifiedViews)} views &middot;{" "}
+                      {formatNumber(creator.verifiedViews)} views &middot;{' '}
                       {formatNumber(creator.verifiedConversions)} conv.
                     </p>
                   </div>
@@ -392,8 +393,8 @@ function LowBudgetAlerts({
 
   const lowBudgetCampaigns = (campaigns ?? []).filter((c) => {
     const isActive =
-      c.status?.toUpperCase() === "ACTIVE" ||
-      c.status?.toUpperCase() === "LIVE";
+      c.status?.toUpperCase() === 'ACTIVE' ||
+      c.status?.toUpperCase() === 'LIVE';
     if (!isActive || c.totalBudget <= 0) return false;
     const remaining = c.totalBudget - c.spentBudget;
     return remaining > 0 && remaining / c.totalBudget < 0.15;
@@ -416,8 +417,7 @@ function LowBudgetAlerts({
         <div className="space-y-3">
           {lowBudgetCampaigns.map((campaign) => {
             const remaining = campaign.totalBudget - campaign.spentBudget;
-            const remainingPercent =
-              (remaining / campaign.totalBudget) * 100;
+            const remainingPercent = (remaining / campaign.totalBudget) * 100;
             return (
               <div
                 key={campaign.id}
@@ -454,15 +454,11 @@ function LowBudgetAlerts({
 // ---------------------------------------------------------------------------
 
 export default function BrandDashboardPage() {
-  const {
-    data: analytics,
-    isLoading: analyticsLoading,
-  } = trpc.analytics.getBrandAnalytics.useQuery();
+  const { data: analytics, isLoading: analyticsLoading } =
+    trpc.analytics.getBrandAnalytics.useQuery();
 
-  const {
-    data: campaigns,
-    isLoading: campaignsLoading,
-  } = trpc.campaign.getBrandCampaigns.useQuery();
+  const { data: campaigns, isLoading: campaignsLoading } =
+    trpc.campaign.getBrandCampaigns.useQuery();
 
   return (
     <div className="space-y-6">

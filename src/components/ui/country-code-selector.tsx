@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -15,10 +15,15 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Check, ChevronDown, Search } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { COUNTRY_CODES, getPopularCountries, getAllCountries, type CountryCode } from "@/lib/country-codes";
+} from '@/components/ui/command';
+import { Check, ChevronDown, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  COUNTRY_CODES,
+  getPopularCountries,
+  getAllCountries,
+  type CountryCode,
+} from '@/lib/country-codes';
 
 interface CountryCodeSelectorProps {
   value?: string;
@@ -29,32 +34,35 @@ interface CountryCodeSelectorProps {
 }
 
 export function CountryCodeSelector({
-  value = "1",
+  value = '1',
   onChange,
   placeholder,
   disabled = false,
-  className
+  className,
 }: CountryCodeSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
-  
-  const selectedCountry = COUNTRY_CODES.find(country => country.code === value);
+  const [searchValue, setSearchValue] = useState('');
+
+  const selectedCountry = COUNTRY_CODES.find(
+    (country) => country.code === value
+  );
   const popularCountries = getPopularCountries();
   const allCountries = getAllCountries();
-  
+
   // Filter countries based on search
   const filteredCountries = searchValue
-    ? allCountries.filter(country => 
-        country.country.toLowerCase().includes(searchValue.toLowerCase()) ||
-        country.code.includes(searchValue) ||
-        country.iso.toLowerCase().includes(searchValue.toLowerCase())
+    ? allCountries.filter(
+        (country) =>
+          country.country.toLowerCase().includes(searchValue.toLowerCase()) ||
+          country.code.includes(searchValue) ||
+          country.iso.toLowerCase().includes(searchValue.toLowerCase())
       )
     : allCountries;
 
   const handleSelect = (countryCode: string) => {
     onChange(countryCode);
     setOpen(false);
-    setSearchValue("");
+    setSearchValue('');
   };
 
   return (
@@ -65,8 +73,8 @@ export function CountryCodeSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between text-left font-normal",
-            !selectedCountry && "text-muted-foreground",
+            'w-full justify-between text-left font-normal',
+            !selectedCountry && 'text-muted-foreground',
             className
           )}
           disabled={disabled}
@@ -81,7 +89,7 @@ export function CountryCodeSelector({
                 </span>
               </>
             ) : (
-              <span>{placeholder || "Select country"}</span>
+              <span>{placeholder || 'Select country'}</span>
             )}
           </div>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -100,7 +108,7 @@ export function CountryCodeSelector({
           </div>
           <CommandList className="max-h-[300px] overflow-auto">
             <CommandEmpty>No country found.</CommandEmpty>
-            
+
             {/* Popular Countries */}
             {!searchValue && (
               <CommandGroup heading="Popular">
@@ -115,22 +123,26 @@ export function CountryCodeSelector({
                       <span className="text-lg">{country.flag}</span>
                       <div>
                         <div className="font-medium">{country.country}</div>
-                        <div className="text-sm text-muted-foreground">+{country.code}</div>
+                        <div className="text-sm text-muted-foreground">
+                          +{country.code}
+                        </div>
                       </div>
                     </div>
                     <Check
                       className={cn(
-                        "ml-auto h-4 w-4",
-                        selectedCountry?.code === country.code ? "opacity-100" : "opacity-0"
+                        'ml-auto h-4 w-4',
+                        selectedCountry?.code === country.code
+                          ? 'opacity-100'
+                          : 'opacity-0'
                       )}
                     />
                   </CommandItem>
                 ))}
               </CommandGroup>
             )}
-            
+
             {/* All Countries */}
-            <CommandGroup heading={!searchValue ? "All Countries" : ""}>
+            <CommandGroup heading={!searchValue ? 'All Countries' : ''}>
               {filteredCountries.map((country) => (
                 <CommandItem
                   key={`all-${country.code}-${country.iso}`}
@@ -142,13 +154,17 @@ export function CountryCodeSelector({
                     <span className="text-lg">{country.flag}</span>
                     <div>
                       <div className="font-medium">{country.country}</div>
-                      <div className="text-sm text-muted-foreground">+{country.code}</div>
+                      <div className="text-sm text-muted-foreground">
+                        +{country.code}
+                      </div>
                     </div>
                   </div>
                   <Check
                     className={cn(
-                      "ml-auto h-4 w-4",
-                      selectedCountry?.code === country.code ? "opacity-100" : "opacity-0"
+                      'ml-auto h-4 w-4',
+                      selectedCountry?.code === country.code
+                        ? 'opacity-100'
+                        : 'opacity-0'
                     )}
                   />
                 </CommandItem>
@@ -177,11 +193,11 @@ export function PhoneInputWithCountry({
   onCountryCodeChange,
   onPhoneNumberChange,
   disabled = false,
-  placeholder = "Enter phone number",
-  className
+  placeholder = 'Enter phone number',
+  className,
 }: PhoneInputWithCountryProps) {
   return (
-    <div className={cn("flex gap-2", className)}>
+    <div className={cn('flex gap-2', className)}>
       <div className="w-[140px]">
         <CountryCodeSelector
           value={countryCode}

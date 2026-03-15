@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useKeyboardAdjustments } from '@/hooks/useKeyboardAdjustments';
 import { cn } from '@/lib/utils';
@@ -10,10 +10,10 @@ interface KeyboardAwareContainerProps {
   type?: 'form' | 'modal' | 'page' | 'scroll' | 'auth';
 }
 
-export function KeyboardAwareContainer({ 
-  children, 
-  className, 
-  type = 'page' 
+export function KeyboardAwareContainer({
+  children,
+  className,
+  type = 'page',
 }: KeyboardAwareContainerProps) {
   const { keyboardClasses, isKeyboardOpen } = useKeyboardAdjustments();
 
@@ -33,7 +33,7 @@ export function KeyboardAwareContainer({
   };
 
   return (
-    <div 
+    <div
       className={cn(
         getTypeClasses(),
         isKeyboardOpen && 'keyboard-active',

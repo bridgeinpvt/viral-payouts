@@ -1,5 +1,5 @@
-import Razorpay from "razorpay";
-import crypto from "crypto";
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -17,7 +17,7 @@ export async function createRazorpayCustomer(params: {
   const customer = await razorpay.customers.create({
     name: params.name,
     email: params.email,
-    contact: params.contact || "",
+    contact: params.contact || '',
     fail_existing: 0,
   });
   return customer;
@@ -31,7 +31,7 @@ export async function createRazorpayOrder(params: {
 }) {
   const order = await razorpay.orders.create({
     amount: Math.round(params.amount * 100), // convert to paise
-    currency: "INR",
+    currency: 'INR',
     receipt: params.receipt,
     notes: params.notes || {},
   });
@@ -46,25 +46,25 @@ export function verifyPaymentSignature(params: {
 }) {
   const body = `${params.orderId}|${params.paymentId}`;
   const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
     .update(body)
-    .digest("hex");
+    .digest('hex');
   return expectedSignature === params.signature;
 }
 
 // Verify webhook signature
 export function verifyWebhookSignature(body: string, signature: string) {
   const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET!)
+    .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET!)
     .update(body)
-    .digest("hex");
+    .digest('hex');
   return expectedSignature === signature;
 }
 
 // Create a fund account for creator payouts
 export async function createFundAccount(params: {
   contactId: string;
-  accountType: "vpa" | "bank_account";
+  accountType: 'vpa' | 'bank_account';
   vpa?: { address: string };
   bankAccount?: {
     name: string;
@@ -75,8 +75,8 @@ export async function createFundAccount(params: {
   const fundAccount = await (razorpay as any).fundAccount.create({
     contact_id: params.contactId,
     account_type: params.accountType,
-    ...(params.accountType === "vpa" && { vpa: params.vpa }),
-    ...(params.accountType === "bank_account" && {
+    ...(params.accountType === 'vpa' && { vpa: params.vpa }),
+    ...(params.accountType === 'bank_account' && {
       bank_account: {
         name: params.bankAccount!.name,
         ifsc: params.bankAccount!.ifsc,
@@ -99,12 +99,12 @@ export async function createRazorpayPayout(params: {
     account_number: process.env.RAZORPAY_ACCOUNT_NUMBER,
     fund_account_id: params.fundAccountId,
     amount: Math.round(params.amount * 100), // convert to paise
-    currency: "INR",
-    mode: "UPI", // or NEFT, IMPS, RTGS
+    currency: 'INR',
+    mode: 'UPI', // or NEFT, IMPS, RTGS
     purpose: params.purpose,
     queue_if_low_balance: true,
     reference_id: params.referenceId,
-    narration: params.narration || "Nocage Creator Payout",
+    narration: params.narration || 'Nocage Creator Payout',
   });
   return payout;
 }

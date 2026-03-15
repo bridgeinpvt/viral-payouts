@@ -1,4 +1,4 @@
-import Razorpay from "razorpay";
+import Razorpay from 'razorpay';
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -19,9 +19,9 @@ export async function createPayout(params: PayoutParams) {
     account_number: process.env.RAZORPAY_ACCOUNT_NUMBER!,
     fund_account_id: fundAccountId,
     amount: Math.round(amount * 100), // Convert to paise
-    currency: "INR",
-    mode: "UPI", // Default to UPI
-    purpose: "payout",
+    currency: 'INR',
+    mode: 'UPI', // Default to UPI
+    purpose: 'payout',
     queue_if_low_balance: true,
     reference_id: referenceId,
     narration,

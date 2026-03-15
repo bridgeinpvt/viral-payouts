@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 interface KeyboardClasses {
   form: string;
@@ -12,7 +12,7 @@ export function useKeyboardAdjustments() {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     const handleResize = () => {
       if (window.visualViewport) {
@@ -21,16 +21,16 @@ export function useKeyboardAdjustments() {
       }
     };
 
-    window.visualViewport?.addEventListener("resize", handleResize);
+    window.visualViewport?.addEventListener('resize', handleResize);
     return () => {
-      window.visualViewport?.removeEventListener("resize", handleResize);
+      window.visualViewport?.removeEventListener('resize', handleResize);
     };
   }, []);
 
   const keyboardClasses: KeyboardClasses = {
-    form: isKeyboardOpen ? "pb-4" : "",
-    modal: isKeyboardOpen ? "max-h-[50vh] overflow-y-auto" : "",
-    scroll: isKeyboardOpen ? "overflow-y-auto" : "",
+    form: isKeyboardOpen ? 'pb-4' : '',
+    modal: isKeyboardOpen ? 'max-h-[50vh] overflow-y-auto' : '',
+    scroll: isKeyboardOpen ? 'overflow-y-auto' : '',
   };
 
   return { isKeyboardOpen, keyboardClasses };

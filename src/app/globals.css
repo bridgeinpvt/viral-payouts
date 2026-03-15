@@ -120,10 +120,10 @@
   }
 
   /* Simplified input styling */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  input[type='number'],
   textarea,
   select {
     @apply bg-input border-border text-foreground placeholder:text-muted-foreground;
@@ -169,7 +169,7 @@
       padding-bottom: env(safe-area-inset-bottom) !important;
     }
 
-    .bottom-nav-fixed>div {
+    .bottom-nav-fixed > div {
       height: calc(70px - env(safe-area-inset-bottom)) !important;
       min-height: 60px !important;
       display: grid !important;

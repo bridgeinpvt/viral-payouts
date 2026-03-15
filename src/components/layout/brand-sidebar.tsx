@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Megaphone,
@@ -14,9 +14,9 @@ import {
   Rocket,
   Menu,
   X,
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { UserMenu } from "./user-menu";
+} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { UserMenu } from './user-menu';
 
 interface NavItem {
   label: string;
@@ -25,14 +25,14 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/brand/dashboard", icon: LayoutDashboard },
-  { label: "Campaigns", href: "/brand/campaigns", icon: Megaphone },
-  { label: "Analytics", href: "/brand/analytics", icon: BarChart3 },
-  { label: "Wallet", href: "/brand/wallet", icon: Wallet },
+  { label: 'Dashboard', href: '/brand/dashboard', icon: LayoutDashboard },
+  { label: 'Campaigns', href: '/brand/campaigns', icon: Megaphone },
+  { label: 'Analytics', href: '/brand/analytics', icon: BarChart3 },
+  { label: 'Wallet', href: '/brand/wallet', icon: Wallet },
 ];
 
 const bottomNavItems: NavItem[] = [
-  { label: "Settings", href: "/brand/settings", icon: Settings },
+  { label: 'Settings', href: '/brand/settings', icon: Settings },
 ];
 
 export function BrandSidebar() {
@@ -50,8 +50,8 @@ export function BrandSidebar() {
         setMobileOpen(false);
       }
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const sidebarContent = (
@@ -62,16 +62,18 @@ export function BrandSidebar() {
             <Rocket className="h-5 w-5 text-primary-foreground" />
           </div>
           {!collapsed && (
-            <span className="text-lg font-bold text-foreground">
-              Nocage
-            </span>
+            <span className="text-lg font-bold text-foreground">Nocage</span>
           )}
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="hidden lg:block rounded-md p-1.5 hover:bg-muted"
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </button>
         <button
           onClick={() => setMobileOpen(false)}
@@ -83,25 +85,28 @@ export function BrandSidebar() {
 
       {!collapsed && (
         <div className="border-b border-border px-4 py-2">
-          <span className="text-xs font-medium uppercase text-muted-foreground">Brand</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">
+            Brand
+          </span>
         </div>
       )}
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive =
+            pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <item.icon className={cn("h-5 w-5", collapsed && "mx-auto")} />
+              <item.icon className={cn('h-5 w-5', collapsed && 'mx-auto')} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -116,13 +121,13 @@ export function BrandSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <item.icon className={cn("h-5 w-5", collapsed && "mx-auto")} />
+              <item.icon className={cn('h-5 w-5', collapsed && 'mx-auto')} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -138,7 +143,10 @@ export function BrandSidebar() {
   return (
     <>
       <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
-        <button onClick={() => setMobileOpen(true)} className="rounded-md p-2 hover:bg-muted">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="rounded-md p-2 hover:bg-muted"
+        >
           <Menu className="h-5 w-5" />
         </button>
         <Link href="/brand/dashboard" className="flex items-center gap-2">
@@ -151,13 +159,16 @@ export function BrandSidebar() {
       </div>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div
+          className="fixed inset-0 z-50 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-[280px] border-r border-border bg-card transition-transform duration-300 lg:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+          'fixed left-0 top-0 z-50 h-screen w-[280px] border-r border-border bg-card transition-transform duration-300 lg:hidden',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {sidebarContent}
@@ -165,8 +176,8 @@ export function BrandSidebar() {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 hidden h-screen border-r border-border bg-card transition-all duration-300 lg:block",
-          collapsed ? "w-[70px]" : "w-[260px]"
+          'fixed left-0 top-0 z-40 hidden h-screen border-r border-border bg-card transition-all duration-300 lg:block',
+          collapsed ? 'w-[70px]' : 'w-[260px]'
         )}
       >
         {sidebarContent}

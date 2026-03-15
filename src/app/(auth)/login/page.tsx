@@ -1,56 +1,56 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Rocket, Eye, EyeOff, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+} from '@/components/ui/card';
+import { Rocket, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const result = await signIn("email-password", {
+      const result = await signIn('email-password', {
         email,
         password,
         redirect: false,
       });
       if (result?.error) {
-        toast.error("Invalid email or password");
+        toast.error('Invalid email or password');
       } else {
         router.push(callbackUrl);
         router.refresh();
       }
     } catch {
-      toast.error("Something went wrong");
+      toast.error('Something went wrong');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => signIn("google", { callbackUrl });
+  const handleGoogleLogin = () => signIn('google', { callbackUrl });
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -123,7 +123,7 @@ export default function LoginPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -149,7 +149,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
+            Don&apos;t have an account?{' '}
             <Link
               href="/signup"
               className="text-primary hover:underline font-medium"

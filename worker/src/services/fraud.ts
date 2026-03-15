@@ -1,17 +1,17 @@
-import { db } from "../db";
+import { db } from '../db';
 
 const FRAUD_THRESHOLDS = {
-  clickBurst: parseInt(process.env.FRAUD_CLICK_BURST_THRESHOLD ?? "50", 10),
-  ipAbuse: parseInt(process.env.FRAUD_IP_ABUSE_THRESHOLD ?? "20", 10),
+  clickBurst: parseInt(process.env.FRAUD_CLICK_BURST_THRESHOLD ?? '50', 10),
+  ipAbuse: parseInt(process.env.FRAUD_IP_ABUSE_THRESHOLD ?? '20', 10),
   conversionRatio: parseFloat(
-    process.env.FRAUD_CONVERSION_RATIO_THRESHOLD ?? "0.5",
+    process.env.FRAUD_CONVERSION_RATIO_THRESHOLD ?? '0.5'
   ),
   conversionMismatch: parseFloat(
-    process.env.FRAUD_CONVERSION_MISMATCH_THRESHOLD ?? "0.3",
+    process.env.FRAUD_CONVERSION_MISMATCH_THRESHOLD ?? '0.3'
   ),
   minConversionsForMismatch: parseInt(
-    process.env.FRAUD_MIN_CONVERSIONS ?? "10",
-    10,
+    process.env.FRAUD_MIN_CONVERSIONS ?? '10',
+    10
   ),
 };
 
@@ -38,18 +38,18 @@ export async function checkClickFraud(trackingLinkId: string): Promise<void> {
 
   if (recentClicks > FRAUD_THRESHOLDS.clickBurst) {
     await createFraudFlag({
-      type: "CLICK_ANOMALY",
+      type: 'CLICK_ANOMALY',
       campaignId: link.campaignId,
       creatorId: link.creatorId,
       severity: recentClicks > 200 ? 5 : recentClicks > 100 ? 4 : 3,
       description: `Click burst detected: ${recentClicks} clicks in last hour on tracking link ${trackingLinkId}`,
-      evidence: { trackingLinkId, clickCount: recentClicks, window: "1h" },
+      evidence: { trackingLinkId, clickCount: recentClicks, window: '1h' },
     });
   }
 
   // Check for IP abuse (single IP >20 clicks in last hour)
   const ipCounts = await db.clickEvent.groupBy({
-    by: ["ip"],
+    by: ['ip'],
     where: {
       trackingLinkId,
       createdAt: { gte: oneHourAgo },
@@ -64,7 +64,7 @@ export async function checkClickFraud(trackingLinkId: string): Promise<void> {
 
   for (const ipGroup of ipCounts) {
     await createFraudFlag({
-      type: "IP_ABUSE",
+      type: 'IP_ABUSE',
       campaignId: link.campaignId,
       creatorId: link.creatorId,
       severity: ipGroup._count > 50 ? 5 : 4,
@@ -81,7 +81,7 @@ export async function checkViewSpike(
   campaignId: string,
   creatorId: string,
   currentViews: number,
-  previousViews: number,
+  previousViews: number
 ): Promise<void> {
   if (previousViews === 0) return;
 
@@ -90,7 +90,7 @@ export async function checkViewSpike(
   // Flag if views grew by more than 500% in one snapshot interval
   if (growthRate > 5) {
     await createFraudFlag({
-      type: "VIEW_SPIKE",
+      type: 'VIEW_SPIKE',
       campaignId,
       creatorId,
       severity: growthRate > 20 ? 5 : growthRate > 10 ? 4 : 3,
@@ -105,7 +105,7 @@ export async function checkViewSpike(
  */
 export async function checkConversionMismatch(
   campaignId: string,
-  creatorId: string,
+  creatorId: string
 ): Promise<void> {
   const metrics = await db.campaignMetrics.findUnique({
     where: { campaignId_creatorId: { campaignId, creatorId } },
@@ -124,7 +124,7 @@ export async function checkConversionMismatch(
     metrics.verifiedConversions > FRAUD_THRESHOLDS.minConversionsForMismatch
   ) {
     await createFraudFlag({
-      type: "CONVERSION_MISMATCH",
+      type: 'CONVERSION_MISMATCH',
       campaignId,
       creatorId,
       severity:
@@ -145,11 +145,11 @@ export async function checkConversionMismatch(
 
 async function createFraudFlag(params: {
   type:
-    | "VIEW_SPIKE"
-    | "CLICK_ANOMALY"
-    | "CONVERSION_MISMATCH"
-    | "BOT_DETECTED"
-    | "IP_ABUSE";
+    | 'VIEW_SPIKE'
+    | 'CLICK_ANOMALY'
+    | 'CONVERSION_MISMATCH'
+    | 'BOT_DETECTED'
+    | 'IP_ABUSE';
   campaignId: string;
   creatorId: string;
   severity: number;
@@ -161,7 +161,7 @@ async function createFraudFlag(params: {
     where: {
       type: params.type,
       campaignId: params.campaignId,
-      status: { in: ["DETECTED", "INVESTIGATING"] },
+      status: { in: ['DETECTED', 'INVESTIGATING'] },
     },
   });
 
@@ -183,7 +183,7 @@ async function createFraudFlag(params: {
   await db.fraudFlag.create({
     data: {
       type: params.type,
-      status: "DETECTED",
+      status: 'DETECTED',
       severity: params.severity,
       description: params.description,
       evidence: params.evidence as any,

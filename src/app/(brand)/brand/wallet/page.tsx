@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { trpc } from "@/trpc/client";
-import { toast } from "sonner";
+import { useState, useCallback } from 'react';
+import { trpc } from '@/trpc/client';
+import { toast } from 'sonner';
 import {
   Card,
   CardHeader,
@@ -10,11 +10,11 @@ import {
   CardContent,
   CardDescription,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -22,7 +22,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
 declare global {
   interface Window {
@@ -33,39 +33,39 @@ declare global {
 }
 
 function formatCurrency(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return `₹${amount.toLocaleString('en-IN')}`;
 }
 
 const TRANSACTION_TYPE_LABELS: Record<string, string> = {
-  EARNING: "Earning",
-  WITHDRAWAL: "Withdrawal",
-  BONUS: "Bonus",
-  REFUND: "Refund",
-  CAMPAIGN_FUND: "Campaign Fund",
-  ESCROW_LOCK: "Escrow Lock",
-  ESCROW_RELEASE: "Escrow Release",
-  PLATFORM_FEE: "Platform Fee",
+  EARNING: 'Earning',
+  WITHDRAWAL: 'Withdrawal',
+  BONUS: 'Bonus',
+  REFUND: 'Refund',
+  CAMPAIGN_FUND: 'Campaign Fund',
+  ESCROW_LOCK: 'Escrow Lock',
+  ESCROW_RELEASE: 'Escrow Release',
+  PLATFORM_FEE: 'Platform Fee',
 };
 
 const STATUS_VARIANT: Record<
   string,
-  "default" | "secondary" | "destructive" | "outline"
+  'default' | 'secondary' | 'destructive' | 'outline'
 > = {
-  COMPLETED: "default",
-  PENDING: "outline",
-  FAILED: "destructive",
-  CANCELLED: "secondary",
-  REFUNDED: "secondary",
+  COMPLETED: 'default',
+  PENDING: 'outline',
+  FAILED: 'destructive',
+  CANCELLED: 'secondary',
+  REFUNDED: 'secondary',
 };
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.Razorpay) {
+    if (typeof window !== 'undefined' && window.Razorpay) {
       resolve(true);
       return;
     }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
@@ -91,7 +91,7 @@ function BalanceSkeleton() {
 
 export default function BrandWalletPage() {
   const [showAddMoney, setShowAddMoney] = useState(false);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const utils = trpc.useUtils();
@@ -107,7 +107,7 @@ export default function BrandWalletPage() {
       utils.wallet.getBrandWallet.invalidate();
       utils.wallet.getTransactions.invalidate();
       setShowAddMoney(false);
-      setAmount("");
+      setAmount('');
     },
   });
 
@@ -122,20 +122,20 @@ export default function BrandWalletPage() {
       const loaded = await loadRazorpayScript();
       if (!loaded) {
         toast.error(
-          "Failed to load Razorpay. Please check your internet connection.",
+          'Failed to load Razorpay. Please check your internet connection.'
         );
         setIsProcessing(false);
         return;
       }
 
-      const response = await fetch("/api/razorpay/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/razorpay/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: numericAmount, walletId: wallet.id }),
       });
 
       if (!response.ok) {
-        toast.error("Failed to create payment order. Please try again.");
+        toast.error('Failed to create payment order. Please try again.');
         setIsProcessing(false);
         return;
       }
@@ -145,9 +145,9 @@ export default function BrandWalletPage() {
       const options = {
         key: orderData.keyId,
         amount: orderData.amount,
-        currency: orderData.currency || "INR",
-        name: "Viral Payouts",
-        description: "Add funds to wallet",
+        currency: orderData.currency || 'INR',
+        name: 'Viral Payouts',
+        description: 'Add funds to wallet',
         order_id: orderData.orderId,
         handler: async (response: {
           razorpay_payment_id: string;
@@ -161,7 +161,7 @@ export default function BrandWalletPage() {
             });
           } catch {
             toast.error(
-              "Payment received but recording failed. Please contact support.",
+              'Payment received but recording failed. Please contact support.'
             );
           }
           setIsProcessing(false);
@@ -172,14 +172,14 @@ export default function BrandWalletPage() {
           },
         },
         theme: {
-          color: "#6366f1",
+          color: '#6366f1',
         },
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error('Something went wrong. Please try again.');
       setIsProcessing(false);
     }
   }, [amount, wallet?.id, recordFunding]);
@@ -281,13 +281,13 @@ export default function BrandWalletPage() {
                     recordFunding.isPending
                   }
                 >
-                  {isProcessing ? "Processing..." : "Pay with Razorpay"}
+                  {isProcessing ? 'Processing...' : 'Pay with Razorpay'}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => {
                     setShowAddMoney(false);
-                    setAmount("");
+                    setAmount('');
                   }}
                   disabled={isProcessing}
                 >
@@ -339,10 +339,10 @@ export default function BrandWalletPage() {
               ) : (
                 txData?.transactions.map((tx) => {
                   const isCredit = [
-                    "EARNING",
-                    "BONUS",
-                    "REFUND",
-                    "ESCROW_RELEASE",
+                    'EARNING',
+                    'BONUS',
+                    'REFUND',
+                    'ESCROW_RELEASE',
                   ].includes(tx.type);
 
                   return (
@@ -356,18 +356,18 @@ export default function BrandWalletPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">
-                        {tx.description || "-"}
+                        {tx.description || '-'}
                       </TableCell>
                       <TableCell
                         className={`text-right font-medium ${
-                          isCredit ? "text-green-600" : "text-red-600"
+                          isCredit ? 'text-green-600' : 'text-red-600'
                         }`}
                       >
-                        {isCredit ? "+" : "-"}
+                        {isCredit ? '+' : '-'}
                         {formatCurrency(Math.abs(tx.amount))}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={STATUS_VARIANT[tx.status] ?? "outline"}>
+                        <Badge variant={STATUS_VARIANT[tx.status] ?? 'outline'}>
                           {tx.status}
                         </Badge>
                       </TableCell>

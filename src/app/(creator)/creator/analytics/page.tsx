@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { trpc } from "@/trpc/client";
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
 const TIER_THRESHOLDS: Record<string, number> = {
   BRONZE: 0,
@@ -28,10 +28,10 @@ const TIER_THRESHOLDS: Record<string, number> = {
   DIAMOND: 500_000,
 };
 
-const TIER_ORDER = ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND"] as const;
+const TIER_ORDER = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'] as const;
 
 function formatCurrency(amount: number): string {
-  return `\u20B9${amount.toLocaleString("en-IN")}`;
+  return `\u20B9${amount.toLocaleString('en-IN')}`;
 }
 
 function getTierProgressPercent(
@@ -66,18 +66,18 @@ function getNextTier(currentTier: string): string | null {
 
 function getTierColor(tier: string): string {
   switch (tier) {
-    case "BRONZE":
-      return "bg-amber-700 text-white";
-    case "SILVER":
-      return "bg-gray-400 text-white";
-    case "GOLD":
-      return "bg-yellow-500 text-white";
-    case "PLATINUM":
-      return "bg-cyan-600 text-white";
-    case "DIAMOND":
-      return "bg-purple-600 text-white";
+    case 'BRONZE':
+      return 'bg-amber-700 text-white';
+    case 'SILVER':
+      return 'bg-gray-400 text-white';
+    case 'GOLD':
+      return 'bg-yellow-500 text-white';
+    case 'PLATINUM':
+      return 'bg-cyan-600 text-white';
+    case 'DIAMOND':
+      return 'bg-purple-600 text-white';
     default:
-      return "bg-gray-500 text-white";
+      return 'bg-gray-500 text-white';
   }
 }
 
@@ -98,7 +98,13 @@ function KPISkeletons() {
   );
 }
 
-function TableSkeletons({ rows = 5, cols = 6 }: { rows?: number; cols?: number }) {
+function TableSkeletons({
+  rows = 5,
+  cols = 6,
+}: {
+  rows?: number;
+  cols?: number;
+}) {
   return (
     <>
       {Array.from({ length: rows }).map((_, i) => (
@@ -220,7 +226,7 @@ export default function CreatorAnalyticsPage() {
               </span>
               {getNextTier(data.tier) ? (
                 <span>
-                  Next tier ({getNextTier(data.tier)}):{" "}
+                  Next tier ({getNextTier(data.tier)}):{' '}
                   {formatCurrency(
                     TIER_THRESHOLDS[getNextTier(data.tier)!] ?? 0
                   )}
@@ -231,7 +237,7 @@ export default function CreatorAnalyticsPage() {
             </div>
             <p className="text-muted-foreground text-sm">
               {data.tierProgress.totalCampaigns} campaign
-              {data.tierProgress.totalCampaigns !== 1 ? "s" : ""} completed
+              {data.tierProgress.totalCampaigns !== 1 ? 's' : ''} completed
             </p>
           </CardContent>
         </Card>
@@ -270,13 +276,13 @@ export default function CreatorAnalyticsPage() {
                       <Badge variant="outline">{metric.campaign.type}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {metric.verifiedViews.toLocaleString("en-IN")}
+                      {metric.verifiedViews.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {metric.verifiedClicks.toLocaleString("en-IN")}
+                      {metric.verifiedClicks.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {metric.verifiedConversions.toLocaleString("en-IN")}
+                      {metric.verifiedConversions.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(metric.earnedAmount)}
@@ -299,16 +305,19 @@ export default function CreatorAnalyticsPage() {
       </Card>
 
       {/* Instagram Insights note — per-reel reach/saves/avgWatchTime are visible on your campaign detail page */}
-      {data?.metrics && data.metrics.some((m) => m.campaign.type === "VIEW") && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Instagram Insights</CardTitle>
-            <CardDescription>
-              Reach, saves, and average watch time are tracked per reel. Visit your active campaign detail page to see per-content metrics synced from Instagram.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+      {data?.metrics &&
+        data.metrics.some((m) => m.campaign.type === 'VIEW') && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Instagram Insights</CardTitle>
+              <CardDescription>
+                Reach, saves, and average watch time are tracked per reel. Visit
+                your active campaign detail page to see per-content metrics
+                synced from Instagram.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
 
       {/* Recent Earnings Timeline */}
       <Card>
@@ -331,8 +340,7 @@ export default function CreatorAnalyticsPage() {
                 </div>
               ))}
             </div>
-          ) : data?.recentTransactions &&
-            data.recentTransactions.length > 0 ? (
+          ) : data?.recentTransactions && data.recentTransactions.length > 0 ? (
             <div className="space-y-4">
               {data.recentTransactions.map((tx, index) => (
                 <div
@@ -342,21 +350,21 @@ export default function CreatorAnalyticsPage() {
                   <div>
                     <p className="text-sm font-medium">{tx.description}</p>
                     <p className="text-muted-foreground text-xs">
-                      {new Date(tx.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
+                      {new Date(tx.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
                       })}
                     </p>
                   </div>
                   <span
                     className={`text-sm font-semibold ${
-                      tx.amount >= 0 ? "text-green-600" : "text-red-600"
+                      tx.amount >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}
                   >
-                    {tx.amount >= 0 ? "+" : ""}
+                    {tx.amount >= 0 ? '+' : ''}
                     {formatCurrency(tx.amount)}
                   </span>
                 </div>

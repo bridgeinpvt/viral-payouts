@@ -1,11 +1,11 @@
-import { createTRPCRouter } from "./trpc";
-import { authRouter } from "./routers/auth";
-import { campaignRouter } from "./routers/campaign";
-import { walletRouter } from "./routers/wallet";
-import { adminRouter } from "./routers/admin";
-import { analyticsRouter } from "./routers/analytics";
-import { escrowRouter } from "./routers/escrow";
-import { trackingRouter } from "./routers/tracking";
+import { createTRPCRouter } from './trpc';
+import { authRouter } from './routers/auth';
+import { campaignRouter } from './routers/campaign';
+import { walletRouter } from './routers/wallet';
+import { adminRouter } from './routers/admin';
+import { analyticsRouter } from './routers/analytics';
+import { escrowRouter } from './routers/escrow';
+import { trackingRouter } from './routers/tracking';
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,

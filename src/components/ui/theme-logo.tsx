@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import Image from 'next/image';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 
 interface ThemeLogoProps {
   width?: number;
@@ -11,11 +11,11 @@ interface ThemeLogoProps {
   forceLight?: boolean; // Force light theme logo
 }
 
-export function ThemeLogo({ 
-  width = 120, 
-  height = 60, 
-  className = "h-16 w-auto",
-  forceLight = false 
+export function ThemeLogo({
+  width = 120,
+  height = 60,
+  className = 'h-16 w-auto',
+  forceLight = false,
 }: ThemeLogoProps) {
   const { theme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -57,7 +57,7 @@ export function ThemeLogo({
 
   return (
     <Image
-      src={isDark ? "/logo-white.png" : "/logo.png"}
+      src={isDark ? '/logo-white.png' : '/logo.png'}
       alt="Nocage"
       width={width}
       height={height}

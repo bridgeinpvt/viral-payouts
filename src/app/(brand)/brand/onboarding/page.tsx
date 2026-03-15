@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { trpc } from "@/trpc/client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
@@ -11,36 +11,36 @@ import {
   CardContent,
   CardDescription,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2 } from "lucide-react";
+} from '@/components/ui/select';
+import { ArrowLeft, ArrowRight, Building2, CheckCircle2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const INDUSTRY_OPTIONS = [
-  "Technology",
-  "E-commerce",
-  "Fashion",
-  "Beauty",
-  "Health",
-  "Food",
-  "Travel",
-  "Gaming",
-  "Education",
-  "Finance",
-  "Entertainment",
-  "Other",
+  'Technology',
+  'E-commerce',
+  'Fashion',
+  'Beauty',
+  'Health',
+  'Food',
+  'Travel',
+  'Gaming',
+  'Education',
+  'Finance',
+  'Entertainment',
+  'Other',
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -69,10 +69,10 @@ function StepCompanyInfo({
   onNext: () => void;
 }) {
   const isValid =
-    form.companyName.trim() !== "" &&
-    form.website.trim() !== "" &&
-    form.industry !== "" &&
-    form.contactPerson.trim() !== "";
+    form.companyName.trim() !== '' &&
+    form.website.trim() !== '' &&
+    form.industry !== '' &&
+    form.contactPerson.trim() !== '';
 
   return (
     <Card className="w-full max-w-lg mx-auto">
@@ -192,11 +192,11 @@ function StepReview({
   error: string | null;
 }) {
   const fields = [
-    { label: "Company Name", value: form.companyName },
-    { label: "Website", value: form.website },
-    { label: "Industry", value: form.industry },
-    { label: "GSTIN", value: form.gstin || "Not provided" },
-    { label: "Contact Person", value: form.contactPerson },
+    { label: 'Company Name', value: form.companyName },
+    { label: 'Website', value: form.website },
+    { label: 'Industry', value: form.industry },
+    { label: 'GSTIN', value: form.gstin || 'Not provided' },
+    { label: 'Contact Person', value: form.contactPerson },
   ];
 
   return (
@@ -239,7 +239,7 @@ function StepReview({
           Back
         </Button>
         <Button onClick={onSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Completing..." : "Complete Onboarding"}
+          {isSubmitting ? 'Completing...' : 'Complete Onboarding'}
         </Button>
       </CardFooter>
     </Card>
@@ -252,8 +252,8 @@ function StepReview({
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   const steps = [
-    { number: 1, label: "Company Info" },
-    { number: 2, label: "Review" },
+    { number: 1, label: 'Company Info' },
+    { number: 2, label: 'Review' },
   ];
 
   return (
@@ -261,18 +261,20 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
       {steps.map((step, index) => (
         <div key={step.number} className="flex items-center gap-2">
           <div
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors ${currentStep >= step.number
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
-              }`}
+            className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
+              currentStep >= step.number
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground'
+            }`}
           >
             {step.number}
           </div>
           <span
-            className={`text-sm hidden sm:inline ${currentStep >= step.number
-              ? "font-medium text-foreground"
-              : "text-muted-foreground"
-              }`}
+            className={`text-sm hidden sm:inline ${
+              currentStep >= step.number
+                ? 'font-medium text-foreground'
+                : 'text-muted-foreground'
+            }`}
           >
             {step.label}
           </span>
@@ -296,22 +298,22 @@ export default function BrandOnboardingPage() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<BrandFormData>({
-    companyName: "",
-    website: "",
-    industry: "",
-    gstin: "",
-    contactPerson: session?.user?.name ?? "",
+    companyName: '',
+    website: '',
+    industry: '',
+    gstin: '',
+    contactPerson: session?.user?.name ?? '',
   });
 
   const completeOnboarding = trpc.auth.completeOnboarding.useMutation({
     onSuccess: async () => {
       // Force session update to reflect isOnboarded: true
       await update();
-      router.push("/brand/dashboard");
+      router.push('/brand/dashboard');
       router.refresh();
     },
     onError: (err) => {
-      setError(err.message ?? "Something went wrong. Please try again.");
+      setError(err.message ?? 'Something went wrong. Please try again.');
     },
   });
 
@@ -319,7 +321,7 @@ export default function BrandOnboardingPage() {
     setError(null);
     completeOnboarding.mutate({
       name: form.contactPerson.trim(),
-      username: form.companyName.trim().toLowerCase().replace(/\s+/g, "-"),
+      username: form.companyName.trim().toLowerCase().replace(/\s+/g, '-'),
       companyName: form.companyName.trim(),
       website: form.website.trim(),
       industry: form.industry,

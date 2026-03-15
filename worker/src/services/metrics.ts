@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from '../db';
 
 /**
  * Calculate earnings for a campaign participation based on campaign type and verified metrics.
@@ -31,17 +31,17 @@ export async function calculateEarnings(
   let earnings = 0;
 
   switch (campaign.type) {
-    case "VIEW":
+    case 'VIEW':
       if (campaign.payoutPer1KViews) {
         earnings = (metrics.verifiedViews / 1000) * campaign.payoutPer1KViews;
       }
       break;
-    case "CLICK":
+    case 'CLICK':
       if (campaign.payoutPerClick) {
         earnings = metrics.verifiedClicks * campaign.payoutPerClick;
       }
       break;
-    case "CONVERSION":
+    case 'CONVERSION':
       if (campaign.payoutPerSale) {
         earnings = metrics.verifiedConversions * campaign.payoutPerSale;
       }

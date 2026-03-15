@@ -1,26 +1,26 @@
-import { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { db } from "./db";
-import bcrypt from "bcryptjs";
+import { NextAuthOptions } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import { db } from './db';
+import bcrypt from 'bcryptjs';
 
-const isLocalhost = process.env.NODE_ENV === "development";
+const isLocalhost = process.env.NODE_ENV === 'development';
 
 const getCookieConfig = () => {
   if (isLocalhost) {
     return {
       httpOnly: true,
-      sameSite: "lax" as const,
-      path: "/",
+      sameSite: 'lax' as const,
+      path: '/',
       secure: false,
     };
   }
 
   return {
     httpOnly: true,
-    sameSite: "lax" as const,
-    path: "/",
+    sameSite: 'lax' as const,
+    path: '/',
     secure: true,
   };
 };
@@ -34,11 +34,11 @@ export const authOptions: NextAuthOptions = {
       allowDangerousEmailAccountLinking: false,
     }),
     CredentialsProvider({
-      id: "email-password",
-      name: "Email & Password",
+      id: 'email-password',
+      name: 'Email & Password',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -55,7 +55,7 @@ export const authOptions: NextAuthOptions = {
 
         const isValid = await bcrypt.compare(
           credentials.password,
-          user.password,
+          user.password
         );
 
         if (!isValid) {
@@ -75,7 +75,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
   },
   cookies: {
     sessionToken: {
@@ -94,10 +94,10 @@ export const authOptions: NextAuthOptions = {
       options: getCookieConfig(),
     },
   },
-  useSecureCookies: process.env.NODE_ENV === "production",
+  useSecureCookies: process.env.NODE_ENV === 'production',
   pages: {
-    signIn: "/login",
-    newUser: "/onboarding",
+    signIn: '/login',
+    newUser: '/onboarding',
   },
   callbacks: {
     async jwt({ token, user, trigger, account }) {
@@ -105,7 +105,7 @@ export const authOptions: NextAuthOptions = {
         token.userId = user.id;
       }
 
-      if (trigger === "signIn" || trigger === "update" || user) {
+      if (trigger === 'signIn' || trigger === 'update' || user) {
         const userId = token.userId as string;
         if (userId) {
           const dbUser = await db.user.findUnique({
@@ -132,7 +132,7 @@ export const authOptions: NextAuthOptions = {
             token.isOnboarded = dbUser.isOnboarded;
             token.phoneVerified = dbUser.phoneVerified;
             token.needsPhoneVerification =
-              account?.provider === "google" && !dbUser.phoneVerified;
+              account?.provider === 'google' && !dbUser.phoneVerified;
           }
         }
       }
@@ -149,20 +149,20 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }) {
-      if (account?.provider === "google") {
+      if (account?.provider === 'google') {
         const dbUser = await db.user.findUnique({
           where: { email: user.email! },
           select: { phoneVerified: true },
         });
 
         if (!dbUser?.phoneVerified) {
-          return "/verify-phone";
+          return '/verify-phone';
         }
       }
       return true;
     },
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) {
+      if (url.startsWith('/')) {
         return `${baseUrl}${url}`;
       }
 

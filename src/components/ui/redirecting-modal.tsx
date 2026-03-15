@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
-import { redirectToAuth } from "@/lib/auth-utils";
-import { toast } from "sonner";
+import { useEffect } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
+import { redirectToAuth } from '@/lib/auth-utils';
+import { toast } from 'sonner';
 
 interface RedirectingModalProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ interface RedirectingModalProps {
 export function RedirectingModal({
   isOpen,
   onClose,
-  message = "Redirecting you to login...",
+  message = 'Redirecting you to login...',
   delay = 1500,
 }: RedirectingModalProps) {
   useEffect(() => {
@@ -27,7 +27,9 @@ export function RedirectingModal({
         } catch (error) {
           console.error('Failed to redirect to auth:', error);
           onClose(); // Close modal if redirect fails
-          toast.error('Unable to redirect. Please check your connection and try again.');
+          toast.error(
+            'Unable to redirect. Please check your connection and try again.'
+          );
         }
       }, delay);
 
@@ -55,9 +57,7 @@ export function RedirectingModal({
             <h3 className="text-lg font-semibold text-foreground">
               Authentication Required
             </h3>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              {message}
-            </p>
+            <p className="text-sm text-muted-foreground max-w-sm">{message}</p>
             <p className="text-xs text-muted-foreground/70">
               Please wait a moment...
             </p>
@@ -65,9 +65,18 @@ export function RedirectingModal({
 
           {/* Progress dots */}
           <div className="flex gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+            <div
+              className="w-2 h-2 rounded-full bg-primary/60 animate-bounce"
+              style={{ animationDelay: '0ms' }}
+            />
+            <div
+              className="w-2 h-2 rounded-full bg-primary/60 animate-bounce"
+              style={{ animationDelay: '150ms' }}
+            />
+            <div
+              className="w-2 h-2 rounded-full bg-primary/60 animate-bounce"
+              style={{ animationDelay: '300ms' }}
+            />
           </div>
         </div>
       </DialogContent>

@@ -1,26 +1,21 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import { trpc } from "@/trpc/client";
-import { useFileUpload } from "@/hooks/useFileUpload";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { trpc } from '@/trpc/client';
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -28,39 +23,45 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
-import { UploadCloud, X, FileImage, FileText as FileIcon, Film } from "lucide-react";
+import {
+  UploadCloud,
+  X,
+  FileImage,
+  FileText as FileIcon,
+  Film,
+} from 'lucide-react';
 
 const statusColors: Record<string, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 border-gray-200",
-  FUNDING: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  PENDING_REVIEW: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  LIVE: "bg-green-100 text-green-700 border-green-200",
-  PAUSED: "bg-orange-100 text-orange-700 border-orange-200",
-  COMPLETED: "bg-blue-100 text-blue-700 border-blue-200",
-  CANCELLED: "bg-red-100 text-red-700 border-red-200",
+  DRAFT: 'bg-gray-100 text-gray-700 border-gray-200',
+  FUNDING: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  PENDING_REVIEW: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  LIVE: 'bg-green-100 text-green-700 border-green-200',
+  PAUSED: 'bg-orange-100 text-orange-700 border-orange-200',
+  COMPLETED: 'bg-blue-100 text-blue-700 border-blue-200',
+  CANCELLED: 'bg-red-100 text-red-700 border-red-200',
 };
 
 const participationStatusColors: Record<string, string> = {
-  APPLIED: "bg-blue-100 text-blue-700 border-blue-200",
-  APPROVED: "bg-green-100 text-green-700 border-green-200",
-  ACTIVE: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  COMPLETED: "bg-blue-100 text-blue-700 border-blue-200",
-  REJECTED: "bg-red-100 text-red-700 border-red-200",
-  FROZEN: "bg-purple-100 text-purple-700 border-purple-200",
+  APPLIED: 'bg-blue-100 text-blue-700 border-blue-200',
+  APPROVED: 'bg-green-100 text-green-700 border-green-200',
+  ACTIVE: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  COMPLETED: 'bg-blue-100 text-blue-700 border-blue-200',
+  REJECTED: 'bg-red-100 text-red-700 border-red-200',
+  FROZEN: 'bg-purple-100 text-purple-700 border-purple-200',
 };
 
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
 function formatNumber(n: number) {
-  return new Intl.NumberFormat("en-IN").format(n);
+  return new Intl.NumberFormat('en-IN').format(n);
 }
 
 export default function CampaignDetailPage() {
@@ -82,10 +83,10 @@ export default function CampaignDetailPage() {
   const { data: conversionEvents } =
     trpc.analytics.getConversionEvents.useQuery(
       { campaignId: id },
-      { enabled: !!id && campaign?.type === "CONVERSION" }
+      { enabled: !!id && campaign?.type === 'CONVERSION' }
     );
 
-  const [rejectReason, setRejectReason] = useState("");
+  const [rejectReason, setRejectReason] = useState('');
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
   // Asset upload state
@@ -102,7 +103,7 @@ export default function CampaignDetailPage() {
     onSuccess: () => {
       utils.campaign.getBrandCampaignDetail.invalidate({ id });
       setRejectingId(null);
-      setRejectReason("");
+      setRejectReason('');
     },
   });
 
@@ -126,7 +127,7 @@ export default function CampaignDetailPage() {
     },
     onError: () => {
       setIsUploading(false);
-    }
+    },
   });
 
   const { uploadFile } = useFileUpload();
@@ -169,12 +170,15 @@ export default function CampaignDetailPage() {
     campaign.metrics?.reduce((sum, m) => sum + m.earnedAmount, 0) ?? 0;
 
   const activeParticipations = campaign.participations.filter(
-    (p) => p.status === "ACTIVE" || p.status === "COMPLETED"
+    (p) => p.status === 'ACTIVE' || p.status === 'COMPLETED'
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFiles((prev) => [...prev, ...Array.from(e.target.files as FileList)]);
+      setSelectedFiles((prev) => [
+        ...prev,
+        ...Array.from(e.target.files as FileList),
+      ]);
     }
   };
 
@@ -193,14 +197,14 @@ export default function CampaignDetailPage() {
           const res = await uploadFile(file);
 
           // Determine MediaType
-          let type: "IMAGE" | "VIDEO" | "DOCUMENT" = "DOCUMENT";
-          if (file.type.startsWith("image/")) type = "IMAGE";
-          else if (file.type.startsWith("video/")) type = "VIDEO";
+          let type: 'IMAGE' | 'VIDEO' | 'DOCUMENT' = 'DOCUMENT';
+          if (file.type.startsWith('image/')) type = 'IMAGE';
+          else if (file.type.startsWith('video/')) type = 'VIDEO';
 
           return {
             type,
             url: res.url,
-            filename: file.name
+            filename: file.name,
           };
         })
       );
@@ -208,11 +212,10 @@ export default function CampaignDetailPage() {
       // Save to database
       saveMediaMutation.mutate({
         campaignId: id,
-        media: uploadedAssets
+        media: uploadedAssets,
       });
-
     } catch (error) {
-      console.error("Failed to upload assets:", error);
+      console.error('Failed to upload assets:', error);
       setIsUploading(false);
     }
   };
@@ -224,17 +227,17 @@ export default function CampaignDetailPage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{campaign.name}</h1>
-            <Badge className={statusColors[campaign.status] ?? ""}>
+            <Badge className={statusColors[campaign.status] ?? ''}>
               {campaign.status}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {campaign.type} campaign &middot;{" "}
-            {campaign.targetPlatforms.join(", ")}
+            {campaign.type} campaign &middot;{' '}
+            {campaign.targetPlatforms.join(', ')}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {campaign.status === "DRAFT" && !campaign.escrow && (
+          {campaign.status === 'DRAFT' && !campaign.escrow && (
             <Button
               variant="outline"
               disabled={lockFundsMutation.isPending}
@@ -245,16 +248,18 @@ export default function CampaignDetailPage() {
                 })
               }
             >
-              {lockFundsMutation.isPending ? "Funding..." : "Fund Escrow"}
+              {lockFundsMutation.isPending ? 'Funding...' : 'Fund Escrow'}
             </Button>
           )}
-          {(campaign.status === "DRAFT" || campaign.status === "FUNDING") &&
-            campaign.escrow?.status === "LOCKED" && (
+          {(campaign.status === 'DRAFT' || campaign.status === 'FUNDING') &&
+            campaign.escrow?.status === 'LOCKED' && (
               <Button
                 disabled={publishMutation.isPending}
                 onClick={() => publishMutation.mutate({ id: campaign.id })}
               >
-                {publishMutation.isPending ? "Publishing..." : "Publish Campaign"}
+                {publishMutation.isPending
+                  ? 'Publishing...'
+                  : 'Publish Campaign'}
               </Button>
             )}
         </div>
@@ -281,7 +286,7 @@ export default function CampaignDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="assets">Assets</TabsTrigger>
-          {campaign.type === "CONVERSION" && (
+          {campaign.type === 'CONVERSION' && (
             <TabsTrigger value="conversions">Conversions</TabsTrigger>
           )}
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -326,7 +331,7 @@ export default function CampaignDetailPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">
-                  {campaign.escrow?.status ?? "Not Funded"}
+                  {campaign.escrow?.status ?? 'Not Funded'}
                 </p>
               </CardContent>
             </Card>
@@ -381,7 +386,7 @@ export default function CampaignDetailPage() {
                   <p className="text-muted-foreground">Type</p>
                   <p className="font-medium">{campaign.type}</p>
                 </div>
-                {campaign.type === "VIEW" && campaign.payoutPer1KViews && (
+                {campaign.type === 'VIEW' && campaign.payoutPer1KViews && (
                   <div>
                     <p className="text-muted-foreground">Payout per 1K Views</p>
                     <p className="font-medium">
@@ -389,7 +394,7 @@ export default function CampaignDetailPage() {
                     </p>
                   </div>
                 )}
-                {campaign.type === "CLICK" && campaign.payoutPerClick && (
+                {campaign.type === 'CLICK' && campaign.payoutPerClick && (
                   <>
                     <div>
                       <p className="text-muted-foreground">Payout per Click</p>
@@ -407,7 +412,7 @@ export default function CampaignDetailPage() {
                     )}
                   </>
                 )}
-                {campaign.type === "CONVERSION" && campaign.payoutPerSale && (
+                {campaign.type === 'CONVERSION' && campaign.payoutPerSale && (
                   <>
                     <div>
                       <p className="text-muted-foreground">Payout per Sale</p>
@@ -458,9 +463,9 @@ export default function CampaignDetailPage() {
                       </div>
                       <Badge
                         className={
-                          flag.status === "DISMISSED"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                          flag.status === 'DISMISSED'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
                         }
                       >
                         {flag.status}
@@ -480,7 +485,7 @@ export default function CampaignDetailPage() {
               <CardTitle>Campaign Creators</CardTitle>
               <CardDescription>
                 {campaign.participations.length} creator
-                {campaign.participations.length !== 1 ? "s" : ""} in this
+                {campaign.participations.length !== 1 ? 's' : ''} in this
                 campaign
               </CardDescription>
             </CardHeader>
@@ -497,7 +502,9 @@ export default function CampaignDetailPage() {
                       <TableHead>Tier</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Joined</TableHead>
-                      {campaign.type !== "VIEW" && <TableHead>Tracking</TableHead>}
+                      {campaign.type !== 'VIEW' && (
+                        <TableHead>Tracking</TableHead>
+                      )}
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -517,7 +524,7 @@ export default function CampaignDetailPage() {
                               <p className="font-medium">
                                 {p.creator.creatorProfile?.displayName ??
                                   p.creator.name ??
-                                  "Unknown"}
+                                  'Unknown'}
                               </p>
                               {p.creator.creatorProfile?.instagramHandle && (
                                 <p className="text-xs text-muted-foreground">
@@ -529,13 +536,13 @@ export default function CampaignDetailPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {p.creator.creatorProfile?.tier ?? "N/A"}
+                            {p.creator.creatorProfile?.tier ?? 'N/A'}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
                             className={
-                              participationStatusColors[p.status] ?? ""
+                              participationStatusColors[p.status] ?? ''
                             }
                           >
                             {p.status}
@@ -544,24 +551,32 @@ export default function CampaignDetailPage() {
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(p.createdAt).toLocaleDateString()}
                         </TableCell>
-                        {campaign.type !== "VIEW" && (
+                        {campaign.type !== 'VIEW' && (
                           <TableCell className="text-xs max-w-[150px] truncate">
                             {p.trackingLinks && p.trackingLinks.length > 0 ? (
                               <div className="flex flex-col gap-1">
                                 {p.trackingLinks.map((link: any) => (
-                                  <div key={link.id} className="flex justify-between" title={`localhost:4002/go/${link.slug}`}>
-                                    <span className="truncate">{link.slug}</span>
-                                    <span className="text-muted-foreground ml-2 font-medium">{link.totalClicks}</span>
+                                  <div
+                                    key={link.id}
+                                    className="flex justify-between"
+                                    title={`localhost:4002/go/${link.slug}`}
+                                  >
+                                    <span className="truncate">
+                                      {link.slug}
+                                    </span>
+                                    <span className="text-muted-foreground ml-2 font-medium">
+                                      {link.totalClicks}
+                                    </span>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              "-"
+                              '-'
                             )}
                           </TableCell>
                         )}
                         <TableCell className="text-right">
-                          {p.status === "APPLIED" && (
+                          {p.status === 'APPLIED' && (
                             <div className="flex items-center justify-end gap-2">
                               <Button
                                 size="sm"
@@ -605,7 +620,7 @@ export default function CampaignDetailPage() {
                                     variant="outline"
                                     onClick={() => {
                                       setRejectingId(null);
-                                      setRejectReason("");
+                                      setRejectReason('');
                                     }}
                                   >
                                     Cancel
@@ -622,7 +637,7 @@ export default function CampaignDetailPage() {
                               )}
                             </div>
                           )}
-                          {p.status === "ACTIVE" && p.contentUrl && (
+                          {p.status === 'ACTIVE' && p.contentUrl && (
                             <a
                               href={p.contentUrl}
                               target="_blank"
@@ -652,8 +667,7 @@ export default function CampaignDetailPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {activeParticipations.filter((p) => p.contentUrl).length ===
-                0 ? (
+              {activeParticipations.filter((p) => p.contentUrl).length === 0 ? (
                 <p className="text-center py-8 text-muted-foreground">
                   No content has been submitted yet.
                 </p>
@@ -678,7 +692,7 @@ export default function CampaignDetailPage() {
                             <p className="font-medium text-sm">
                               {p.creator.creatorProfile?.displayName ??
                                 p.creator.name ??
-                                "Unknown"}
+                                'Unknown'}
                             </p>
                             {p.platform && (
                               <p className="text-xs text-muted-foreground">
@@ -695,7 +709,7 @@ export default function CampaignDetailPage() {
                           )}
                           <Badge
                             className={
-                              participationStatusColors[p.status] ?? ""
+                              participationStatusColors[p.status] ?? ''
                             }
                           >
                             {p.status}
@@ -724,11 +738,11 @@ export default function CampaignDetailPage() {
             <CardHeader>
               <CardTitle>Campaign Assets</CardTitle>
               <CardDescription>
-                Upload logos, product images, brand guidelines, and other assets for creators to use.
+                Upload logos, product images, brand guidelines, and other assets
+                for creators to use.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-
               {/* Upload Zone */}
               <div className="border-2 border-dashed rounded-xl p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer relative group">
                 <input
@@ -742,7 +756,9 @@ export default function CampaignDetailPage() {
                     <UploadCloud className="h-8 w-8 text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm">Click to upload or drag and drop</p>
+                    <p className="font-semibold text-sm">
+                      Click to upload or drag and drop
+                    </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       SVG, PNG, JPG, PDF or MP4 (max. 50MB)
                     </p>
@@ -753,22 +769,40 @@ export default function CampaignDetailPage() {
               {/* Selected Files Preview */}
               {selectedFiles.length > 0 && (
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Files to Upload ({selectedFiles.length})</h4>
+                  <h4 className="text-sm font-medium">
+                    Files to Upload ({selectedFiles.length})
+                  </h4>
                   <div className="space-y-2">
                     {selectedFiles.map((file, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3 border rounded-lg bg-card">
+                      <div
+                        key={idx}
+                        className="flex justify-between items-center p-3 border rounded-lg bg-card"
+                      >
                         <div className="flex items-center gap-3 overflow-hidden">
                           <div className="p-2 bg-muted rounded">
-                            {file.type.startsWith('image/') ? <FileImage className="h-4 w-4" /> :
-                              file.type.startsWith('video/') ? <Film className="h-4 w-4" /> :
-                                <FileIcon className="h-4 w-4" />}
+                            {file.type.startsWith('image/') ? (
+                              <FileImage className="h-4 w-4" />
+                            ) : file.type.startsWith('video/') ? (
+                              <Film className="h-4 w-4" />
+                            ) : (
+                              <FileIcon className="h-4 w-4" />
+                            )}
                           </div>
                           <div className="truncate">
-                            <p className="text-sm font-medium truncate">{file.name}</p>
-                            <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                            <p className="text-sm font-medium truncate">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeFile(idx)} className="text-muted-foreground hover:text-red-500">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeFile(idx)}
+                          className="text-muted-foreground hover:text-red-500"
+                        >
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -776,7 +810,9 @@ export default function CampaignDetailPage() {
                   </div>
                   <div className="flex justify-end pt-2">
                     <Button onClick={handleUploadFiles} disabled={isUploading}>
-                      {isUploading ? "Uploading..." : `Upload ${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''}`}
+                      {isUploading
+                        ? 'Uploading...'
+                        : `Upload ${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''}`}
                     </Button>
                   </div>
                 </div>
@@ -792,10 +828,10 @@ export default function CampaignDetailPage() {
                         key={m.id}
                         className="rounded-lg border overflow-hidden relative group"
                       >
-                        {m.type === "IMAGE" ? (
+                        {m.type === 'IMAGE' ? (
                           <img
                             src={m.url}
-                            alt={m.filename ?? ""}
+                            alt={m.filename ?? ''}
                             className="w-full h-32 object-cover group-hover:opacity-90 transition-opacity"
                           />
                         ) : (
@@ -805,7 +841,9 @@ export default function CampaignDetailPage() {
                         )}
                         {m.filename && (
                           <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform">
-                            <p className="text-xs text-white truncate">{m.filename}</p>
+                            <p className="text-xs text-white truncate">
+                              {m.filename}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -814,7 +852,9 @@ export default function CampaignDetailPage() {
                 </div>
               ) : (
                 <div className="pt-6 border-t text-center py-8">
-                  <p className="text-muted-foreground text-sm">No assets have been uploaded for this campaign yet.</p>
+                  <p className="text-muted-foreground text-sm">
+                    No assets have been uploaded for this campaign yet.
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -822,7 +862,7 @@ export default function CampaignDetailPage() {
         </TabsContent>
 
         {/* Conversions Tab — Only for CONVERSION campaigns */}
-        {campaign.type === "CONVERSION" && (
+        {campaign.type === 'CONVERSION' && (
           <TabsContent value="conversions" className="space-y-6 mt-4">
             <Card>
               <CardHeader>
@@ -834,7 +874,8 @@ export default function CampaignDetailPage() {
               <CardContent>
                 {!conversionEvents || conversionEvents.length === 0 ? (
                   <p className="text-center py-8 text-muted-foreground">
-                    No conversions tracked yet. When a customer uses a creator&apos;s promo code, it will appear here.
+                    No conversions tracked yet. When a customer uses a
+                    creator&apos;s promo code, it will appear here.
                   </p>
                 ) : (
                   <Table>
@@ -851,17 +892,25 @@ export default function CampaignDetailPage() {
                     <TableBody>
                       {conversionEvents.map((ev) => (
                         <TableRow key={ev.id}>
-                          <TableCell className="font-medium">{ev.creatorName}</TableCell>
-                          <TableCell>
-                            <span className="font-mono text-sm">{ev.promoCode}</span>
+                          <TableCell className="font-medium">
+                            {ev.creatorName}
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{ev.orderId}</TableCell>
+                          <TableCell>
+                            <span className="font-mono text-sm">
+                              {ev.promoCode}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {ev.orderId}
+                          </TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(ev.orderAmount)}
                           </TableCell>
                           <TableCell>
                             {ev.isVerified ? (
-                              <Badge className="bg-green-100 text-green-700 border-green-200">Verified</Badge>
+                              <Badge className="bg-green-100 text-green-700 border-green-200">
+                                Verified
+                              </Badge>
                             ) : (
                               <Badge variant="secondary">Pending</Badge>
                             )}
@@ -927,9 +976,7 @@ export default function CampaignDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Creator Performance</CardTitle>
-              <CardDescription>
-                Metrics breakdown by creator
-              </CardDescription>
+              <CardDescription>Metrics breakdown by creator</CardDescription>
             </CardHeader>
             <CardContent>
               {campaign.metrics.length === 0 ? (
@@ -996,7 +1043,8 @@ export default function CampaignDetailPage() {
             <CardContent>
               {!contentSnapshots || contentSnapshots.length === 0 ? (
                 <p className="text-center py-8 text-muted-foreground">
-                  No content submitted yet, or views haven&apos;t been synced. Check back after the first hourly sync.
+                  No content submitted yet, or views haven&apos;t been synced.
+                  Check back after the first hourly sync.
                 </p>
               ) : (
                 <Table>
@@ -1021,7 +1069,11 @@ export default function CampaignDetailPage() {
                       if (!snap) return null;
                       const viewGrowth =
                         snap.previousViews > 0
-                          ? (((snap.currentViews - snap.previousViews) / snap.previousViews) * 100).toFixed(1)
+                          ? (
+                              ((snap.currentViews - snap.previousViews) /
+                                snap.previousViews) *
+                              100
+                            ).toFixed(1)
                           : null;
                       return (
                         <TableRow key={`${snap.creatorId}-${i}`}>
@@ -1035,7 +1087,9 @@ export default function CampaignDetailPage() {
                                 />
                               )}
                               <div>
-                                <p className="text-sm font-medium">{snap.creatorName}</p>
+                                <p className="text-sm font-medium">
+                                  {snap.creatorName}
+                                </p>
                                 {snap.instagramHandle && (
                                   <p className="text-xs text-muted-foreground">
                                     @{snap.instagramHandle}
@@ -1044,27 +1098,31 @@ export default function CampaignDetailPage() {
                               </div>
                               {snap.fraudFlags > 0 && (
                                 <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] ml-1">
-                                  ⚠ {snap.fraudFlags} flag{snap.fraudFlags > 1 ? "s" : ""}
+                                  ⚠ {snap.fraudFlags} flag
+                                  {snap.fraudFlags > 1 ? 's' : ''}
                                 </Badge>
                               )}
                             </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant="secondary" className="text-[11px]">
-                              {snap.platform ?? "—"}
+                              {snap.platform ?? '—'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             {formatNumber(snap.currentViews)}
                             {viewGrowth && (
                               <span className="block text-[10px] text-muted-foreground">
-                                {Number(viewGrowth) >= 0 ? "+" : ""}{viewGrowth}%
+                                {Number(viewGrowth) >= 0 ? '+' : ''}
+                                {viewGrowth}%
                               </span>
                             )}
                           </TableCell>
                           <TableCell className="text-right">
                             {snap.deltaViews > 0 ? (
-                              <span className="text-green-600 font-medium">+{formatNumber(snap.deltaViews)}</span>
+                              <span className="text-green-600 font-medium">
+                                +{formatNumber(snap.deltaViews)}
+                              </span>
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
@@ -1079,20 +1137,30 @@ export default function CampaignDetailPage() {
                             {formatNumber(snap.shares)}
                           </TableCell>
                           <TableCell className="text-right">
-                            {snap.reach != null ? formatNumber(snap.reach) : <span className="text-muted-foreground">—</span>}
+                            {snap.reach != null ? (
+                              formatNumber(snap.reach)
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {snap.saves != null ? formatNumber(snap.saves) : <span className="text-muted-foreground">—</span>}
+                            {snap.saves != null ? (
+                              formatNumber(snap.saves)
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {snap.avgWatchTime != null
-                              ? `${(snap.avgWatchTime / 1000).toFixed(1)}s`
-                              : <span className="text-muted-foreground">—</span>}
+                            {snap.avgWatchTime != null ? (
+                              `${(snap.avgWatchTime / 1000).toFixed(1)}s`
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {snap.lastSyncedAt
                               ? new Date(snap.lastSyncedAt).toLocaleString()
-                              : "Not yet"}
+                              : 'Not yet'}
                           </TableCell>
                           <TableCell>
                             <a
@@ -1100,7 +1168,9 @@ export default function CampaignDetailPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              <Button variant="outline" size="sm">View</Button>
+                              <Button variant="outline" size="sm">
+                                View
+                              </Button>
                             </a>
                           </TableCell>
                         </TableRow>

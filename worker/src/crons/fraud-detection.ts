@@ -1,14 +1,14 @@
-import { db } from "../db";
-import { checkClickFraud, checkConversionMismatch } from "../services/fraud";
+import { db } from '../db';
+import { checkClickFraud, checkConversionMismatch } from '../services/fraud';
 
 export async function detectFraud(): Promise<void> {
-  console.log("[fraud-detection] Starting fraud detection sweep...");
+  console.log('[fraud-detection] Starting fraud detection sweep...');
 
   // 1. Check click fraud on active tracking links
   const activeLinks = await db.trackingLink.findMany({
     where: {
       isActive: true,
-      campaign: { status: "LIVE" },
+      campaign: { status: 'LIVE' },
     },
     select: { id: true },
   });
@@ -17,16 +17,19 @@ export async function detectFraud(): Promise<void> {
     try {
       await checkClickFraud(link.id);
     } catch (error) {
-      console.error(`[fraud-detection] Click fraud check failed for link ${link.id}:`, error);
+      console.error(
+        `[fraud-detection] Click fraud check failed for link ${link.id}:`,
+        error
+      );
     }
   }
 
   // 2. Check conversion mismatches on CONVERSION campaigns
   const conversionCampaigns = await db.campaign.findMany({
-    where: { type: "CONVERSION", status: "LIVE" },
+    where: { type: 'CONVERSION', status: 'LIVE' },
     include: {
       participations: {
-        where: { status: "ACTIVE" },
+        where: { status: 'ACTIVE' },
         select: { creatorId: true, campaignId: true },
       },
     },
@@ -78,17 +81,17 @@ export async function detectFraud(): Promise<void> {
       // More than 50% fraud clicks — create bot detection flag
       const existing = await db.fraudFlag.findFirst({
         where: {
-          type: "BOT_DETECTED",
+          type: 'BOT_DETECTED',
           campaignId: link.campaign.id,
-          status: { in: ["DETECTED", "INVESTIGATING"] },
+          status: { in: ['DETECTED', 'INVESTIGATING'] },
         },
       });
 
       if (!existing) {
         await db.fraudFlag.create({
           data: {
-            type: "BOT_DETECTED",
-            status: "DETECTED",
+            type: 'BOT_DETECTED',
+            status: 'DETECTED',
             severity: fraudClicks / totalClicks > 0.8 ? 5 : 4,
             description: `High bot ratio: ${fraudClicks}/${totalClicks} (${Math.round((fraudClicks / totalClicks) * 100)}%) clicks flagged as fraud in last hour`,
             evidence: {
@@ -104,5 +107,5 @@ export async function detectFraud(): Promise<void> {
     }
   }
 
-  console.log("[fraud-detection] Fraud detection sweep completed");
+  console.log('[fraud-detection] Fraud detection sweep completed');
 }

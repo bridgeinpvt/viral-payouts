@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { trpc } from "@/trpc/client";
+import { useState } from 'react';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -19,82 +19,82 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 const FRAUD_STATUSES = [
-  "DETECTED",
-  "INVESTIGATING",
-  "CONFIRMED",
-  "DISMISSED",
+  'DETECTED',
+  'INVESTIGATING',
+  'CONFIRMED',
+  'DISMISSED',
 ] as const;
 const FRAUD_TYPES = [
-  "VIEW_SPIKE",
-  "CLICK_ANOMALY",
-  "CONVERSION_MISMATCH",
-  "BOT_DETECTED",
-  "IP_ABUSE",
+  'VIEW_SPIKE',
+  'CLICK_ANOMALY',
+  'CONVERSION_MISMATCH',
+  'BOT_DETECTED',
+  'IP_ABUSE',
 ] as const;
 
 function getSeverityColor(severity: number): string {
-  if (severity >= 4) return "bg-red-500 text-white";
-  if (severity === 3) return "bg-orange-500 text-white";
-  return "bg-yellow-500 text-white";
+  if (severity >= 4) return 'bg-red-500 text-white';
+  if (severity === 3) return 'bg-orange-500 text-white';
+  return 'bg-yellow-500 text-white';
 }
 
 function getStatusVariant(
-  status: string,
-): "default" | "secondary" | "destructive" | "outline" {
+  status: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
-    case "CONFIRMED":
-      return "destructive";
-    case "DISMISSED":
-      return "outline";
-    case "INVESTIGATING":
-      return "default";
+    case 'CONFIRMED':
+      return 'destructive';
+    case 'DISMISSED':
+      return 'outline';
+    case 'INVESTIGATING':
+      return 'default';
     default:
-      return "secondary";
+      return 'secondary';
   }
 }
 
 export default function FraudMonitoringPage() {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [minSeverity, setMinSeverity] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [minSeverity, setMinSeverity] = useState<string>('all');
   const [resolveNotes, setResolveNotes] = useState<Record<string, string>>({});
 
   const utils = trpc.useUtils();
 
   const queryParams: {
-    status?: "DETECTED" | "INVESTIGATING" | "CONFIRMED" | "DISMISSED";
+    status?: 'DETECTED' | 'INVESTIGATING' | 'CONFIRMED' | 'DISMISSED';
     type?: string;
     minSeverity?: number;
     limit: number;
   } = { limit: 50 };
 
-  if (statusFilter !== "all")
+  if (statusFilter !== 'all')
     queryParams.status = statusFilter as
-      | "DETECTED"
-      | "INVESTIGATING"
-      | "CONFIRMED"
-      | "DISMISSED";
-  if (typeFilter !== "all") queryParams.type = typeFilter;
-  if (minSeverity !== "all") queryParams.minSeverity = parseInt(minSeverity);
+      | 'DETECTED'
+      | 'INVESTIGATING'
+      | 'CONFIRMED'
+      | 'DISMISSED';
+  if (typeFilter !== 'all') queryParams.type = typeFilter;
+  if (minSeverity !== 'all') queryParams.minSeverity = parseInt(minSeverity);
 
   const { data, isLoading } = trpc.admin.getFraudFlags.useQuery(queryParams);
 
   const resolveMutation = trpc.admin.resolveFraudFlag.useMutation({
     onSuccess: () => {
       utils.admin.getFraudFlags.invalidate();
-      toast.success("Fraud flag resolved");
+      toast.success('Fraud flag resolved');
     },
     onError: (err) => {
       toast.error(err.message);
@@ -103,12 +103,12 @@ export default function FraudMonitoringPage() {
 
   function handleResolve(
     flagId: string,
-    status: "INVESTIGATING" | "CONFIRMED" | "DISMISSED",
+    status: 'INVESTIGATING' | 'CONFIRMED' | 'DISMISSED'
   ) {
     resolveMutation.mutate({
       flagId,
       status,
-      note: resolveNotes[flagId] ?? "",
+      note: resolveNotes[flagId] ?? '',
     });
   }
 
@@ -150,7 +150,7 @@ export default function FraudMonitoringPage() {
                   <SelectItem value="all">All Types</SelectItem>
                   {FRAUD_TYPES.map((t) => (
                     <SelectItem key={t} value={t}>
-                      {t.replace(/_/g, " ")}
+                      {t.replace(/_/g, ' ')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -215,7 +215,7 @@ export default function FraudMonitoringPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {flag.type.replace(/_/g, " ")}
+                        {flag.type.replace(/_/g, ' ')}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -232,7 +232,7 @@ export default function FraudMonitoringPage() {
                           {flag.campaign.name}
                         </a>
                       ) : (
-                        "-"
+                        '-'
                       )}
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate">
@@ -244,12 +244,12 @@ export default function FraudMonitoringPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {flag.status !== "CONFIRMED" &&
-                        flag.status !== "DISMISSED" && (
+                      {flag.status !== 'CONFIRMED' &&
+                        flag.status !== 'DISMISSED' && (
                           <div className="flex items-center gap-2">
                             <Input
                               placeholder="Note..."
-                              value={resolveNotes[flag.id] ?? ""}
+                              value={resolveNotes[flag.id] ?? ''}
                               onChange={(e) =>
                                 setResolveNotes((prev) => ({
                                   ...prev,
@@ -258,13 +258,13 @@ export default function FraudMonitoringPage() {
                               }
                               className="w-24"
                             />
-                            {flag.status === "DETECTED" && (
+                            {flag.status === 'DETECTED' && (
                               <Button
                                 size="sm"
                                 variant="secondary"
                                 disabled={resolveMutation.isPending}
                                 onClick={() =>
-                                  handleResolve(flag.id, "INVESTIGATING")
+                                  handleResolve(flag.id, 'INVESTIGATING')
                                 }
                               >
                                 Investigate
@@ -275,7 +275,7 @@ export default function FraudMonitoringPage() {
                               variant="destructive"
                               disabled={resolveMutation.isPending}
                               onClick={() =>
-                                handleResolve(flag.id, "CONFIRMED")
+                                handleResolve(flag.id, 'CONFIRMED')
                               }
                             >
                               Confirm
@@ -285,15 +285,15 @@ export default function FraudMonitoringPage() {
                               variant="outline"
                               disabled={resolveMutation.isPending}
                               onClick={() =>
-                                handleResolve(flag.id, "DISMISSED")
+                                handleResolve(flag.id, 'DISMISSED')
                               }
                             >
                               Dismiss
                             </Button>
                           </div>
                         )}
-                      {(flag.status === "CONFIRMED" ||
-                        flag.status === "DISMISSED") && (
+                      {(flag.status === 'CONFIRMED' ||
+                        flag.status === 'DISMISSED') && (
                         <span className="text-sm text-muted-foreground">
                           Resolved
                         </span>

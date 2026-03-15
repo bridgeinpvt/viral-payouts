@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/server/db";
-import { verifyWebhookSignature } from "@/lib/razorpay";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/server/db';
+import { verifyWebhookSignature } from '@/lib/razorpay';
+import { z } from 'zod';
 
 const razorpayEventSchema = z.object({
   event: z.string(),
@@ -37,10 +37,10 @@ type RazorpayEvent = z.infer<typeof razorpayEventSchema>;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
-    const signature = request.headers.get("x-razorpay-signature");
+    const signature = request.headers.get('x-razorpay-signature');
 
     if (!signature || !verifyWebhookSignature(body, signature)) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
     const rawEvent = JSON.parse(body);
@@ -48,19 +48,19 @@ export async function POST(request: NextRequest) {
     const eventType = event.event;
 
     switch (eventType) {
-      case "payment.captured": {
+      case 'payment.captured': {
         if (event.payload.payment?.entity) {
           await handlePaymentCaptured(event.payload.payment.entity);
         }
         break;
       }
-      case "payout.processed": {
+      case 'payout.processed': {
         if (event.payload.payout?.entity) {
           await handlePayoutProcessed(event.payload.payout.entity);
         }
         break;
       }
-      case "payout.failed": {
+      case 'payout.failed': {
         if (event.payload.payout?.entity) {
           await handlePayoutFailed(event.payload.payout.entity);
         }
@@ -68,19 +68,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ status: "ok" });
+    return NextResponse.json({ status: 'ok' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("Razorpay webhook validation error:", error.errors);
+      console.error('Razorpay webhook validation error:', error.errors);
       return NextResponse.json(
-        { error: "Invalid webhook payload" },
-        { status: 400 },
+        { error: 'Invalid webhook payload' },
+        { status: 400 }
       );
     }
-    console.error("Razorpay webhook error:", error);
+    console.error('Razorpay webhook error:', error);
     return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 500 },
+      { error: 'Webhook processing failed' },
+      { status: 500 }
     );
   }
 }
@@ -91,7 +91,7 @@ async function handlePaymentCaptured(payment: any) {
   const walletId = notes?.walletId;
 
   if (!userId || !walletId) {
-    console.error("Missing userId or walletId in payment notes");
+    console.error('Missing userId or walletId in payment notes');
     return;
   }
 
@@ -112,11 +112,11 @@ async function handlePaymentCaptured(payment: any) {
         walletId,
         toUserId: userId,
         amount: amountInRupees,
-        type: "CAMPAIGN_FUND",
-        status: "COMPLETED",
+        type: 'CAMPAIGN_FUND',
+        status: 'COMPLETED',
         description: `Wallet top-up via Razorpay`,
         referenceId: order_id,
-        referenceType: "RAZORPAY_ORDER",
+        referenceType: 'RAZORPAY_ORDER',
       },
     }),
   ]);
@@ -130,7 +130,7 @@ async function handlePayoutProcessed(payout: any) {
   await db.payout.updateMany({
     where: { id: reference_id },
     data: {
-      status: "COMPLETED",
+      status: 'COMPLETED',
       razorpayPayoutId,
       processedAt: new Date(),
     },
@@ -154,9 +154,9 @@ async function handlePayoutFailed(payout: any) {
     db.payout.update({
       where: { id: reference_id },
       data: {
-        status: "FAILED",
+        status: 'FAILED',
         razorpayPayoutId,
-        failedReason: failure_reason || "Payout failed",
+        failedReason: failure_reason || 'Payout failed',
       },
     }),
     // Refund to creator wallet

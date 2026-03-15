@@ -1,37 +1,37 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Phone, Loader2, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
-import { trpc } from "@/trpc/client";
-import { OTPType } from "@prisma/client";
+} from '@/components/ui/card';
+import { Phone, Loader2, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { trpc } from '@/trpc/client';
+import { OTPType } from '@prisma/client';
 
 export default function VerifyPhonePage() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
 
-  const [phone, setPhone] = useState("");
-  const [countryCode] = useState("91");
+  const [phone, setPhone] = useState('');
+  const [countryCode] = useState('91');
   const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState('');
   const [verified, setVerified] = useState(false);
 
   const sendPhoneOTP = trpc.auth.sendPhoneOTP.useMutation({
     onSuccess: () => {
       setOtpSent(true);
-      toast.success("OTP sent");
+      toast.success('OTP sent');
     },
     onError: (e) => toast.error(e.message),
   });
@@ -39,9 +39,9 @@ export default function VerifyPhonePage() {
   const verifyOTP = trpc.auth.verifyOTPCode.useMutation({
     onSuccess: async () => {
       setVerified(true);
-      toast.success("Phone verified!");
+      toast.success('Phone verified!');
       await updateSession();
-      setTimeout(() => router.push("/"), 1500);
+      setTimeout(() => router.push('/'), 1500);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -92,7 +92,7 @@ export default function VerifyPhonePage() {
                         value={phone}
                         onChange={(e) =>
                           setPhone(
-                            e.target.value.replace(/\D/g, "").slice(0, 10),
+                            e.target.value.replace(/\D/g, '').slice(0, 10)
                           )
                         }
                         className="flex-1"
@@ -125,7 +125,7 @@ export default function VerifyPhonePage() {
                       placeholder="123456"
                       value={otp}
                       onChange={(e) =>
-                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                        setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
                       }
                       maxLength={6}
                     />
@@ -155,7 +155,7 @@ export default function VerifyPhonePage() {
                     className="w-full"
                     onClick={() => {
                       setOtpSent(false);
-                      setOtp("");
+                      setOtp('');
                     }}
                   >
                     Change Phone Number

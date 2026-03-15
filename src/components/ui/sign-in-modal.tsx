@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Dialog,
@@ -6,9 +6,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { LogIn, UserPlus } from "lucide-react";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { LogIn, UserPlus } from 'lucide-react';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -20,8 +20,8 @@ interface SignInModalProps {
 export function SignInModal({
   isOpen,
   onClose,
-  title = "Sign In Required",
-  description = "You need to sign in to access this feature.",
+  title = 'Sign In Required',
+  description = 'You need to sign in to access this feature.',
 }: SignInModalProps) {
   const handleSignIn = () => {
     const authUrl = process.env.NEXT_PUBLIC_AUTH_URL;
@@ -46,11 +46,7 @@ export function SignInModal({
         </DialogHeader>
 
         <div className="flex flex-col gap-3 mt-4">
-          <Button
-            onClick={handleSignIn}
-            size="lg"
-            className="w-full"
-          >
+          <Button onClick={handleSignIn} size="lg" className="w-full">
             <LogIn className="mr-2 h-4 w-4" />
             Sign In
           </Button>

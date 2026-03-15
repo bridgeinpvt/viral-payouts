@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -33,13 +33,14 @@ export function FileUpload({
   const [preview, setPreview] = useState<string | null>(currentImage || null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const { uploadFile, isUploading, uploadProgress, error, setError } = useFileUpload({
-    purpose,
-    onSuccess: (response) => {
-      setPreview(response.url);
-      onUploadComplete?.(response.url, response.id);
-    },
-  });
+  const { uploadFile, isUploading, uploadProgress, error, setError } =
+    useFileUpload({
+      purpose,
+      onSuccess: (response) => {
+        setPreview(response.url);
+        onUploadComplete?.(response.url, response.id);
+      },
+    });
 
   const handleFileSelect = async (file: File) => {
     if (file.size > maxSize * 1024 * 1024) {
@@ -53,7 +54,7 @@ export function FileUpload({
 
     // Upload file
     await uploadFile(file);
-    
+
     // Clean up preview URL
     URL.revokeObjectURL(previewUrl);
   };
@@ -68,7 +69,7 @@ export function FileUpload({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
       handleFileSelect(file);
@@ -104,7 +105,7 @@ export function FileUpload({
   if (variant === 'avatar') {
     return (
       <div className={cn('relative', sizeClasses[size], className)}>
-        <div 
+        <div
           className={cn(
             'relative w-full h-full rounded-full border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors cursor-pointer overflow-hidden group',
             isDragOver && 'border-blue-500 bg-blue-50',
@@ -118,9 +119,9 @@ export function FileUpload({
         >
           {preview ? (
             <>
-              <img 
-                src={preview} 
-                alt="Profile" 
+              <img
+                src={preview}
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -133,7 +134,7 @@ export function FileUpload({
               <span className="text-xs text-center">Upload Image</span>
             </div>
           )}
-          
+
           {isUploading && (
             <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
               <div className="text-center">
@@ -167,9 +168,7 @@ export function FileUpload({
           disabled={disabled}
         />
 
-        {error && (
-          <p className="text-sm text-red-600 mt-2">{error}</p>
-        )}
+        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
       </div>
     );
   }
@@ -191,12 +190,14 @@ export function FileUpload({
         >
           {preview ? (
             <div className="space-y-4">
-              <img 
-                src={preview} 
-                alt="Preview" 
+              <img
+                src={preview}
+                alt="Preview"
                 className="max-h-48 max-w-full mx-auto rounded-lg"
               />
-              <p className="text-sm text-muted-foreground">Click to change image</p>
+              <p className="text-sm text-muted-foreground">
+                Click to change image
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -215,22 +216,20 @@ export function FileUpload({
           {isUploading && (
             <div className="mt-4">
               <div className="bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-blue-600 h-2 rounded-full"
                   style={{ width: `${uploadProgress}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">Uploading... {uploadProgress}%</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Uploading... {uploadProgress}%
+              </p>
             </div>
           )}
         </div>
 
         {preview && !isUploading && (
-          <Button
-            variant="outline"
-            onClick={removeImage}
-            className="w-full"
-          >
+          <Button variant="outline" onClick={removeImage} className="w-full">
             <X className="h-4 w-4 mr-2" />
             Remove Image
           </Button>
@@ -245,9 +244,7 @@ export function FileUpload({
           disabled={disabled}
         />
 
-        {error && (
-          <p className="text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
     );
   }
@@ -267,9 +264,9 @@ export function FileUpload({
 
       {preview && (
         <div className="relative">
-          <img 
-            src={preview} 
-            alt="Preview" 
+          <img
+            src={preview}
+            alt="Preview"
             className="max-h-32 max-w-full mx-auto rounded-lg"
           />
           <Button
@@ -292,9 +289,7 @@ export function FileUpload({
         disabled={disabled}
       />
 
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }

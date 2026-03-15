@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { CampaignType, Platform, AudienceType } from "@prisma/client";
-import { trpc } from "@/trpc/client";
+import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { CampaignType, Platform, AudienceType } from '@prisma/client';
+import { trpc } from '@/trpc/client';
 
-type PromotionType = "PAID" | "ORGANIC";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+type PromotionType = 'PAID' | 'ORGANIC';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Card,
   CardContent,
@@ -18,25 +18,25 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 
 const PLATFORMS: Platform[] = [
-  "INSTAGRAM",
-  "YOUTUBE",
-  "TWITTER",
-  "LINKEDIN",
-  "TIKTOK",
+  'INSTAGRAM',
+  'YOUTUBE',
+  'TWITTER',
+  'LINKEDIN',
+  'TIKTOK',
 ];
 
 const LOCATIONS = [
-  "India",
-  "USA",
-  "UK",
-  "Canada",
-  "Australia",
-  "UAE",
-  "Singapore",
-  "Global",
+  'India',
+  'USA',
+  'UK',
+  'Canada',
+  'Australia',
+  'UAE',
+  'Singapore',
+  'Global',
 ];
 
 const CAMPAIGN_TYPES: {
@@ -45,19 +45,19 @@ const CAMPAIGN_TYPES: {
   description: string;
 }[] = [
   {
-    value: "VIEW",
-    label: "View-based",
-    description: "Pay creators based on views their content receives",
+    value: 'VIEW',
+    label: 'View-based',
+    description: 'Pay creators based on views their content receives',
   },
   {
-    value: "CLICK",
-    label: "Click-based",
-    description: "Pay creators based on clicks to your landing page",
+    value: 'CLICK',
+    label: 'Click-based',
+    description: 'Pay creators based on clicks to your landing page',
   },
   {
-    value: "CONVERSION",
-    label: "Conversion-based",
-    description: "Pay creators based on sales using promo codes",
+    value: 'CONVERSION',
+    label: 'Conversion-based',
+    description: 'Pay creators based on sales using promo codes',
   },
 ];
 
@@ -67,30 +67,30 @@ const PROMOTION_TYPES: {
   description: string;
 }[] = [
   {
-    value: "PAID",
-    label: "Paid Promotion",
+    value: 'PAID',
+    label: 'Paid Promotion',
     description: "Creators disclose it's a paid promotion.",
   },
   {
-    value: "ORGANIC",
-    label: "Organic Promotion",
-    description: "Creators promote organically without explicit disclosure.",
+    value: 'ORGANIC',
+    label: 'Organic Promotion',
+    description: 'Creators promote organically without explicit disclosure.',
   },
 ];
 
 const AUDIENCES: { value: AudienceType; label: string }[] = [
-  { value: "BUSINESS", label: "Business & Professionals" },
-  { value: "COLLEGE", label: "College Students" },
-  { value: "EDUCATORS", label: "Educators & Teachers" },
-  { value: "GAMERS", label: "Gamers & Esports" },
-  { value: "TECH", label: "Tech Enthusiasts" },
-  { value: "ARTISTS", label: "Artists & Creatives" },
-  { value: "FASHION", label: "Fashion & Style" },
-  { value: "BEAUTY", label: "Beauty & Makeup" },
-  { value: "HEALTH_FITNESS", label: "Health & Fitness" },
-  { value: "FOOD", label: "Food & Beverage" },
-  { value: "TRAVEL", label: "Travel & Hospitality" },
-  { value: "LIFESTYLE", label: "Lifestyle" },
+  { value: 'BUSINESS', label: 'Business & Professionals' },
+  { value: 'COLLEGE', label: 'College Students' },
+  { value: 'EDUCATORS', label: 'Educators & Teachers' },
+  { value: 'GAMERS', label: 'Gamers & Esports' },
+  { value: 'TECH', label: 'Tech Enthusiasts' },
+  { value: 'ARTISTS', label: 'Artists & Creatives' },
+  { value: 'FASHION', label: 'Fashion & Style' },
+  { value: 'BEAUTY', label: 'Beauty & Makeup' },
+  { value: 'HEALTH_FITNESS', label: 'Health & Fitness' },
+  { value: 'FOOD', label: 'Food & Beverage' },
+  { value: 'TRAVEL', label: 'Travel & Hospitality' },
+  { value: 'LIFESTYLE', label: 'Lifestyle' },
 ];
 
 interface FormData {
@@ -118,33 +118,33 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  name: "",
-  type: "VIEW",
+  name: '',
+  type: 'VIEW',
   promotionType: undefined,
-  description: "",
-  campaignBrief: "",
-  contentGuidelines: "",
-  rules: "",
-  assetsLink: "",
+  description: '',
+  campaignBrief: '',
+  contentGuidelines: '',
+  rules: '',
+  assetsLink: '',
   targetPlatforms: [],
   targetAudience: [],
   locations: [],
-  startDate: "",
-  endDate: "",
-  payoutPer1KViews: "",
+  startDate: '',
+  endDate: '',
+  payoutPer1KViews: '',
   oauthRequired: false,
-  payoutPerClick: "",
-  landingPageUrl: "",
-  payoutPerSale: "",
-  promoCodeFormat: "",
-  maxPayoutPerCreator: "",
-  totalBudget: "",
+  payoutPerClick: '',
+  landingPageUrl: '',
+  payoutPerSale: '',
+  promoCodeFormat: '',
+  maxPayoutPerCreator: '',
+  totalBudget: '',
 };
 
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -207,24 +207,24 @@ export default function CreateCampaignPage() {
     const budget = parseFloat(form.totalBudget) || 0;
     if (budget === 0) return null;
 
-    if (form.type === "VIEW") {
+    if (form.type === 'VIEW') {
       const payout = parseFloat(form.payoutPer1KViews) || 0;
       if (payout === 0) return null;
       return {
-        label: "Estimated Views",
+        label: 'Estimated Views',
         value: Math.floor((budget / payout) * 1000),
       };
     }
-    if (form.type === "CLICK") {
+    if (form.type === 'CLICK') {
       const payout = parseFloat(form.payoutPerClick) || 0;
       if (payout === 0) return null;
-      return { label: "Estimated Clicks", value: Math.floor(budget / payout) };
+      return { label: 'Estimated Clicks', value: Math.floor(budget / payout) };
     }
-    if (form.type === "CONVERSION") {
+    if (form.type === 'CONVERSION') {
       const payout = parseFloat(form.payoutPerSale) || 0;
       if (payout === 0) return null;
       return {
-        label: "Estimated Conversions",
+        label: 'Estimated Conversions',
         value: Math.floor(budget / payout),
       };
     }
@@ -284,7 +284,7 @@ export default function CreateCampaignPage() {
         {[1, 2, 3, 4].map((s) => (
           <div key={s} className="flex items-center gap-2 flex-1">
             <div
-              className={`h-2 rounded-full flex-1 transition-colors ${s <= step ? "bg-primary" : "bg-muted"}`}
+              className={`h-2 rounded-full flex-1 transition-colors ${s <= step ? 'bg-primary' : 'bg-muted'}`}
             />
           </div>
         ))}
@@ -316,24 +316,24 @@ export default function CreateCampaignPage() {
               <div className="grid gap-3">
                 {[
                   {
-                    value: "VIEW",
-                    label: "Brand Awareness",
-                    desc: "Maximize your reach and get your brand seen by new audiences.",
+                    value: 'VIEW',
+                    label: 'Brand Awareness',
+                    desc: 'Maximize your reach and get your brand seen by new audiences.',
                   },
                   {
-                    value: "CONVERSION",
-                    label: "Sales & Conversions",
-                    desc: "Drive sales and actions on your website or store.",
+                    value: 'CONVERSION',
+                    label: 'Sales & Conversions',
+                    desc: 'Drive sales and actions on your website or store.',
                   },
                   {
-                    value: "CLICK",
-                    label: "Engagement",
-                    desc: "Increase likes, comments, shares and community interaction.",
+                    value: 'CLICK',
+                    label: 'Engagement',
+                    desc: 'Increase likes, comments, shares and community interaction.',
                   },
                 ].map((ct) => (
                   <label
                     key={ct.value}
-                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${form.type === ct.value ? "border-primary bg-primary/10" : ""}`}
+                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${form.type === ct.value ? 'border-primary bg-primary/10' : ''}`}
                   >
                     <input
                       type="radio"
@@ -524,7 +524,7 @@ export default function CreateCampaignPage() {
             </div>
             {duration > 0 && (
               <p className="text-sm">
-                Campaign duration: {duration} day{duration !== 1 ? "s" : ""}
+                Campaign duration: {duration} day{duration !== 1 ? 's' : ''}
               </p>
             )}
           </CardContent>
@@ -565,24 +565,24 @@ export default function CreateCampaignPage() {
               <div className="grid gap-3">
                 {[
                   {
-                    value: "UGC",
-                    label: "User Generated Content (UGC)",
-                    desc: "Creators will create videos using face and product/service (explanation, showcasing, etc).",
+                    value: 'UGC',
+                    label: 'User Generated Content (UGC)',
+                    desc: 'Creators will create videos using face and product/service (explanation, showcasing, etc).',
                   },
                   {
-                    value: "CLIPPING",
-                    label: "Clipping",
-                    desc: "Using viral hooks and then creating a viral video for brand and creators.",
+                    value: 'CLIPPING',
+                    label: 'Clipping',
+                    desc: 'Using viral hooks and then creating a viral video for brand and creators.',
                   },
                   {
-                    value: "POSTING",
-                    label: "Posting",
-                    desc: "Post product/service images for brands and creators so that they get views.",
+                    value: 'POSTING',
+                    label: 'Posting',
+                    desc: 'Post product/service images for brands and creators so that they get views.',
                   },
                 ].map((pt) => (
                   <label
                     key={pt.value}
-                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${form.promotionType === pt.value ? "border-primary bg-primary/10" : ""}`}
+                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${form.promotionType === pt.value ? 'border-primary bg-primary/10' : ''}`}
                   >
                     <input
                       type="radio"
@@ -699,13 +699,13 @@ export default function CreateCampaignPage() {
                 <div>
                   <p className="text-sm">Platforms</p>
                   <p className="font-medium">
-                    {form.targetPlatforms.join(", ")}
+                    {form.targetPlatforms.join(', ')}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm">Audience Categories</p>
                   <p className="font-medium">
-                    {form.targetAudience.join(", ")}
+                    {form.targetAudience.join(', ')}
                   </p>
                 </div>
               </div>
@@ -713,12 +713,12 @@ export default function CreateCampaignPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm">Locations</p>
-                  <p className="font-medium">{form.locations.join(", ")}</p>
+                  <p className="font-medium">{form.locations.join(', ')}</p>
                 </div>
                 <div>
                   <p className="text-sm">Duration</p>
                   <p className="font-medium">
-                    {duration} day{duration !== 1 ? "s" : ""}
+                    {duration} day{duration !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
@@ -759,7 +759,7 @@ export default function CreateCampaignPage() {
               Back
             </Button>
             <Button disabled={createMutation.isPending} onClick={handleSubmit}>
-              {createMutation.isPending ? "Creating..." : "Create Campaign"}
+              {createMutation.isPending ? 'Creating...' : 'Create Campaign'}
             </Button>
           </CardFooter>
         </Card>

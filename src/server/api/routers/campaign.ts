@@ -1,12 +1,12 @@
-import { z } from "zod";
+import { z } from 'zod';
 import {
   createTRPCRouter,
   publicProcedure,
   protectedProcedure,
   brandProcedure,
   creatorProcedure,
-} from "@/server/api/trpc";
-import { TRPCError } from "@trpc/server";
+} from '@/server/api/trpc';
+import { TRPCError } from '@trpc/server';
 import {
   CampaignType,
   CampaignStatus,
@@ -14,27 +14,27 @@ import {
   AudienceType,
   ParticipationStatus,
   MediaType,
-} from "@prisma/client";
+} from '@prisma/client';
 
-type PromotionType = "UGC" | "CLIPPING" | "POSTING";
+type PromotionType = 'UGC' | 'CLIPPING' | 'POSTING';
 
 function generateSlug(name: string): string {
   return (
     name
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") +
-    "-" +
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') +
+    '-' +
     Date.now().toString(36)
   );
 }
 
 function generatePromoCode(format?: string | null): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const random = Array.from({ length: 6 }, () =>
-    chars.charAt(Math.floor(Math.random() * chars.length)),
-  ).join("");
-  return format ? format.replace("{{CODE}}", random) : random;
+    chars.charAt(Math.floor(Math.random() * chars.length))
+  ).join('');
+  return format ? format.replace('{{CODE}}', random) : random;
 }
 
 export const campaignRouter = createTRPCRouter({
@@ -60,7 +60,7 @@ export const campaignRouter = createTRPCRouter({
         targetAudience: z.array(z.nativeEnum(AudienceType)).optional(),
         targetCategories: z.array(z.string()).optional(),
         locations: z.array(z.string()).optional(),
-        promotionType: z.enum(["UGC", "CLIPPING", "POSTING"]).optional(),
+        promotionType: z.enum(['UGC', 'CLIPPING', 'POSTING']).optional(),
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
         duration: z.number().int().positive(),
@@ -77,7 +77,7 @@ export const campaignRouter = createTRPCRouter({
         // Step 3: Budget
         totalBudget: z.number().min(25000),
         platformCommissionRate: z.number().min(0).max(1).optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const slug = generateSlug(input.name);
@@ -137,7 +137,7 @@ export const campaignRouter = createTRPCRouter({
         targetAudience: z.array(z.nativeEnum(AudienceType)).optional(),
         targetCategories: z.array(z.string()).optional(),
         locations: z.array(z.string()).optional(),
-        promotionType: z.enum(["UGC", "CLIPPING", "POSTING"]).optional(),
+        promotionType: z.enum(['UGC', 'CLIPPING', 'POSTING']).optional(),
         totalBudget: z.number().min(25000).optional(),
         payoutPer1KViews: z.number().positive().optional(),
         oauthRequired: z.boolean().optional(),
@@ -149,20 +149,20 @@ export const campaignRouter = createTRPCRouter({
         startDate: z.coerce.date().optional(),
         endDate: z.coerce.date().optional(),
         duration: z.number().int().positive().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
 
       const existing = await ctx.db.campaign.findUnique({ where: { id } });
       if (!existing || existing.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       if (existing.status !== CampaignStatus.DRAFT) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Only draft campaigns can be edited",
+          code: 'BAD_REQUEST',
+          message: 'Only draft campaigns can be edited',
         });
       }
 
@@ -179,7 +179,7 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!campaign || campaign.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       if (
@@ -188,16 +188,16 @@ export const campaignRouter = createTRPCRouter({
         campaign.totalBudget < 25000
       ) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
+          code: 'BAD_REQUEST',
           message:
-            "Please complete all required fields. Minimum budget is ₹25,000",
+            'Please complete all required fields. Minimum budget is ₹25,000',
         });
       }
 
-      if (!campaign.escrow || campaign.escrow.status !== "LOCKED") {
+      if (!campaign.escrow || campaign.escrow.status !== 'LOCKED') {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Campaign budget must be funded in escrow before publishing",
+          code: 'BAD_REQUEST',
+          message: 'Campaign budget must be funded in escrow before publishing',
         });
       }
 
@@ -226,13 +226,13 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!campaign || campaign.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       if (campaign.status !== CampaignStatus.LIVE) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Only live campaigns can be paused",
+          code: 'BAD_REQUEST',
+          message: 'Only live campaigns can be paused',
         });
       }
 
@@ -251,13 +251,13 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!campaign || campaign.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       if (campaign.status !== CampaignStatus.PAUSED) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Only paused campaigns can be resumed",
+          code: 'BAD_REQUEST',
+          message: 'Only paused campaigns can be resumed',
         });
       }
 
@@ -276,10 +276,10 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!source || source.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
-      const slug = generateSlug(source.name + " copy");
+      const slug = generateSlug(source.name + ' copy');
 
       return await ctx.db.campaign.create({
         data: {
@@ -318,7 +318,7 @@ export const campaignRouter = createTRPCRouter({
   getBrandCampaigns: brandProcedure.query(async ({ ctx }) => {
     return await ctx.db.campaign.findMany({
       where: { brandId: ctx.session.user.id },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       include: {
         escrow: {
           select: { totalAmount: true, releasedAmount: true, status: true },
@@ -356,8 +356,8 @@ export const campaignRouter = createTRPCRouter({
 
       if (!campaign) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Campaign not found",
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
         });
       }
 
@@ -394,17 +394,17 @@ export const campaignRouter = createTRPCRouter({
               trackingLinks: true,
               promoCode: true,
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
           },
-          metrics: { orderBy: { earnedAmount: "desc" } },
-          dailyAnalytics: { orderBy: { date: "desc" }, take: 30 },
-          fraudFlags: { orderBy: { createdAt: "desc" } },
-          media: { orderBy: { sortOrder: "asc" } },
+          metrics: { orderBy: { earnedAmount: 'desc' } },
+          dailyAnalytics: { orderBy: { date: 'desc' }, take: 30 },
+          fraudFlags: { orderBy: { createdAt: 'desc' } },
+          media: { orderBy: { sortOrder: 'asc' } },
         },
       });
 
       if (!campaign || campaign.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       return campaign;
@@ -416,7 +416,7 @@ export const campaignRouter = createTRPCRouter({
       z.object({
         campaignId: z.string(),
         creatorId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const campaign = await ctx.db.campaign.findUnique({
@@ -424,7 +424,7 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!campaign || campaign.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       // Check not already participating
@@ -439,8 +439,8 @@ export const campaignRouter = createTRPCRouter({
 
       if (existing) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "Creator is already part of this campaign",
+          code: 'CONFLICT',
+          message: 'Creator is already part of this campaign',
         });
       }
 
@@ -449,10 +449,10 @@ export const campaignRouter = createTRPCRouter({
         where: { id: input.creatorId },
       });
 
-      if (!creator || creator.role !== "CREATOR") {
+      if (!creator || creator.role !== 'CREATOR') {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Creator not found",
+          code: 'NOT_FOUND',
+          message: 'Creator not found',
         });
       }
 
@@ -518,7 +518,7 @@ export const campaignRouter = createTRPCRouter({
   // Approve participation (brand)
   approveParticipation: brandProcedure
     .input(
-      z.object({ participationId: z.string(), note: z.string().optional() }),
+      z.object({ participationId: z.string(), note: z.string().optional() })
     )
     .mutation(async ({ ctx, input }) => {
       const participation = await ctx.db.campaignParticipation.findUnique({
@@ -528,26 +528,26 @@ export const campaignRouter = createTRPCRouter({
 
       if (!participation) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Participation not found",
+          code: 'NOT_FOUND',
+          message: 'Participation not found',
         });
       }
 
       if (participation.campaign.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       if (participation.campaign.status !== CampaignStatus.LIVE) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Can only approve participation for live campaigns",
+          code: 'BAD_REQUEST',
+          message: 'Can only approve participation for live campaigns',
         });
       }
 
       if (participation.status !== ParticipationStatus.APPLIED) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Can only approve pending applications",
+          code: 'BAD_REQUEST',
+          message: 'Can only approve pending applications',
         });
       }
 
@@ -613,32 +613,32 @@ export const campaignRouter = createTRPCRouter({
           if (!creator?.email) return;
 
           const payoutLine =
-            campaign.type === "VIEW"
+            campaign.type === 'VIEW'
               ? `₹${campaign.payoutPer1KViews ?? 0} per 1K views`
-              : campaign.type === "CLICK"
+              : campaign.type === 'CLICK'
                 ? `₹${campaign.payoutPerClick ?? 0} per click`
                 : `₹${campaign.payoutPerSale ?? 0} per sale`;
 
-          const appUrl = process.env.NEXTAUTH_URL ?? "https://viralpayouts.com";
+          const appUrl = process.env.NEXTAUTH_URL ?? 'https://viralpayouts.com';
 
           // Use Resend directly if configured; fall back to console in dev
           const RESEND_API_KEY = process.env.RESEND_API_KEY;
           if (RESEND_API_KEY) {
-            await fetch("https://api.resend.com/emails", {
-              method: "POST",
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
               headers: {
                 Authorization: `Bearer ${RESEND_API_KEY}`,
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
               },
               body: JSON.stringify({
                 from:
-                  process.env.RESEND_FROM_EMAIL ?? "noreply@viralpayouts.com",
+                  process.env.RESEND_FROM_EMAIL ?? 'noreply@viralpayouts.com',
                 to: creator.email,
                 subject: `✅ You've been approved for "${campaign.name}"`,
                 html: `
                   <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto;">
                     <h2 style="color:#111;">🎉 You're approved!</h2>
-                    <p>Hi ${creator.name ?? "Creator"},</p>
+                    <p>Hi ${creator.name ?? 'Creator'},</p>
                     <p>Great news — you've been approved to participate in the <strong>${campaign.name}</strong> campaign.</p>
                     <table style="width:100%;border-collapse:collapse;margin:16px 0;">
                       <tr><td style="padding:6px;color:#555;">Campaign</td><td style="padding:6px;font-weight:600;">${campaign.name}</td></tr>
@@ -653,12 +653,12 @@ export const campaignRouter = createTRPCRouter({
             });
           } else {
             console.log(
-              `[DEV] Approval email to ${creator.email} for campaign "${campaign.name}" (payout: ${payoutLine})`,
+              `[DEV] Approval email to ${creator.email} for campaign "${campaign.name}" (payout: ${payoutLine})`
             );
           }
         })
         .catch((err) =>
-          console.warn("[approveParticipation] email error:", err),
+          console.warn('[approveParticipation] email error:', err)
         );
 
       return updated;
@@ -675,13 +675,13 @@ export const campaignRouter = createTRPCRouter({
 
       if (!participation) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Participation not found",
+          code: 'NOT_FOUND',
+          message: 'Participation not found',
         });
       }
 
       if (participation.campaign.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       return await ctx.db.campaignParticipation.update({
@@ -704,9 +704,9 @@ export const campaignRouter = createTRPCRouter({
             type: z.nativeEnum(MediaType),
             url: z.string().url(),
             filename: z.string().optional(),
-          }),
+          })
         ),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const campaign = await ctx.db.campaign.findUnique({
@@ -715,7 +715,7 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!campaign || campaign.brandId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       const startingSortOrder = campaign.media.length;
@@ -732,7 +732,7 @@ export const campaignRouter = createTRPCRouter({
               sortOrder: startingSortOrder + idx,
             },
           });
-        }),
+        })
       );
 
       return newMedia;
@@ -748,7 +748,7 @@ export const campaignRouter = createTRPCRouter({
       z.object({
         campaignId: z.string(),
         platforms: z.array(z.nativeEnum(Platform)),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const campaign = await ctx.db.campaign.findUnique({
@@ -757,8 +757,8 @@ export const campaignRouter = createTRPCRouter({
 
       if (!campaign || campaign.status !== CampaignStatus.LIVE) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Campaign is not accepting applications",
+          code: 'BAD_REQUEST',
+          message: 'Campaign is not accepting applications',
         });
       }
 
@@ -774,8 +774,8 @@ export const campaignRouter = createTRPCRouter({
 
       if (existing) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "You have already applied to this campaign",
+          code: 'CONFLICT',
+          message: 'You have already applied to this campaign',
         });
       }
 
@@ -800,7 +800,7 @@ export const campaignRouter = createTRPCRouter({
         contentUrl: z.string().url(),
         platform: z.nativeEnum(Platform),
         caption: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const participation = await ctx.db.campaignParticipation.findUnique({
@@ -808,7 +808,7 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!participation || participation.creatorId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       if (
@@ -816,8 +816,8 @@ export const campaignRouter = createTRPCRouter({
         participation.status !== ParticipationStatus.ACTIVE
       ) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Cannot submit content at this stage",
+          code: 'BAD_REQUEST',
+          message: 'Cannot submit content at this stage',
         });
       }
 
@@ -840,7 +840,7 @@ export const campaignRouter = createTRPCRouter({
         .object({
           status: z.nativeEnum(ParticipationStatus).optional(),
         })
-        .optional(),
+        .optional()
     )
     .query(async ({ ctx, input }) => {
       return await ctx.db.campaignParticipation.findMany({
@@ -848,7 +848,7 @@ export const campaignRouter = createTRPCRouter({
           creatorId: ctx.session.user.id,
           ...(input?.status && { status: input.status }),
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           campaign: {
             include: {
@@ -899,8 +899,8 @@ export const campaignRouter = createTRPCRouter({
 
       if (!participation || participation.creatorId !== ctx.session.user.id) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Participation not found",
+          code: 'NOT_FOUND',
+          message: 'Participation not found',
         });
       }
 
@@ -924,7 +924,7 @@ export const campaignRouter = createTRPCRouter({
       z.object({
         participationId: z.string(),
         platform: z.nativeEnum(Platform),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const participation = await ctx.db.campaignParticipation.findUnique({
@@ -933,7 +933,7 @@ export const campaignRouter = createTRPCRouter({
       });
 
       if (!participation || participation.creatorId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       if (
@@ -941,22 +941,22 @@ export const campaignRouter = createTRPCRouter({
         participation.status !== ParticipationStatus.ACTIVE
       ) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Can only generate links for approved participations",
+          code: 'BAD_REQUEST',
+          message: 'Can only generate links for approved participations',
         });
       }
 
       if (participation.campaign.type !== CampaignType.CLICK) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Tracking links are only for CLICK campaigns",
+          code: 'BAD_REQUEST',
+          message: 'Tracking links are only for CLICK campaigns',
         });
       }
 
       if (!participation.campaign.landingPageUrl) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Campaign does not have a landing page URL configured",
+          code: 'BAD_REQUEST',
+          message: 'Campaign does not have a landing page URL configured',
         });
       }
 
@@ -971,7 +971,7 @@ export const campaignRouter = createTRPCRouter({
 
       if (existing) {
         throw new TRPCError({
-          code: "CONFLICT",
+          code: 'CONFLICT',
           message: `You already have a tracking link for ${input.platform}`,
         });
       }
@@ -1010,7 +1010,7 @@ export const campaignRouter = createTRPCRouter({
           cursor: z.string().optional(),
           limit: z.number().min(1).max(50).default(20),
         })
-        .optional(),
+        .optional()
     )
     .query(async ({ ctx, input }) => {
       const where: Record<string, unknown> = {
@@ -1023,8 +1023,8 @@ export const campaignRouter = createTRPCRouter({
       if (input?.category) where.targetCategories = { has: input.category };
       if (input?.search) {
         where.OR = [
-          { name: { contains: input.search, mode: "insensitive" } },
-          { productName: { contains: input.search, mode: "insensitive" } },
+          { name: { contains: input.search, mode: 'insensitive' } },
+          { productName: { contains: input.search, mode: 'insensitive' } },
         ];
       }
 
@@ -1033,7 +1033,7 @@ export const campaignRouter = createTRPCRouter({
         where,
         take: limit + 1,
         cursor: input?.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           brand: {
             select: {
@@ -1109,7 +1109,7 @@ export const campaignRouter = createTRPCRouter({
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
 
     return saved.map((s) => s.campaign);
