@@ -1,14 +1,13 @@
-import { z } from "zod";
+import { z } from 'zod';
 import {
   createTRPCRouter,
   brandProcedure,
   creatorProcedure,
   adminProcedure,
   protectedProcedure,
-} from "@/server/api/trpc";
-import { TRPCError } from "@trpc/server";
-import { FraudFlagStatus } from "@prisma/client";
-
+} from '@/server/api/trpc';
+import { TRPCError } from '@trpc/server';
+import { FraudFlagStatus } from '@prisma/client';
 
 export const analyticsRouter = createTRPCRouter({
   // ==========================================
@@ -36,39 +35,44 @@ export const analyticsRouter = createTRPCRouter({
     const totalBudget = campaigns.reduce((sum, c) => sum + c.totalBudget, 0);
     const totalViews = campaigns.reduce((sum, c) => sum + c.totalViews, 0);
     const totalClicks = campaigns.reduce((sum, c) => sum + c.totalClicks, 0);
-    const totalConversions = campaigns.reduce((sum, c) => sum + c.totalConversions, 0);
-    const liveCampaigns = campaigns.filter((c) => c.status === "LIVE").length;
+    const totalConversions = campaigns.reduce(
+      (sum, c) => sum + c.totalConversions,
+      0
+    );
+    const liveCampaigns = campaigns.filter((c) => c.status === 'LIVE').length;
 
     // Top creators by earnings across brand's campaigns
     const campaignIds = campaigns.map((c) => c.id);
-    const topCreators = campaignIds.length > 0
-      ? await ctx.db.campaignMetrics.findMany({
-        where: { campaignId: { in: campaignIds } },
-        orderBy: { earnedAmount: "desc" },
-        take: 10,
-        select: {
-          creatorId: true,
-          earnedAmount: true,
-          verifiedViews: true,
-          verifiedClicks: true,
-          verifiedConversions: true,
-        },
-      })
-      : [];
+    const topCreators =
+      campaignIds.length > 0
+        ? await ctx.db.campaignMetrics.findMany({
+            where: { campaignId: { in: campaignIds } },
+            orderBy: { earnedAmount: 'desc' },
+            take: 10,
+            select: {
+              creatorId: true,
+              earnedAmount: true,
+              verifiedViews: true,
+              verifiedClicks: true,
+              verifiedConversions: true,
+            },
+          })
+        : [];
 
     // Daily trends (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const dailyTrends = campaignIds.length > 0
-      ? await ctx.db.campaignDailyAnalytics.findMany({
-        where: {
-          campaignId: { in: campaignIds },
-          date: { gte: thirtyDaysAgo },
-        },
-        orderBy: { date: "asc" },
-      })
-      : [];
+    const dailyTrends =
+      campaignIds.length > 0
+        ? await ctx.db.campaignDailyAnalytics.findMany({
+            where: {
+              campaignId: { in: campaignIds },
+              date: { gte: thirtyDaysAgo },
+            },
+            orderBy: { date: 'asc' },
+          })
+        : [];
 
     return {
       summary: {
@@ -79,7 +83,10 @@ export const analyticsRouter = createTRPCRouter({
         totalViews,
         totalClicks,
         totalConversions,
-        roi: totalSpent > 0 ? ((totalConversions * 100) / totalSpent).toFixed(2) : "0",
+        roi:
+          totalSpent > 0
+            ? ((totalConversions * 100) / totalSpent).toFixed(2)
+            : '0',
       },
       campaigns,
       topCreators,
@@ -117,7 +124,10 @@ export const analyticsRouter = createTRPCRouter({
     const totalPaid = metrics.reduce((sum, m) => sum + m.paidAmount, 0);
     const totalViews = metrics.reduce((sum, m) => sum + m.verifiedViews, 0);
     const totalClicks = metrics.reduce((sum, m) => sum + m.verifiedClicks, 0);
-    const totalConversions = metrics.reduce((sum, m) => sum + m.verifiedConversions, 0);
+    const totalConversions = metrics.reduce(
+      (sum, m) => sum + m.verifiedConversions,
+      0
+    );
 
     // Creator profile for tier info
     const profile = await ctx.db.creatorProfile.findUnique({
@@ -130,14 +140,14 @@ export const analyticsRouter = createTRPCRouter({
 
     const recentTransactions = wallet
       ? await ctx.db.transaction.findMany({
-        where: {
-          walletId: wallet.id,
-          type: "EARNING",
-          createdAt: { gte: thirtyDaysAgo },
-        },
-        orderBy: { createdAt: "asc" },
-        select: { amount: true, createdAt: true, description: true },
-      })
+          where: {
+            walletId: wallet.id,
+            type: 'EARNING',
+            createdAt: { gte: thirtyDaysAgo },
+          },
+          orderBy: { createdAt: 'asc' },
+          select: { amount: true, createdAt: true, description: true },
+        })
       : [];
 
     return {
@@ -150,13 +160,15 @@ export const analyticsRouter = createTRPCRouter({
         totalClicks,
         totalConversions,
         activeCampaigns: participations.filter(
-          (p) => p.status === "APPROVED" || p.status === "ACTIVE"
+          (p) => p.status === 'APPROVED' || p.status === 'ACTIVE'
         ).length,
-        completedCampaigns: participations.filter((p) => p.status === "COMPLETED").length,
+        completedCampaigns: participations.filter(
+          (p) => p.status === 'COMPLETED'
+        ).length,
       },
-      tier: profile?.tier ?? "BRONZE",
+      tier: profile?.tier ?? 'BRONZE',
       tierProgress: {
-        currentTier: profile?.tier ?? "BRONZE",
+        currentTier: profile?.tier ?? 'BRONZE',
         totalEarnings: profile?.totalEarnings ?? 0,
         totalCampaigns: profile?.totalCampaigns ?? 0,
       },
@@ -176,33 +188,34 @@ export const analyticsRouter = createTRPCRouter({
     // Platform daily analytics
     const platformTrends = await ctx.db.platformDailyAnalytics.findMany({
       where: { date: { gte: thirtyDaysAgo } },
-      orderBy: { date: "asc" },
+      orderBy: { date: 'asc' },
     });
 
     // Funnel: signups → onboarded → active campaigns → conversions
-    const [totalUsers, onboardedUsers, activeCampaigns, totalConversions] = await Promise.all([
-      ctx.db.user.count(),
-      ctx.db.user.count({ where: { isOnboarded: true } }),
-      ctx.db.campaign.count({ where: { status: "LIVE" } }),
-      ctx.db.conversionEvent.count({ where: { isVerified: true } }),
-    ]);
+    const [totalUsers, onboardedUsers, activeCampaigns, totalConversions] =
+      await Promise.all([
+        ctx.db.user.count(),
+        ctx.db.user.count({ where: { isOnboarded: true } }),
+        ctx.db.campaign.count({ where: { status: 'LIVE' } }),
+        ctx.db.conversionEvent.count({ where: { isVerified: true } }),
+      ]);
 
     // Brand breakdown
     const brandStats = await ctx.db.user.groupBy({
-      by: ["role"],
+      by: ['role'],
       _count: true,
     });
 
     // Campaign type breakdown
     const campaignTypeStats = await ctx.db.campaign.groupBy({
-      by: ["type"],
+      by: ['type'],
       _count: true,
       _sum: { totalBudget: true, spentBudget: true },
     });
 
     // Top campaigns by spend
     const topCampaigns = await ctx.db.campaign.findMany({
-      orderBy: { spentBudget: "desc" },
+      orderBy: { spentBudget: 'desc' },
       take: 10,
       select: {
         id: true,
@@ -211,13 +224,18 @@ export const analyticsRouter = createTRPCRouter({
         totalBudget: true,
         spentBudget: true,
         totalParticipants: true,
-        brand: { select: { name: true, brandProfile: { select: { companyName: true } } } },
+        brand: {
+          select: {
+            name: true,
+            brandProfile: { select: { companyName: true } },
+          },
+        },
       },
     });
 
     // Top creators by earnings
     const topCreators = await ctx.db.creatorProfile.findMany({
-      orderBy: { totalEarnings: "desc" },
+      orderBy: { totalEarnings: 'desc' },
       take: 10,
       select: {
         userId: true,
@@ -251,26 +269,32 @@ export const analyticsRouter = createTRPCRouter({
       });
 
       if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
       }
 
       // Verify access: must be brand owner or admin
-      if (campaign.brandId !== ctx.session.user.id && !ctx.session.user.isAdmin) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+      if (
+        campaign.brandId !== ctx.session.user.id &&
+        !ctx.session.user.isAdmin
+      ) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       const [dailyAnalytics, metrics, fraudFlags] = await Promise.all([
         ctx.db.campaignDailyAnalytics.findMany({
           where: { campaignId: input.campaignId },
-          orderBy: { date: "asc" },
+          orderBy: { date: 'asc' },
         }),
         ctx.db.campaignMetrics.findMany({
           where: { campaignId: input.campaignId },
-          orderBy: { earnedAmount: "desc" },
+          orderBy: { earnedAmount: 'desc' },
         }),
         ctx.db.fraudFlag.findMany({
           where: { campaignId: input.campaignId },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
         }),
       ]);
 
@@ -308,16 +332,25 @@ export const analyticsRouter = createTRPCRouter({
       });
 
       if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
       }
 
-      if (campaign.brandId !== ctx.session.user.id && !ctx.session.user.isAdmin) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+      if (
+        campaign.brandId !== ctx.session.user.id &&
+        !ctx.session.user.isAdmin
+      ) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       // Get all participations with creator info
       const participations = await ctx.db.campaignParticipation.findMany({
-        where: { campaignId: input.campaignId, status: { in: ["ACTIVE", "COMPLETED"] } },
+        where: {
+          campaignId: input.campaignId,
+          status: { in: ['ACTIVE', 'COMPLETED'] },
+        },
         select: {
           creatorId: true,
           contentUrl: true,
@@ -326,7 +359,9 @@ export const analyticsRouter = createTRPCRouter({
             select: {
               name: true,
               image: true,
-              creatorProfile: { select: { displayName: true, instagramHandle: true } },
+              creatorProfile: {
+                select: { displayName: true, instagramHandle: true },
+              },
             },
           },
         },
@@ -340,21 +375,25 @@ export const analyticsRouter = createTRPCRouter({
 
           // Latest snapshot
           const latest = await ctx.db.viewSnapshot.findFirst({
-            where: { campaignId: input.campaignId, creatorId: p.creatorId, postUrl },
-            orderBy: { snapshotAt: "desc" },
+            where: {
+              campaignId: input.campaignId,
+              creatorId: p.creatorId,
+              postUrl,
+            },
+            orderBy: { snapshotAt: 'desc' },
           });
 
           // Previous snapshot (for trend indicator)
           const previous = latest
             ? await ctx.db.viewSnapshot.findFirst({
-              where: {
-                campaignId: input.campaignId,
-                creatorId: p.creatorId,
-                postUrl,
-                snapshotAt: { lt: latest.snapshotAt },
-              },
-              orderBy: { snapshotAt: "desc" },
-            })
+                where: {
+                  campaignId: input.campaignId,
+                  creatorId: p.creatorId,
+                  postUrl,
+                  snapshotAt: { lt: latest.snapshotAt },
+                },
+                orderBy: { snapshotAt: 'desc' },
+              })
             : null;
 
           // Check fraud flags for this creator in this campaign
@@ -369,7 +408,9 @@ export const analyticsRouter = createTRPCRouter({
           return {
             creatorId: p.creatorId,
             creatorName:
-              p.creator.creatorProfile?.displayName ?? p.creator.name ?? p.creatorId,
+              p.creator.creatorProfile?.displayName ??
+              p.creator.name ??
+              p.creatorId,
             creatorImage: p.creator.image,
             instagramHandle: p.creator.creatorProfile?.instagramHandle,
             platform: p.platform,
@@ -414,7 +455,7 @@ export const analyticsRouter = createTRPCRouter({
       });
 
       if (!participation || participation.creatorId !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       if (!participation.contentUrl) return [];
@@ -426,21 +467,21 @@ export const analyticsRouter = createTRPCRouter({
           creatorId: participation.creatorId,
           postUrl: participation.contentUrl,
         },
-        orderBy: { snapshotAt: "desc" },
+        orderBy: { snapshotAt: 'desc' },
         take: 1, // only the latest
       });
 
       const latest = snapshots[0];
       const previous = latest
         ? await ctx.db.viewSnapshot.findFirst({
-          where: {
-            campaignId: participation.campaignId,
-            creatorId: participation.creatorId,
-            postUrl: participation.contentUrl,
-            snapshotAt: { lt: latest.snapshotAt },
-          },
-          orderBy: { snapshotAt: "desc" },
-        })
+            where: {
+              campaignId: participation.campaignId,
+              creatorId: participation.creatorId,
+              postUrl: participation.contentUrl,
+              snapshotAt: { lt: latest.snapshotAt },
+            },
+            orderBy: { snapshotAt: 'desc' },
+          })
         : null;
 
       if (!latest) return [];
@@ -450,7 +491,9 @@ export const analyticsRouter = createTRPCRouter({
           postUrl: participation.contentUrl,
           platform: participation.platform,
           currentViews: latest.viewCount,
-          deltaViews: latest.deltaViews ?? (previous ? Math.max(0, latest.viewCount - previous.viewCount) : 0),
+          deltaViews:
+            latest.deltaViews ??
+            (previous ? Math.max(0, latest.viewCount - previous.viewCount) : 0),
           likes: latest.likeCount ?? 0,
           comments: latest.commentCount ?? 0,
           shares: latest.shareCount ?? 0,
@@ -469,25 +512,31 @@ export const analyticsRouter = createTRPCRouter({
   getAdminCreatorInsights: adminProcedure
     .input(z.object({ campaignId: z.string(), creatorId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [participation, snapshots, fraudFlags, creatorProfile] = await Promise.all([
-        ctx.db.campaignParticipation.findUnique({
-          where: { campaignId_creatorId: { campaignId: input.campaignId, creatorId: input.creatorId } },
-          select: { platform: true, contentUrl: true, status: true },
-        }),
-        ctx.db.viewSnapshot.findMany({
-          where: { campaignId: input.campaignId, creatorId: input.creatorId },
-          orderBy: { snapshotAt: "desc" },
-          take: 50,
-        }),
-        ctx.db.fraudFlag.findMany({
-          where: { campaignId: input.campaignId, creatorId: input.creatorId },
-          orderBy: { createdAt: "desc" },
-        }),
-        ctx.db.creatorProfile.findUnique({
-          where: { userId: input.creatorId },
-          select: { instagramTokenExpiresAt: true },
-        }),
-      ]);
+      const [participation, snapshots, fraudFlags, creatorProfile] =
+        await Promise.all([
+          ctx.db.campaignParticipation.findUnique({
+            where: {
+              campaignId_creatorId: {
+                campaignId: input.campaignId,
+                creatorId: input.creatorId,
+              },
+            },
+            select: { platform: true, contentUrl: true, status: true },
+          }),
+          ctx.db.viewSnapshot.findMany({
+            where: { campaignId: input.campaignId, creatorId: input.creatorId },
+            orderBy: { snapshotAt: 'desc' },
+            take: 50,
+          }),
+          ctx.db.fraudFlag.findMany({
+            where: { campaignId: input.campaignId, creatorId: input.creatorId },
+            orderBy: { createdAt: 'desc' },
+          }),
+          ctx.db.creatorProfile.findUnique({
+            where: { userId: input.creatorId },
+            select: { instagramTokenExpiresAt: true },
+          }),
+        ]);
 
       const expiresAt = creatorProfile?.instagramTokenExpiresAt ?? null;
       const daysUntilExpiry = expiresAt
@@ -529,12 +578,12 @@ export const analyticsRouter = createTRPCRouter({
         : null;
       const status =
         daysUntilExpiry === null
-          ? "UNKNOWN"
+          ? 'UNKNOWN'
           : daysUntilExpiry < 0
-          ? "EXPIRED"
-          : daysUntilExpiry <= 15
-          ? "EXPIRING_SOON"
-          : "OK";
+            ? 'EXPIRED'
+            : daysUntilExpiry <= 15
+              ? 'EXPIRING_SOON'
+              : 'OK';
 
       return {
         userId: c.userId,
@@ -556,7 +605,12 @@ export const analyticsRouter = createTRPCRouter({
    * Used to show promo code redemptions in the brand campaign detail analytics tab.
    */
   getConversionEvents: protectedProcedure
-    .input(z.object({ campaignId: z.string(), limit: z.number().max(200).default(50) }))
+    .input(
+      z.object({
+        campaignId: z.string(),
+        limit: z.number().max(200).default(50),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const campaign = await ctx.db.campaign.findUnique({
         where: { id: input.campaignId },
@@ -564,16 +618,22 @@ export const analyticsRouter = createTRPCRouter({
       });
 
       if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
       }
 
-      if (campaign.brandId !== ctx.session.user.id && !ctx.session.user.isAdmin) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+      if (
+        campaign.brandId !== ctx.session.user.id &&
+        !ctx.session.user.isAdmin
+      ) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
       }
 
       const events = await ctx.db.conversionEvent.findMany({
         where: { campaignId: input.campaignId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         take: input.limit,
         include: {
           promoCode: { select: { code: true } },
@@ -581,21 +641,29 @@ export const analyticsRouter = createTRPCRouter({
       });
 
       // Fetch creator names separately (ConversionEvent has no direct creator relation)
-      const creatorIds = [...new Set(events.map((e) => e.creatorId).filter(Boolean))];
-      const creators = creatorIds.length > 0
-        ? await ctx.db.user.findMany({
-          where: { id: { in: creatorIds as string[] } },
-          select: { id: true, name: true, creatorProfile: { select: { displayName: true } } },
-        })
-        : [];
+      const creatorIds = [
+        ...new Set(events.map((e) => e.creatorId).filter(Boolean)),
+      ];
+      const creators =
+        creatorIds.length > 0
+          ? await ctx.db.user.findMany({
+              where: { id: { in: creatorIds as string[] } },
+              select: {
+                id: true,
+                name: true,
+                creatorProfile: { select: { displayName: true } },
+              },
+            })
+          : [];
       const creatorMap = new Map(creators.map((c) => [c.id, c]));
 
       return events.map((e) => {
         const creator = e.creatorId ? creatorMap.get(e.creatorId) : undefined;
         return {
           id: e.id,
-          creatorName: creator?.creatorProfile?.displayName ?? creator?.name ?? "Unknown",
-          promoCode: e.promoCode?.code ?? "—",
+          creatorName:
+            creator?.creatorProfile?.displayName ?? creator?.name ?? 'Unknown',
+          promoCode: e.promoCode?.code ?? '—',
           orderId: e.orderId,
           orderAmount: e.orderAmount,
           isVerified: e.isVerified,
@@ -604,4 +672,3 @@ export const analyticsRouter = createTRPCRouter({
       });
     }),
 });
-

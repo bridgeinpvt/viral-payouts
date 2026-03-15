@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { trpc } from "@/trpc/client";
-import Link from "next/link";
+import { trpc } from '@/trpc/client';
+import Link from 'next/link';
 import {
   Card,
   CardHeader,
@@ -9,13 +9,13 @@ import {
   CardContent,
   CardDescription,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 
-const TIER_ORDER = ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND"] as const;
+const TIER_ORDER = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND'] as const;
 
 const TIER_THRESHOLDS: Record<string, number> = {
   BRONZE: 0,
@@ -26,19 +26,21 @@ const TIER_THRESHOLDS: Record<string, number> = {
 };
 
 const TIER_COLORS: Record<string, string> = {
-  BRONZE: "bg-orange-700 text-white",
-  SILVER: "bg-gray-400 text-white",
-  GOLD: "bg-yellow-500 text-white",
-  PLATINUM: "bg-cyan-600 text-white",
-  DIAMOND: "bg-violet-600 text-white",
+  BRONZE: 'bg-orange-700 text-white',
+  SILVER: 'bg-gray-400 text-white',
+  GOLD: 'bg-yellow-500 text-white',
+  PLATINUM: 'bg-cyan-600 text-white',
+  DIAMOND: 'bg-violet-600 text-white',
 };
 
 function formatCurrency(amount: number): string {
-  return `\u20B9${amount.toLocaleString("en-IN")}`;
+  return `\u20B9${amount.toLocaleString('en-IN')}`;
 }
 
 function getTierProgress(currentTier: string, totalEarnings: number): number {
-  const currentIndex = TIER_ORDER.indexOf(currentTier as (typeof TIER_ORDER)[number]);
+  const currentIndex = TIER_ORDER.indexOf(
+    currentTier as (typeof TIER_ORDER)[number]
+  );
   if (currentIndex === TIER_ORDER.length - 1) return 100;
 
   const nextTier = TIER_ORDER[currentIndex + 1];
@@ -46,7 +48,8 @@ function getTierProgress(currentTier: string, totalEarnings: number): number {
   const nextThreshold = TIER_THRESHOLDS[nextTier] ?? 0;
 
   const progress =
-    ((totalEarnings - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
+    ((totalEarnings - currentThreshold) / (nextThreshold - currentThreshold)) *
+    100;
   return Math.min(Math.max(progress, 0), 100);
 }
 
@@ -92,7 +95,10 @@ export default function CreatorDashboardPage() {
   const participationsQuery = trpc.campaign.getMyParticipations.useQuery();
   const authQuery = trpc.auth.getCurrentUser.useQuery();
 
-  const isLoading = analyticsQuery.isLoading || participationsQuery.isLoading || authQuery.isLoading;
+  const isLoading =
+    analyticsQuery.isLoading ||
+    participationsQuery.isLoading ||
+    authQuery.isLoading;
 
   if (isLoading) {
     return (
@@ -125,7 +131,9 @@ export default function CreatorDashboardPage() {
     tierProgress.currentTier,
     tierProgress.totalEarnings
   );
-  const currentTierIndex = TIER_ORDER.indexOf(tier as (typeof TIER_ORDER)[number]);
+  const currentTierIndex = TIER_ORDER.indexOf(
+    tier as (typeof TIER_ORDER)[number]
+  );
   const nextTier =
     currentTierIndex < TIER_ORDER.length - 1
       ? TIER_ORDER[currentTierIndex + 1]
@@ -136,9 +144,7 @@ export default function CreatorDashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Creator Dashboard</h1>
-        <Badge className={TIER_COLORS[tier] ?? ""}>
-          {tier}
-        </Badge>
+        <Badge className={TIER_COLORS[tier] ?? ''}>{tier}</Badge>
       </div>
 
       {/* KPI Cards */}
@@ -148,7 +154,9 @@ export default function CreatorDashboardPage() {
             <CardDescription>Total Earned</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{formatCurrency(summary.totalEarned)}</p>
+            <p className="text-2xl font-bold">
+              {formatCurrency(summary.totalEarned)}
+            </p>
           </CardContent>
         </Card>
 
@@ -191,7 +199,7 @@ export default function CreatorDashboardPage() {
           <CardDescription>
             {nextTier
               ? `${formatCurrency(tierProgress.totalEarnings)} / ${formatCurrency(nextThreshold!)} to reach ${nextTier}`
-              : "You have reached the highest tier!"}
+              : 'You have reached the highest tier!'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -200,9 +208,7 @@ export default function CreatorDashboardPage() {
             {TIER_ORDER.map((t) => (
               <span
                 key={t}
-                className={
-                  t === tier ? "font-semibold text-foreground" : ""
-                }
+                className={t === tier ? 'font-semibold text-foreground' : ''}
               >
                 {t}
               </span>
@@ -216,26 +222,43 @@ export default function CreatorDashboardPage() {
         <CardHeader>
           <CardTitle className="text-lg">Connected Accounts</CardTitle>
           <CardDescription>
-            Connect your social media accounts to participate in oauth-required campaigns.
+            Connect your social media accounts to participate in oauth-required
+            campaigns.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-100 text-pink-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                </svg>
               </div>
               <div>
                 <p className="font-medium">Instagram</p>
                 <p className="text-sm text-muted-foreground">
                   {user.creatorProfile?.instagramAccessToken
-                    ? `Connected as @${user.creatorProfile.instagramHandle || "user"}`
-                    : "Not connected"}
+                    ? `Connected as @${user.creatorProfile.instagramHandle || 'user'}`
+                    : 'Not connected'}
                 </p>
               </div>
             </div>
             {user.creatorProfile?.instagramAccessToken ? (
-              <Badge variant="default" className="bg-green-600">Connected</Badge>
+              <Badge variant="default" className="bg-green-600">
+                Connected
+              </Badge>
             ) : (
               <Button variant="outline" size="sm" asChild>
                 <Link href="/api/auth/instagram">Connect</Link>
@@ -245,19 +268,34 @@ export default function CreatorDashboardPage() {
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-red-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" /><path d="m10 15 5-3-5-3z" /></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+                  <path d="m10 15 5-3-5-3z" />
+                </svg>
               </div>
               <div>
                 <p className="font-medium">YouTube</p>
                 <p className="text-sm text-muted-foreground">
                   {user.creatorProfile?.youtubeAccessToken
-                    ? `Connected as ${user.creatorProfile.youtubeHandle || "user"}`
-                    : "Not connected"}
+                    ? `Connected as ${user.creatorProfile.youtubeHandle || 'user'}`
+                    : 'Not connected'}
                 </p>
               </div>
             </div>
             {user.creatorProfile?.youtubeAccessToken ? (
-              <Badge variant="default" className="bg-green-600">Connected</Badge>
+              <Badge variant="default" className="bg-green-600">
+                Connected
+              </Badge>
             ) : (
               <Button variant="outline" size="sm" asChild>
                 <Link href="/api/auth/youtube">Connect</Link>
@@ -276,8 +314,8 @@ export default function CreatorDashboardPage() {
         <CardContent>
           {!participations || participations.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
-              You have not joined any campaigns yet. Browse the marketplace to get
-              started.
+              You have not joined any campaigns yet. Browse the marketplace to
+              get started.
             </p>
           ) : (
             <div className="space-y-3">
@@ -292,7 +330,7 @@ export default function CreatorDashboardPage() {
                       <span>
                         {p.campaign.brand?.brandProfile?.companyName ??
                           p.campaign.brand?.name ??
-                          "Unknown Brand"}
+                          'Unknown Brand'}
                       </span>
                       <span>-</span>
                       <Badge variant="outline" className="text-xs">
@@ -303,11 +341,11 @@ export default function CreatorDashboardPage() {
                   <div className="flex items-center gap-3">
                     <Badge
                       variant={
-                        p.status === "ACTIVE"
-                          ? "default"
-                          : p.status === "COMPLETED"
-                            ? "secondary"
-                            : "outline"
+                        p.status === 'ACTIVE'
+                          ? 'default'
+                          : p.status === 'COMPLETED'
+                            ? 'secondary'
+                            : 'outline'
                       }
                     >
                       {p.status}

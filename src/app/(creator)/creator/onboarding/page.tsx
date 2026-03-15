@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { trpc } from "@/trpc/client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
@@ -11,50 +11,50 @@ import {
   CardContent,
   CardDescription,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 const NICHE_OPTIONS = [
-  "Technology",
-  "Fashion",
-  "Beauty",
-  "Health",
-  "Food",
-  "Travel",
-  "Gaming",
-  "Education",
-  "Finance",
-  "Entertainment",
-  "Lifestyle",
-  "Sports",
+  'Technology',
+  'Fashion',
+  'Beauty',
+  'Health',
+  'Food',
+  'Travel',
+  'Gaming',
+  'Education',
+  'Finance',
+  'Entertainment',
+  'Lifestyle',
+  'Sports',
 ] as const;
 
 const LANGUAGE_OPTIONS = [
-  "English",
-  "Hindi",
-  "Tamil",
-  "Telugu",
-  "Kannada",
-  "Malayalam",
-  "Marathi",
-  "Bengali",
-  "Gujarati",
-  "Other",
+  'English',
+  'Hindi',
+  'Tamil',
+  'Telugu',
+  'Kannada',
+  'Malayalam',
+  'Marathi',
+  'Bengali',
+  'Gujarati',
+  'Other',
 ] as const;
 
 const STEPS = [
-  { title: "Profile", description: "Tell us about yourself" },
-  { title: "Social Accounts", description: "Connect your social presence" },
-  { title: "Payouts", description: "Set up your payout method" },
+  { title: 'Profile', description: 'Tell us about yourself' },
+  { title: 'Social Accounts', description: 'Connect your social presence' },
+  { title: 'Payouts', description: 'Set up your payout method' },
 ];
 
 export default function CreatorOnboardingPage() {
@@ -64,19 +64,19 @@ export default function CreatorOnboardingPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Form state
-  const [displayName, setDisplayName] = useState(session?.user?.name ?? "");
-  const [niche, setNiche] = useState("");
-  const [language, setLanguage] = useState("");
-  const [location, setLocation] = useState("");
-  const [instagramHandle, setInstagramHandle] = useState("");
-  const [youtubeHandle, setYoutubeHandle] = useState("");
-  const [upiId, setUpiId] = useState("");
+  const [displayName, setDisplayName] = useState(session?.user?.name ?? '');
+  const [niche, setNiche] = useState('');
+  const [language, setLanguage] = useState('');
+  const [location, setLocation] = useState('');
+  const [instagramHandle, setInstagramHandle] = useState('');
+  const [youtubeHandle, setYoutubeHandle] = useState('');
+  const [upiId, setUpiId] = useState('');
 
   const completeOnboarding = trpc.auth.completeOnboarding.useMutation({
     onSuccess: async () => {
       // Force session update to reflect isOnboarded: true
       await update();
-      router.push("/creator/dashboard");
+      router.push('/creator/dashboard');
       router.refresh();
     },
     onError: (err) => {
@@ -86,13 +86,18 @@ export default function CreatorOnboardingPage() {
 
   function canProceed(): boolean {
     if (step === 0) {
-      return displayName.trim() !== "" && niche !== "" && language !== "" && location.trim() !== "";
+      return (
+        displayName.trim() !== '' &&
+        niche !== '' &&
+        language !== '' &&
+        location.trim() !== ''
+      );
     }
     if (step === 1) {
-      return instagramHandle.trim() !== "";
+      return instagramHandle.trim() !== '';
     }
     if (step === 2) {
-      return upiId.trim() !== "";
+      return upiId.trim() !== '';
     }
     return false;
   }
@@ -115,7 +120,7 @@ export default function CreatorOnboardingPage() {
     setError(null);
     completeOnboarding.mutate({
       name: displayName.trim(),
-      username: displayName.trim().toLowerCase().replace(/\s+/g, ""),
+      username: displayName.trim().toLowerCase().replace(/\s+/g, ''),
       displayName: displayName.trim(),
       niche,
       language,
@@ -140,25 +145,26 @@ export default function CreatorOnboardingPage() {
         {STEPS.map((s, i) => (
           <div key={i} className="flex items-center gap-2">
             <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${i < step
-                  ? "bg-primary text-primary-foreground"
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                i < step
+                  ? 'bg-primary text-primary-foreground'
                   : i === step
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
+              }`}
             >
-              {i < step ? "\u2713" : i + 1}
+              {i < step ? '\u2713' : i + 1}
             </div>
             <span
-              className={`hidden text-sm sm:inline ${i === step ? "font-medium" : "text-muted-foreground"
-                }`}
+              className={`hidden text-sm sm:inline ${
+                i === step ? 'font-medium' : 'text-muted-foreground'
+              }`}
             >
               {s.title}
             </span>
             {i < STEPS.length - 1 && (
               <div
-                className={`h-px w-8 ${i < step ? "bg-primary" : "bg-muted"
-                  }`}
+                className={`h-px w-8 ${i < step ? 'bg-primary' : 'bg-muted'}`}
               />
             )}
           </div>
@@ -278,17 +284,11 @@ export default function CreatorOnboardingPage() {
             </>
           )}
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
 
         <CardFooter className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={step === 0}
-          >
+          <Button variant="outline" onClick={handleBack} disabled={step === 0}>
             Back
           </Button>
 
@@ -301,7 +301,7 @@ export default function CreatorOnboardingPage() {
               onClick={handleComplete}
               disabled={!canProceed() || completeOnboarding.isPending}
             >
-              {completeOnboarding.isPending ? "Completing..." : "Complete"}
+              {completeOnboarding.isPending ? 'Completing...' : 'Complete'}
             </Button>
           )}
         </CardFooter>

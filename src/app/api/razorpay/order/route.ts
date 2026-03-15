@@ -1,26 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth";
-import { db } from "@/server/db";
-import { createRazorpayOrder } from "@/lib/razorpay";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/server/auth';
+import { db } from '@/server/db';
+import { createRazorpayOrder } from '@/lib/razorpay';
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== "BRAND") {
-      return NextResponse.json({ error: "Only brands can fund wallets" }, { status: 403 });
+    if (session.user.role !== 'BRAND') {
+      return NextResponse.json(
+        { error: 'Only brands can fund wallets' },
+        { status: 403 }
+      );
     }
 
     const { amount } = await request.json();
 
     if (!amount || amount < 1000) {
       return NextResponse.json(
-        { error: "Minimum top-up amount is Rs. 1,000" },
+        { error: 'Minimum top-up amount is Rs. 1,000' },
         { status: 400 }
       );
     }
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
       wallet = await db.wallet.create({
         data: {
           userId: session.user.id,
-          type: "BRAND",
+          type: 'BRAND',
         },
       });
     }
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
       notes: {
         userId: session.user.id,
         walletId: wallet.id,
-        purpose: "wallet_topup",
+        purpose: 'wallet_topup',
       },
     });
 
@@ -58,9 +61,9 @@ export async function POST(request: NextRequest) {
       keyId: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
-    console.error("Razorpay order creation error:", error);
+    console.error('Razorpay order creation error:', error);
     return NextResponse.json(
-      { error: "Failed to create order" },
+      { error: 'Failed to create order' },
       { status: 500 }
     );
   }

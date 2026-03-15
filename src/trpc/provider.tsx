@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink } from "@trpc/client";
-import { useState } from "react";
-import superjson from "superjson";
-import { trpc } from "./client";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { httpBatchLink } from '@trpc/client';
+import { useState } from 'react';
+import superjson from 'superjson';
+import { trpc } from './client';
 
 export const api = trpc;
 
 function getBaseUrl() {
-  if (typeof window !== "undefined") return "";
-  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:4001";
+  if (typeof window !== 'undefined') return '';
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:4001';
 }
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {

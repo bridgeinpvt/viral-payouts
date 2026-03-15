@@ -1,17 +1,17 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
 
-import { SessionProvider } from "@/components/session-provider";
-import { TRPCProvider } from "@/trpc/provider";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "sonner";
+import { SessionProvider } from '@/components/session-provider';
+import { TRPCProvider } from '@/trpc/provider';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from 'sonner';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Viral Payouts - Creator Marketing Platform",
-  description: "Connect brands with creators for viral marketing campaigns",
+  title: 'Viral Payouts - Creator Marketing Platform',
+  description: 'Connect brands with creators for viral marketing campaigns',
 };
 
 export default function RootLayout({

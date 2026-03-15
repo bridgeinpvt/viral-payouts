@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { trpc } from "@/trpc/client";
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function formatCurrency(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return `₹${amount.toLocaleString('en-IN')}`;
 }
 
 function KpiSkeleton() {

@@ -1,13 +1,13 @@
-import { Router } from "express";
-import { db } from "../db";
-import UAParser from "ua-parser-js";
-import { updateMetrics } from "../services/metrics";
+import { Router } from 'express';
+import { db } from '../db';
+import UAParser from 'ua-parser-js';
+import { updateMetrics } from '../services/metrics';
 
 export const trackingRouter = Router();
 
 // GET /go/:slug — Tracking link redirect
 // The slug format is the TrackingLink.slug field
-trackingRouter.get("/:slug", async (req, res) => {
+trackingRouter.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
 
@@ -19,22 +19,25 @@ trackingRouter.get("/:slug", async (req, res) => {
     });
 
     if (!trackingLink || !trackingLink.isActive) {
-      return res.status(404).send("Link not found or inactive");
+      return res.status(404).send('Link not found or inactive');
     }
 
-    if (trackingLink.campaign.status !== "LIVE") {
+    if (trackingLink.campaign.status !== 'LIVE') {
       return res.redirect(trackingLink.destinationUrl);
     }
 
     // Parse user agent for bot detection
-    const ua = new UAParser(req.headers["user-agent"]);
+    const ua = new UAParser(req.headers['user-agent']);
     const browser = ua.getBrowser();
     const os = ua.getOS();
-    const isBotUA = !browser.name || browser.name === "undefined";
+    const isBotUA = !browser.name || browser.name === 'undefined';
 
-    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.ip ?? "unknown";
-    const userAgent = req.headers["user-agent"] ?? "";
-    const referer = req.headers["referer"] ?? null;
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
+      req.ip ??
+      'unknown';
+    const userAgent = req.headers['user-agent'] ?? '';
+    const referer = req.headers['referer'] ?? null;
 
     // Rate limit: max 5 clicks per IP per tracking link per hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -79,7 +82,7 @@ trackingRouter.get("/:slug", async (req, res) => {
     // Redirect to destination
     return res.redirect(302, trackingLink.destinationUrl);
   } catch (error) {
-    console.error("Tracking redirect error:", error);
-    return res.status(500).send("Internal server error");
+    console.error('Tracking redirect error:', error);
+    return res.status(500).send('Internal server error');
   }
 });

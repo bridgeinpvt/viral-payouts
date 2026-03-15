@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { trpc } from "@/trpc/client";
-import { CampaignType, Platform } from "@prisma/client";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from 'react';
+import { trpc } from '@/trpc/client';
+import { CampaignType, Platform } from '@prisma/client';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -14,34 +14,34 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
+} from '@/components/ui/select';
+import { toast } from 'sonner';
 
 const typeLabels: Record<CampaignType, string> = {
-  VIEW: "Views",
-  CLICK: "Clicks",
-  CONVERSION: "Conversions",
+  VIEW: 'Views',
+  CLICK: 'Clicks',
+  CONVERSION: 'Conversions',
 };
 
 const typeColors: Record<CampaignType, string> = {
-  VIEW: "bg-blue-100 text-blue-700 border-blue-200",
-  CLICK: "bg-green-100 text-green-700 border-green-200",
-  CONVERSION: "bg-purple-100 text-purple-700 border-purple-200",
+  VIEW: 'bg-blue-100 text-blue-700 border-blue-200',
+  CLICK: 'bg-green-100 text-green-700 border-green-200',
+  CONVERSION: 'bg-purple-100 text-purple-700 border-purple-200',
 };
 
 const platformLabels: Record<Platform, string> = {
-  INSTAGRAM: "Instagram",
-  YOUTUBE: "YouTube",
-  TWITTER: "Twitter",
-  LINKEDIN: "LinkedIn",
-  TIKTOK: "TikTok",
+  INSTAGRAM: 'Instagram',
+  YOUTUBE: 'YouTube',
+  TWITTER: 'Twitter',
+  LINKEDIN: 'LinkedIn',
+  TIKTOK: 'TikTok',
 };
 
 function formatPayout(
@@ -50,14 +50,14 @@ function formatPayout(
     payoutPer1KViews?: number | null;
     payoutPerClick?: number | null;
     payoutPerSale?: number | null;
-  },
+  }
 ) {
   switch (type) {
-    case "VIEW":
+    case 'VIEW':
       return `₹${campaign.payoutPer1KViews ?? 0} per 1K views`;
-    case "CLICK":
+    case 'CLICK':
       return `₹${campaign.payoutPerClick ?? 0} per click`;
-    case "CONVERSION":
+    case 'CONVERSION':
       return `₹${campaign.payoutPerSale ?? 0} per sale`;
   }
 }
@@ -66,13 +66,13 @@ export default function CreatorMarketplacePage() {
   const utils = trpc.useUtils();
 
   const [typeFilter, setTypeFilter] = useState<CampaignType | undefined>(
-    undefined,
+    undefined
   );
   const [platformFilter, setPlatformFilter] = useState<Platform | undefined>(
-    undefined,
+    undefined
   );
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [selectedPlatforms, setSelectedPlatforms] = useState<
@@ -89,7 +89,7 @@ export default function CreatorMarketplacePage() {
       },
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor,
-      },
+      }
     );
 
   useEffect(() => {
@@ -116,7 +116,7 @@ export default function CreatorMarketplacePage() {
   function handleApply(campaignId: string) {
     const platform = selectedPlatforms[campaignId];
     if (!platform) {
-      toast.error("Please select a platform before applying.");
+      toast.error('Please select a platform before applying.');
       return;
     }
     setApplyingId(campaignId);
@@ -124,7 +124,7 @@ export default function CreatorMarketplacePage() {
       { campaignId, platforms: [platform] },
       {
         onSettled: () => setApplyingId(null),
-      },
+      }
     );
   }
 
@@ -167,9 +167,9 @@ export default function CreatorMarketplacePage() {
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center gap-3">
         <Select
-          value={typeFilter ?? "ALL"}
+          value={typeFilter ?? 'ALL'}
           onValueChange={(val) =>
-            setTypeFilter(val === "ALL" ? undefined : (val as CampaignType))
+            setTypeFilter(val === 'ALL' ? undefined : (val as CampaignType))
           }
         >
           <SelectTrigger className="w-[160px]">
@@ -184,9 +184,9 @@ export default function CreatorMarketplacePage() {
         </Select>
 
         <Select
-          value={platformFilter ?? "ALL"}
+          value={platformFilter ?? 'ALL'}
           onValueChange={(val) =>
-            setPlatformFilter(val === "ALL" ? undefined : (val as Platform))
+            setPlatformFilter(val === 'ALL' ? undefined : (val as Platform))
           }
         >
           <SelectTrigger className="w-[160px]">
@@ -209,7 +209,7 @@ export default function CreatorMarketplacePage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleSearch();
+              if (e.key === 'Enter') handleSearch();
             }}
           />
           <Button variant="outline" onClick={handleSearch}>
@@ -297,12 +297,12 @@ export default function CreatorMarketplacePage() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {campaign._count.participations} participant
-                    {campaign._count.participations !== 1 ? "s" : ""}
+                    {campaign._count.participations !== 1 ? 's' : ''}
                   </p>
                 </CardContent>
                 <CardFooter className="flex items-center gap-2">
                   <Select
-                    value={selectedPlatforms[campaign.id] ?? ""}
+                    value={selectedPlatforms[campaign.id] ?? ''}
                     onValueChange={(val) =>
                       setSelectedPlatforms((prev) => ({
                         ...prev,
@@ -329,10 +329,10 @@ export default function CreatorMarketplacePage() {
                     onClick={() => handleApply(campaign.id)}
                   >
                     {appliedIds.has(campaign.id)
-                      ? "Applied"
+                      ? 'Applied'
                       : applyingId === campaign.id
-                        ? "Applying..."
-                        : "Apply"}
+                        ? 'Applying...'
+                        : 'Apply'}
                   </Button>
                 </CardFooter>
               </Card>
@@ -346,7 +346,7 @@ export default function CreatorMarketplacePage() {
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
               >
-                {isFetchingNextPage ? "Loading..." : "Load More"}
+                {isFetchingNextPage ? 'Loading...' : 'Load More'}
               </Button>
             </div>
           )}

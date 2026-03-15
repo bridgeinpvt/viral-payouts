@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Megaphone,
@@ -15,9 +15,9 @@ import {
   Menu,
   X,
   CreditCard,
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { UserMenu } from "./user-menu";
+} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { UserMenu } from './user-menu';
 
 interface NavItem {
   label: string;
@@ -26,15 +26,15 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Campaigns", href: "/admin/campaigns", icon: Megaphone },
-  { label: "Payouts", href: "/admin/payouts", icon: CreditCard },
-  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { label: "Fraud", href: "/admin/fraud", icon: ShieldAlert },
+  { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { label: 'Campaigns', href: '/admin/campaigns', icon: Megaphone },
+  { label: 'Payouts', href: '/admin/payouts', icon: CreditCard },
+  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { label: 'Fraud', href: '/admin/fraud', icon: ShieldAlert },
 ];
 
 const bottomNavItems: NavItem[] = [
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
 export function AdminSidebar() {
@@ -52,8 +52,8 @@ export function AdminSidebar() {
         setMobileOpen(false);
       }
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const sidebarContent = (
@@ -64,38 +64,53 @@ export function AdminSidebar() {
             <Rocket className="h-5 w-5 text-white" />
           </div>
           {!collapsed && (
-            <span className="text-lg font-bold text-foreground">Nocage Admin</span>
+            <span className="text-lg font-bold text-foreground">
+              Nocage Admin
+            </span>
           )}
         </Link>
-        <button onClick={() => setCollapsed(!collapsed)} className="hidden lg:block rounded-md p-1.5 hover:bg-muted">
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="hidden lg:block rounded-md p-1.5 hover:bg-muted"
+        >
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </button>
-        <button onClick={() => setMobileOpen(false)} className="lg:hidden rounded-md p-1.5 hover:bg-muted">
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="lg:hidden rounded-md p-1.5 hover:bg-muted"
+        >
           <X className="h-5 w-5" />
         </button>
       </div>
 
       {!collapsed && (
         <div className="border-b border-border px-4 py-2">
-          <span className="text-xs font-medium uppercase text-red-500">Admin Panel</span>
+          <span className="text-xs font-medium uppercase text-red-500">
+            Admin Panel
+          </span>
         </div>
       )}
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive =
+            pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <item.icon className={cn("h-5 w-5", collapsed && "mx-auto")} />
+              <item.icon className={cn('h-5 w-5', collapsed && 'mx-auto')} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -110,13 +125,13 @@ export function AdminSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <item.icon className={cn("h-5 w-5", collapsed && "mx-auto")} />
+              <item.icon className={cn('h-5 w-5', collapsed && 'mx-auto')} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -132,7 +147,10 @@ export function AdminSidebar() {
   return (
     <>
       <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
-        <button onClick={() => setMobileOpen(true)} className="rounded-md p-2 hover:bg-muted">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="rounded-md p-2 hover:bg-muted"
+        >
           <Menu className="h-5 w-5" />
         </button>
         <Link href="/admin/dashboard" className="flex items-center gap-2">
@@ -145,13 +163,16 @@ export function AdminSidebar() {
       </div>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div
+          className="fixed inset-0 z-50 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-[280px] border-r border-border bg-card transition-transform duration-300 lg:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+          'fixed left-0 top-0 z-50 h-screen w-[280px] border-r border-border bg-card transition-transform duration-300 lg:hidden',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {sidebarContent}
@@ -159,8 +180,8 @@ export function AdminSidebar() {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 hidden h-screen border-r border-border bg-card transition-all duration-300 lg:block",
-          collapsed ? "w-[70px]" : "w-[260px]"
+          'fixed left-0 top-0 z-40 hidden h-screen border-r border-border bg-card transition-all duration-300 lg:block',
+          collapsed ? 'w-[70px]' : 'w-[260px]'
         )}
       >
         {sidebarContent}

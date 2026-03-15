@@ -2,15 +2,18 @@
 // Requires a per-creator access token (stored encrypted in CreatorProfile.instagramAccessToken).
 // Falls back to INSTAGRAM_ACCESS_TOKEN env var for testing only.
 
-import { decryptToken, isEncrypted } from "../lib/token-crypto";
+import { decryptToken, isEncrypted } from '../lib/token-crypto';
 
-const GRAPH_API_BASE = "https://graph.instagram.com/v18.0";
+const GRAPH_API_BASE = 'https://graph.instagram.com/v18.0';
 
 /** Resolve a stored token — decrypt if encrypted, pass through if raw (legacy/dev). */
 function resolveToken(stored: string): string {
   if (isEncrypted(stored)) {
     const plain = decryptToken(stored);
-    if (!plain) throw new Error("[instagram] Token decryption failed — check TOKEN_ENCRYPTION_KEY");
+    if (!plain)
+      throw new Error(
+        '[instagram] Token decryption failed — check TOKEN_ENCRYPTION_KEY'
+      );
     return plain;
   }
   return stored; // legacy plaintext fallback
@@ -35,23 +38,36 @@ async function fetchWithRetry(
     const response = await fetch(url, options);
 
     // Log rate limit usage if header is present
-    const usageHeader = response.headers.get("X-Business-Use-Case-Usage");
+    const usageHeader = response.headers.get('X-Business-Use-Case-Usage');
     if (usageHeader) {
       try {
-        const usage = JSON.parse(usageHeader) as Record<string, Array<{ call_count: number; total_cputime: number; total_time: number }>>;
+        const usage = JSON.parse(usageHeader) as Record<
+          string,
+          Array<{
+            call_count: number;
+            total_cputime: number;
+            total_time: number;
+          }>
+        >;
         for (const [appId, metrics] of Object.entries(usage)) {
           const m = metrics[0];
           if (m && (m.call_count >= 80 || m.total_time >= 80)) {
-            console.warn(`[instagram] Rate limit warning for app ${appId}: calls=${m.call_count}% cpu=${m.total_cputime}% time=${m.total_time}%`);
+            console.warn(
+              `[instagram] Rate limit warning for app ${appId}: calls=${m.call_count}% cpu=${m.total_cputime}% time=${m.total_time}%`
+            );
           }
         }
-      } catch { /* ignore parse errors */ }
+      } catch {
+        /* ignore parse errors */
+      }
     }
 
     if (response.status === 429 || response.status === 503) {
       if (attempt === retries) return response; // exhausted — caller handles it
       const delay = backoffMs * Math.pow(2, attempt);
-      console.warn(`[instagram] Rate limited (${response.status}), retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+      console.warn(
+        `[instagram] Rate limited (${response.status}), retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`
+      );
       await new Promise((r) => setTimeout(r, delay));
       continue;
     }
@@ -59,7 +75,7 @@ async function fetchWithRetry(
     return response;
   }
   // TypeScript requires a return here, but the loop above always returns
-  throw new Error("[instagram] fetchWithRetry: unreachable");
+  throw new Error('[instagram] fetchWithRetry: unreachable');
 }
 
 interface IGMediaInsights {
@@ -78,9 +94,14 @@ interface IGMediaInsights {
  * Resolve an Instagram post/reel URL to a numeric Media ID using the oEmbed endpoint.
  * The IG Graph API /insights endpoint requires the numeric ID, not the URL shortcode.
  */
-async function resolveMediaId(postUrl: string, accessToken: string): Promise<string | null> {
+async function resolveMediaId(
+  postUrl: string,
+  accessToken: string
+): Promise<string | null> {
   // Extract shortcode to use as cache key
-  const shortcodeMatch = postUrl.match(/instagram\.com\/(?:p|reel)\/([A-Za-z0-9_-]+)/);
+  const shortcodeMatch = postUrl.match(
+    /instagram\.com\/(?:p|reel)\/([A-Za-z0-9_-]+)/
+  );
   const shortcode = shortcodeMatch?.[1];
   if (!shortcode) return null;
 
@@ -101,11 +122,14 @@ async function resolveMediaId(postUrl: string, accessToken: string): Promise<str
         `https://graph.facebook.com/v18.0/instagram_oembed?url=${encodeURIComponent(postUrl)}&access_token=${accessToken}`
       );
       if (!oembed.ok) {
-        console.error(`[instagram] Cannot resolve Media ID for ${postUrl}: ${response.status}`);
+        console.error(
+          `[instagram] Cannot resolve Media ID for ${postUrl}: ${response.status}`
+        );
         return null;
       }
-      const oembedData = await oembed.json() as any;
-      const mediaId: string | undefined = oembedData?.media_id ?? oembedData?.media?.id;
+      const oembedData = (await oembed.json()) as any;
+      const mediaId: string | undefined =
+        oembedData?.media_id ?? oembedData?.media?.id;
       if (mediaId) {
         mediaIdCache.set(shortcode, mediaId);
         return mediaId;
@@ -113,14 +137,17 @@ async function resolveMediaId(postUrl: string, accessToken: string): Promise<str
       return null;
     }
 
-    const data = await response.json() as any;
+    const data = (await response.json()) as any;
     const mediaId: string | undefined = data?.id;
     if (!mediaId) return null;
 
     mediaIdCache.set(shortcode, mediaId);
     return mediaId;
   } catch (error) {
-    console.error(`[instagram] Error resolving Media ID for ${postUrl}:`, error);
+    console.error(
+      `[instagram] Error resolving Media ID for ${postUrl}:`,
+      error
+    );
     return null;
   }
 }
@@ -144,7 +171,7 @@ export async function getPostMetrics(
 } | null> {
   const rawToken = accessToken ?? process.env.INSTAGRAM_ACCESS_TOKEN;
   if (!rawToken) {
-    console.warn("[instagram] No access token available — skipping.");
+    console.warn('[instagram] No access token available — skipping.');
     return null;
   }
   const token = resolveToken(rawToken);
@@ -159,7 +186,9 @@ export async function getPostMetrics(
     );
 
     if (!response.ok) {
-      console.error(`[instagram] Insights API error: ${response.status} ${response.statusText}`);
+      console.error(
+        `[instagram] Insights API error: ${response.status} ${response.statusText}`
+      );
       return null;
     }
 
@@ -177,7 +206,7 @@ export async function getPostMetrics(
       avgWatchTime: metrics.ig_reels_avg_watch_time ?? null,
     };
   } catch (error) {
-    console.error("[instagram] API error:", error);
+    console.error('[instagram] API error:', error);
     return null;
   }
 }

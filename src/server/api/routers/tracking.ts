@@ -1,14 +1,13 @@
-import { z } from "zod";
+import { z } from 'zod';
 import {
   createTRPCRouter,
   protectedProcedure,
   adminProcedure,
-} from "@/server/api/trpc";
-import { TRPCError } from "@trpc/server";
+} from '@/server/api/trpc';
+import { TRPCError } from '@trpc/server';
 
 export const trackingRouter = createTRPCRouter({
   // Get tracking link for a campaign+creator
-
 
   // Get click events for a tracking link
   getClickEvents: protectedProcedure
@@ -40,7 +39,7 @@ export const trackingRouter = createTRPCRouter({
         where,
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
 
       let nextCursor: string | undefined;
@@ -79,7 +78,7 @@ export const trackingRouter = createTRPCRouter({
       return await ctx.db.viewSnapshot.findMany({
         where,
         take: input.limit,
-        orderBy: { snapshotAt: "desc" },
+        orderBy: { snapshotAt: 'desc' },
       });
     }),
 
@@ -105,7 +104,7 @@ export const trackingRouter = createTRPCRouter({
         where,
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           promoCode: { select: { code: true } },
         },
@@ -138,7 +137,7 @@ export const trackingRouter = createTRPCRouter({
         ctx.db.clickEvent.count({ where }),
         ctx.db.clickEvent.count({ where: { ...where, isFraud: true } }),
         ctx.db.clickEvent.groupBy({
-          by: ["ip"],
+          by: ['ip'],
           where,
         }),
       ]);

@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { trpc } from "@/trpc/client";
+import { useState } from 'react';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -20,33 +20,33 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 
 function formatCurrency(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return `₹${amount.toLocaleString('en-IN')}`;
 }
 
 function getApprovalBadgeVariant(
-  status: string,
-): "default" | "secondary" | "destructive" | "outline" {
+  status: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
-    case "APPROVED":
-      return "default";
-    case "REJECTED":
-      return "destructive";
-    case "PENDING":
-      return "secondary";
+    case 'APPROVED':
+      return 'default';
+    case 'REJECTED':
+      return 'destructive';
+    case 'PENDING':
+      return 'secondary';
     default:
-      return "outline";
+      return 'outline';
   }
 }
 
 export default function AdminPayoutsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>(
-    {},
+    {}
   );
   const [showRejectInput, setShowRejectInput] = useState<string | null>(null);
 
@@ -126,7 +126,7 @@ export default function AdminPayoutsPage() {
             disabled={batchApproveMutation.isPending}
           >
             {batchApproveMutation.isPending
-              ? "Approving..."
+              ? 'Approving...'
               : `Batch Approve (${selectedIds.size})`}
           </Button>
         )}
@@ -184,7 +184,7 @@ export default function AdminPayoutsPage() {
                         <p className="font-medium">
                           {payout.user?.creatorProfile?.displayName ??
                             payout.user?.name ??
-                            "Unknown"}
+                            'Unknown'}
                         </p>
                         {payout.user?.creatorProfile?.tier && (
                           <Badge variant="outline" className="mt-1">
@@ -224,7 +224,7 @@ export default function AdminPayoutsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {payout.approvalStatus === "PENDING_APPROVAL" && (
+                      {payout.approvalStatus === 'PENDING_APPROVAL' && (
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
@@ -240,7 +240,7 @@ export default function AdminPayoutsPage() {
                             <div className="flex items-center gap-1">
                               <Input
                                 placeholder="Reason..."
-                                value={rejectReasons[payout.id] ?? ""}
+                                value={rejectReasons[payout.id] ?? ''}
                                 onChange={(e) =>
                                   setRejectReasons((prev) => ({
                                     ...prev,
@@ -284,11 +284,11 @@ export default function AdminPayoutsPage() {
                           )}
                         </div>
                       )}
-                      {payout.approvalStatus !== "PENDING_APPROVAL" && (
+                      {payout.approvalStatus !== 'PENDING_APPROVAL' && (
                         <span className="text-sm text-muted-foreground">
-                          {payout.approvalStatus === "APPROVED"
-                            ? "Approved"
-                            : "Rejected"}
+                          {payout.approvalStatus === 'APPROVED'
+                            ? 'Approved'
+                            : 'Rejected'}
                         </span>
                       )}
                     </TableCell>

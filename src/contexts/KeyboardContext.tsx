@@ -1,6 +1,12 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 
 interface KeyboardContextType {
   isKeyboardOpen: boolean;
@@ -14,7 +20,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     const handleResize = () => {
       // On mobile, when keyboard opens, the visual viewport shrinks
@@ -24,9 +30,9 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    window.visualViewport?.addEventListener("resize", handleResize);
+    window.visualViewport?.addEventListener('resize', handleResize);
     return () => {
-      window.visualViewport?.removeEventListener("resize", handleResize);
+      window.visualViewport?.removeEventListener('resize', handleResize);
     };
   }, []);
 

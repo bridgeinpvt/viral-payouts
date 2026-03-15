@@ -12,9 +12,9 @@
  * Meta webhook docs: https://developers.facebook.com/docs/graph-api/webhooks/getting-started
  */
 
-import { NextResponse } from "next/server";
-import crypto from "crypto";
-import { db } from "@/server/db";
+import { NextResponse } from 'next/server';
+import crypto from 'crypto';
+import { db } from '@/server/db';
 
 // ==========================================
 // GET — hub.challenge verification
@@ -22,17 +22,20 @@ import { db } from "@/server/db";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const mode = searchParams.get("hub.mode");
-  const token = searchParams.get("hub.verify_token");
-  const challenge = searchParams.get("hub.challenge");
+  const mode = searchParams.get('hub.mode');
+  const token = searchParams.get('hub.verify_token');
+  const challenge = searchParams.get('hub.challenge');
 
-  if (mode === "subscribe" && token === process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN) {
-    console.log("[webhook/instagram] Hub verification succeeded");
+  if (
+    mode === 'subscribe' &&
+    token === process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN
+  ) {
+    console.log('[webhook/instagram] Hub verification succeeded');
     return new Response(challenge, { status: 200 });
   }
 
-  console.warn("[webhook/instagram] Hub verification failed — token mismatch");
-  return new Response("Forbidden", { status: 403 });
+  console.warn('[webhook/instagram] Hub verification failed — token mismatch');
+  return new Response('Forbidden', { status: 403 });
 }
 
 // ==========================================
@@ -43,25 +46,25 @@ export async function POST(request: Request) {
   const rawBody = await request.text();
 
   // Verify X-Hub-Signature-256 to confirm the payload is from Meta
-  const signature = request.headers.get("x-hub-signature-256");
+  const signature = request.headers.get('x-hub-signature-256');
   if (!verifySignature(rawBody, signature)) {
-    console.warn("[webhook/instagram] Invalid signature — rejecting");
-    return new Response("Unauthorized", { status: 401 });
+    console.warn('[webhook/instagram] Invalid signature — rejecting');
+    return new Response('Unauthorized', { status: 401 });
   }
 
   let payload: any;
   try {
     payload = JSON.parse(rawBody);
   } catch {
-    return new Response("Bad Request", { status: 400 });
+    return new Response('Bad Request', { status: 400 });
   }
 
   // Process asynchronously — always return 200 immediately so Meta doesn't retry
   void handleEvents(payload).catch((err) =>
-    console.error("[webhook/instagram] Event processing error:", err)
+    console.error('[webhook/instagram] Event processing error:', err)
   );
 
-  return new Response("OK", { status: 200 });
+  return new Response('OK', { status: 200 });
 }
 
 // ==========================================
@@ -71,15 +74,13 @@ export async function POST(request: Request) {
 function verifySignature(body: string, header: string | null): boolean {
   const secret = process.env.INSTAGRAM_WEBHOOK_SECRET;
   if (!secret) {
-    console.error("[webhook/instagram] INSTAGRAM_WEBHOOK_SECRET not set");
+    console.error('[webhook/instagram] INSTAGRAM_WEBHOOK_SECRET not set');
     return false;
   }
   if (!header) return false;
 
-  const expected = "sha256=" + crypto
-    .createHmac("sha256", secret)
-    .update(body)
-    .digest("hex");
+  const expected =
+    'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');
 
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(header));
@@ -103,11 +104,11 @@ async function handleEvents(payload: any) {
       const value = change.value;
 
       switch (field) {
-        case "mentions":
+        case 'mentions':
           await handleMention(entry.id, value);
           break;
 
-        case "story_insights":
+        case 'story_insights':
           await handleStoryInsights(entry.id, value);
           break;
 
@@ -123,7 +124,10 @@ async function handleEvents(payload: any) {
  * Log it — could be used for brand safety checks later.
  */
 async function handleMention(igUserId: string, value: any) {
-  console.log(`[webhook/instagram] Mention event for IG user ${igUserId}:`, JSON.stringify(value));
+  console.log(
+    `[webhook/instagram] Mention event for IG user ${igUserId}:`,
+    JSON.stringify(value)
+  );
   // Future: check if mentioned post belongs to a campaign, flag for review, etc.
 }
 
@@ -146,7 +150,9 @@ async function handleStoryInsights(igUserId: string, value: any) {
     });
 
     if (!creatorProfile) {
-      console.log(`[webhook/instagram] No creator found for IG user ${igUserId}`);
+      console.log(
+        `[webhook/instagram] No creator found for IG user ${igUserId}`
+      );
       return;
     }
 
@@ -154,14 +160,16 @@ async function handleStoryInsights(igUserId: string, value: any) {
     const participation = await db.campaignParticipation.findFirst({
       where: {
         creatorId: creatorProfile.userId,
-        status: { in: ["ACTIVE", "COMPLETED"] },
+        status: { in: ['ACTIVE', 'COMPLETED'] },
         contentUrl: { contains: mediaId },
       },
       select: { campaignId: true, creatorId: true, contentUrl: true },
     });
 
     if (!participation?.contentUrl) {
-      console.log(`[webhook/instagram] No participation found for media ${mediaId}`);
+      console.log(
+        `[webhook/instagram] No participation found for media ${mediaId}`
+      );
       return;
     }
 
@@ -169,7 +177,7 @@ async function handleStoryInsights(igUserId: string, value: any) {
       data: {
         campaignId: participation.campaignId,
         creatorId: participation.creatorId,
-        platform: "INSTAGRAM",
+        platform: 'INSTAGRAM',
         postUrl: participation.contentUrl,
         viewCount: impressions,
         reach,
@@ -178,8 +186,10 @@ async function handleStoryInsights(igUserId: string, value: any) {
       },
     });
 
-    console.log(`[webhook/instagram] Stored story insight for creator ${participation.creatorId}: impressions=${impressions} reach=${reach}`);
+    console.log(
+      `[webhook/instagram] Stored story insight for creator ${participation.creatorId}: impressions=${impressions} reach=${reach}`
+    );
   } catch (err) {
-    console.error("[webhook/instagram] handleStoryInsights error:", err);
+    console.error('[webhook/instagram] handleStoryInsights error:', err);
   }
 }

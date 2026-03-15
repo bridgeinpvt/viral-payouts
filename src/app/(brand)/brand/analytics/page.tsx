@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { trpc } from "@/trpc/client";
+import { useState } from 'react';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -18,20 +18,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Instagram, Youtube, Twitter } from "lucide-react";
+} from '@/components/ui/sheet';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Instagram, Youtube, Twitter } from 'lucide-react';
 
 function formatCurrency(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return `₹${amount.toLocaleString('en-IN')}`;
 }
 
 function KPISkeleton() {
@@ -47,7 +47,13 @@ function KPISkeleton() {
   );
 }
 
-function TableSkeleton({ rows = 5, cols = 6 }: { rows?: number; cols?: number }) {
+function TableSkeleton({
+  rows = 5,
+  cols = 6,
+}: {
+  rows?: number;
+  cols?: number;
+}) {
   return (
     <>
       {Array.from({ length: rows }).map((_, i) => (
@@ -65,11 +71,15 @@ function TableSkeleton({ rows = 5, cols = 6 }: { rows?: number; cols?: number })
 
 export default function BrandAnalyticsPage() {
   const { data, isLoading } = trpc.analytics.getBrandAnalytics.useQuery();
-  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(
+    null
+  );
 
-  // We can derive the selected creator's data from the existing list, 
+  // We can derive the selected creator's data from the existing list,
   // or use a separate query. Here we just find them in the list.
-  const selectedCreator = data?.topCreators.find((c) => c.creatorId === selectedCreatorId);
+  const selectedCreator = data?.topCreators.find(
+    (c) => c.creatorId === selectedCreatorId
+  );
 
   return (
     <div className="space-y-8">
@@ -102,7 +112,7 @@ export default function BrandAnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">
-                  {(data?.summary.totalViews ?? 0).toLocaleString("en-IN")}
+                  {(data?.summary.totalViews ?? 0).toLocaleString('en-IN')}
                 </p>
               </CardContent>
             </Card>
@@ -112,7 +122,7 @@ export default function BrandAnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">
-                  {(data?.summary.totalClicks ?? 0).toLocaleString("en-IN")}
+                  {(data?.summary.totalClicks ?? 0).toLocaleString('en-IN')}
                 </p>
               </CardContent>
             </Card>
@@ -122,7 +132,9 @@ export default function BrandAnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">
-                  {(data?.summary.totalConversions ?? 0).toLocaleString("en-IN")}
+                  {(data?.summary.totalConversions ?? 0).toLocaleString(
+                    'en-IN'
+                  )}
                 </p>
               </CardContent>
             </Card>
@@ -131,9 +143,7 @@ export default function BrandAnalyticsPage() {
                 <CardDescription>ROI</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">
-                  {data?.summary.roi ?? 0}%
-                </p>
+                <p className="text-2xl font-bold">{data?.summary.roi ?? 0}%</p>
               </CardContent>
             </Card>
           </>
@@ -167,25 +177,30 @@ export default function BrandAnalyticsPage() {
                 <TableSkeleton rows={5} cols={8} />
               ) : data?.campaigns.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     No campaigns found.
                   </TableCell>
                 </TableRow>
               ) : (
                 data?.campaigns.map((campaign) => (
                   <TableRow key={campaign.id}>
-                    <TableCell className="font-medium">{campaign.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {campaign.name}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{campaign.type}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={
-                          campaign.status === "LIVE"
-                            ? "default"
-                            : campaign.status === "PAUSED"
-                              ? "outline"
-                              : "secondary"
+                          campaign.status === 'LIVE'
+                            ? 'default'
+                            : campaign.status === 'PAUSED'
+                              ? 'outline'
+                              : 'secondary'
                         }
                       >
                         {campaign.status}
@@ -198,13 +213,13 @@ export default function BrandAnalyticsPage() {
                       {formatCurrency(campaign.spentBudget)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {campaign.totalViews.toLocaleString("en-IN")}
+                      {campaign.totalViews.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {campaign.totalClicks.toLocaleString("en-IN")}
+                      {campaign.totalClicks.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {campaign.totalConversions.toLocaleString("en-IN")}
+                      {campaign.totalConversions.toLocaleString('en-IN')}
                     </TableCell>
                   </TableRow>
                 ))
@@ -240,7 +255,10 @@ export default function BrandAnalyticsPage() {
                 <TableSkeleton rows={5} cols={6} />
               ) : data?.topCreators.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     No creator data yet.
                   </TableCell>
                 </TableRow>
@@ -248,21 +266,30 @@ export default function BrandAnalyticsPage() {
                 data?.topCreators.slice(0, 10).map((creator, index) => (
                   <TableRow key={creator.creatorId}>
                     <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell className="max-w-[150px] truncate" title={creator.creatorId}>{creator.creatorId}</TableCell>
+                    <TableCell
+                      className="max-w-[150px] truncate"
+                      title={creator.creatorId}
+                    >
+                      {creator.creatorId}
+                    </TableCell>
                     <TableCell className="text-right font-medium text-green-600">
                       {formatCurrency(creator.earnedAmount)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {creator.verifiedViews.toLocaleString("en-IN")}
+                      {creator.verifiedViews.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {creator.verifiedClicks.toLocaleString("en-IN")}
+                      {creator.verifiedClicks.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {creator.verifiedConversions.toLocaleString("en-IN")}
+                      {creator.verifiedConversions.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedCreatorId(creator.creatorId)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedCreatorId(creator.creatorId)}
+                      >
                         View Profile
                       </Button>
                     </TableCell>
@@ -275,7 +302,10 @@ export default function BrandAnalyticsPage() {
       </Card>
 
       {/* Profile Drawer */}
-      <Sheet open={!!selectedCreatorId} onOpenChange={(open) => !open && setSelectedCreatorId(null)}>
+      <Sheet
+        open={!!selectedCreatorId}
+        onOpenChange={(open) => !open && setSelectedCreatorId(null)}
+      >
         <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
           <SheetHeader className="pb-6 border-b">
             <SheetTitle>Creator Profile</SheetTitle>
@@ -288,14 +318,23 @@ export default function BrandAnalyticsPage() {
             <div className="py-6 space-y-8">
               <div className="flex items-start gap-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedCreator.creatorId}`} />
+                  <AvatarImage
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedCreator.creatorId}`}
+                  />
                   <AvatarFallback>CR</AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-lg">Creator {selectedCreator.creatorId.substring(0, 8)}...</h3>
+                  <h3 className="font-semibold text-lg">
+                    Creator {selectedCreator.creatorId.substring(0, 8)}...
+                  </h3>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">Gold Tier</Badge>
-                    <Badge variant="outline" className="text-emerald-600 bg-emerald-50 border-emerald-200">Highly Active</Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-emerald-600 bg-emerald-50 border-emerald-200"
+                    >
+                      Highly Active
+                    </Badge>
                   </div>
                 </div>
               </div>
@@ -329,29 +368,47 @@ export default function BrandAnalyticsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <Card>
                     <CardHeader className="p-4 pb-2">
-                      <CardDescription className="text-xs">Total Views</CardDescription>
-                      <CardTitle className="text-lg">{selectedCreator.verifiedViews.toLocaleString()}</CardTitle>
+                      <CardDescription className="text-xs">
+                        Total Views
+                      </CardDescription>
+                      <CardTitle className="text-lg">
+                        {selectedCreator.verifiedViews.toLocaleString()}
+                      </CardTitle>
                     </CardHeader>
                   </Card>
                   <Card>
                     <CardHeader className="p-4 pb-2">
-                      <CardDescription className="text-xs">Total Earned</CardDescription>
-                      <CardTitle className="text-lg text-green-600">{formatCurrency(selectedCreator.earnedAmount)}</CardTitle>
+                      <CardDescription className="text-xs">
+                        Total Earned
+                      </CardDescription>
+                      <CardTitle className="text-lg text-green-600">
+                        {formatCurrency(selectedCreator.earnedAmount)}
+                      </CardTitle>
                     </CardHeader>
                   </Card>
                   <Card>
                     <CardHeader className="p-4 pb-2">
-                      <CardDescription className="text-xs">Conversions</CardDescription>
-                      <CardTitle className="text-lg">{selectedCreator.verifiedConversions.toLocaleString()}</CardTitle>
+                      <CardDescription className="text-xs">
+                        Conversions
+                      </CardDescription>
+                      <CardTitle className="text-lg">
+                        {selectedCreator.verifiedConversions.toLocaleString()}
+                      </CardTitle>
                     </CardHeader>
                   </Card>
                   <Card>
                     <CardHeader className="p-4 pb-2">
-                      <CardDescription className="text-xs">Avg. Click Rate</CardDescription>
+                      <CardDescription className="text-xs">
+                        Avg. Click Rate
+                      </CardDescription>
                       <CardTitle className="text-lg">
                         {selectedCreator.verifiedViews > 0
-                          ? ((selectedCreator.verifiedClicks / selectedCreator.verifiedViews) * 100).toFixed(1) + "%"
-                          : "0%"}
+                          ? (
+                              (selectedCreator.verifiedClicks /
+                                selectedCreator.verifiedViews) *
+                              100
+                            ).toFixed(1) + '%'
+                          : '0%'}
                       </CardTitle>
                     </CardHeader>
                   </Card>
@@ -360,7 +417,9 @@ export default function BrandAnalyticsPage() {
 
               <div className="pt-4 flex gap-3">
                 <Button className="flex-1">Invite to New Campaign</Button>
-                <Button variant="outline" className="flex-1">Message</Button>
+                <Button variant="outline" className="flex-1">
+                  Message
+                </Button>
               </div>
             </div>
           ) : (
@@ -395,7 +454,10 @@ export default function BrandAnalyticsPage() {
                 <TableSkeleton rows={7} cols={5} />
               ) : data?.dailyTrends.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     No trend data available.
                   </TableCell>
                 </TableRow>
@@ -406,13 +468,13 @@ export default function BrandAnalyticsPage() {
                       {new Date(day.date).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      {day.views.toLocaleString("en-IN")}
+                      {day.views.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {day.clicks.toLocaleString("en-IN")}
+                      {day.clicks.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {day.conversions.toLocaleString("en-IN")}
+                      {day.conversions.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(day.spend)}

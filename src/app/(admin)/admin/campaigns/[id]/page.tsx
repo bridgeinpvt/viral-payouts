@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import { trpc } from "@/trpc/client";
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -21,22 +21,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 function formatCurrency(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return `₹${amount.toLocaleString('en-IN')}`;
 }
 
 export default function AdminCampaignDetailPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const [pauseReason, setPauseReason] = useState("");
-  const [freezeReason, setFreezeReason] = useState("");
+  const [pauseReason, setPauseReason] = useState('');
+  const [freezeReason, setFreezeReason] = useState('');
   const [freezeCreatorId, setFreezeCreatorId] = useState<string | null>(null);
-  const [resolveNote, setResolveNote] = useState("");
+  const [resolveNote, setResolveNote] = useState('');
 
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.admin.getCampaignOversight.useQuery({ id });
@@ -45,13 +45,13 @@ export default function AdminCampaignDetailPage() {
   const { data: contentSnapshots } =
     trpc.analytics.getCampaignContentSnapshots.useQuery(
       { campaignId: id },
-      { enabled: !!id },
+      { enabled: !!id }
     );
 
   const pauseMutation = trpc.admin.adminPauseCampaign.useMutation({
     onSuccess: () => {
       utils.admin.getCampaignOversight.invalidate({ id });
-      setPauseReason("");
+      setPauseReason('');
     },
   });
 
@@ -69,14 +69,14 @@ export default function AdminCampaignDetailPage() {
     onSuccess: () => {
       utils.admin.getCampaignOversight.invalidate({ id });
       setFreezeCreatorId(null);
-      setFreezeReason("");
+      setFreezeReason('');
     },
   });
 
   const resolveFraudMutation = trpc.admin.resolveFraudFlag.useMutation({
     onSuccess: () => {
       utils.admin.getCampaignOversight.invalidate({ id });
-      setResolveNote("");
+      setResolveNote('');
     },
   });
 
@@ -107,24 +107,24 @@ export default function AdminCampaignDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {campaign.status === "PENDING_REVIEW" ? (
+          {campaign.status === 'PENDING_REVIEW' ? (
             <>
               <Button
                 variant="default"
                 disabled={approveMutation.isPending}
                 onClick={() => approveMutation.mutate({ campaignId: id })}
               >
-                {approveMutation.isPending ? "Approving..." : "Approve"}
+                {approveMutation.isPending ? 'Approving...' : 'Approve'}
               </Button>
               <Button
                 variant="destructive"
                 disabled={rejectMutation.isPending}
                 onClick={() => rejectMutation.mutate({ campaignId: id })}
               >
-                {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+                {rejectMutation.isPending ? 'Rejecting...' : 'Reject'}
               </Button>
             </>
-          ) : campaign.status === "LIVE" ? (
+          ) : campaign.status === 'LIVE' ? (
             <>
               <Input
                 placeholder="Pause reason..."
@@ -139,7 +139,7 @@ export default function AdminCampaignDetailPage() {
                   pauseMutation.mutate({ campaignId: id, reason: pauseReason })
                 }
               >
-                {pauseMutation.isPending ? "Pausing..." : "Pause Campaign"}
+                {pauseMutation.isPending ? 'Pausing...' : 'Pause Campaign'}
               </Button>
             </>
           ) : null}
@@ -187,9 +187,9 @@ export default function AdminCampaignDetailPage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Rate per Action</span>
                   <span className="font-medium">
-                    {campaign.type === "VIEW"
+                    {campaign.type === 'VIEW'
                       ? `₹${campaign.payoutPer1KViews ?? 0}/1K views`
-                      : campaign.type === "CLICK"
+                      : campaign.type === 'CLICK'
                         ? `₹${campaign.payoutPerClick ?? 0}/click`
                         : `₹${campaign.payoutPerSale ?? 0}/sale`}
                   </span>
@@ -243,7 +243,7 @@ export default function AdminCampaignDetailPage() {
                       <span className="font-medium">
                         {formatCurrency(
                           (campaign.escrow.totalAmount ?? 0) -
-                            (campaign.escrow.releasedAmount ?? 0),
+                            (campaign.escrow.releasedAmount ?? 0)
                         )}
                       </span>
                     </div>
@@ -266,7 +266,7 @@ export default function AdminCampaignDetailPage() {
             <CardHeader>
               <CardTitle>Budget Progress</CardTitle>
               <CardDescription>
-                {formatCurrency(campaign.spentBudget)} of{" "}
+                {formatCurrency(campaign.spentBudget)} of{' '}
                 {formatCurrency(campaign.totalBudget)} spent (
                 {campaign.totalBudget > 0
                   ? (
@@ -286,7 +286,7 @@ export default function AdminCampaignDetailPage() {
                       campaign.totalBudget > 0
                         ? (campaign.spentBudget / campaign.totalBudget) * 100
                         : 0,
-                      100,
+                      100
                     )}%`,
                   }}
                 />
@@ -323,7 +323,7 @@ export default function AdminCampaignDetailPage() {
                           <p className="font-medium">
                             {p.creator?.displayName ??
                               p.creator?.user?.name ??
-                              "Unknown"}
+                              'Unknown'}
                           </p>
                           {p.creator?.tier && (
                             <Badge variant="outline" className="mt-1">
@@ -344,7 +344,7 @@ export default function AdminCampaignDetailPage() {
                                 className="flex justify-between text-xs"
                               >
                                 <span className="truncate" title={link.slug}>
-                                  {link.slug} ({link.platform ?? "Gen"})
+                                  {link.slug} ({link.platform ?? 'Gen'})
                                 </span>
                                 <span className="text-muted-foreground ml-1">
                                   {link.totalClicks}
@@ -353,10 +353,10 @@ export default function AdminCampaignDetailPage() {
                             ))}
                           </div>
                         ) : (
-                          "-"
+                          '-'
                         )}
                       </TableCell>
-                      <TableCell>{p.promoCode?.code ?? "-"}</TableCell>
+                      <TableCell>{p.promoCode?.code ?? '-'}</TableCell>
                       <TableCell>
                         {freezeCreatorId === p.creatorId ? (
                           <div className="flex items-center gap-2">
@@ -386,7 +386,7 @@ export default function AdminCampaignDetailPage() {
                               variant="outline"
                               onClick={() => {
                                 setFreezeCreatorId(null);
-                                setFreezeReason("");
+                                setFreezeReason('');
                               }}
                             >
                               Cancel
@@ -445,7 +445,7 @@ export default function AdminCampaignDetailPage() {
                       <TableCell className="font-medium">
                         {m.creator?.displayName ??
                           m.creator?.user?.name ??
-                          "Unknown"}
+                          'Unknown'}
                       </TableCell>
                       <TableCell className="text-right">
                         {m.totalViews?.toLocaleString() ?? 0}
@@ -582,7 +582,7 @@ export default function AdminCampaignDetailPage() {
                           </TableCell>
                           <TableCell>
                             <Badge variant="secondary" className="text-[11px]">
-                              {snap.platform ?? "—"}
+                              {snap.platform ?? '—'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-medium">
@@ -609,7 +609,7 @@ export default function AdminCampaignDetailPage() {
                           <TableCell className="text-xs text-muted-foreground">
                             {snap.lastSyncedAt
                               ? new Date(snap.lastSyncedAt).toLocaleString()
-                              : "Not yet"}
+                              : 'Not yet'}
                           </TableCell>
                           <TableCell>
                             <a
@@ -659,11 +659,11 @@ export default function AdminCampaignDetailPage() {
                       <TableCell className="font-medium">
                         {link.creator?.displayName ??
                           link.creator?.user?.name ??
-                          "Unknown"}
+                          'Unknown'}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {link.platform ?? "General"}
+                          {link.platform ?? 'General'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -684,9 +684,9 @@ export default function AdminCampaignDetailPage() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={link.isActive ? "default" : "destructive"}
+                          variant={link.isActive ? 'default' : 'destructive'}
                         >
-                          {link.isActive ? "Active" : "Disabled"}
+                          {link.isActive ? 'Active' : 'Disabled'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
@@ -741,10 +741,10 @@ export default function AdminCampaignDetailPage() {
                         <Badge
                           className={
                             flag.severity >= 4
-                              ? "bg-red-500 text-white"
+                              ? 'bg-red-500 text-white'
                               : flag.severity === 3
-                                ? "bg-orange-500 text-white"
-                                : "bg-yellow-500 text-white"
+                                ? 'bg-orange-500 text-white'
+                                : 'bg-yellow-500 text-white'
                           }
                         >
                           {flag.severity}/5
@@ -757,8 +757,8 @@ export default function AdminCampaignDetailPage() {
                         {flag.description}
                       </TableCell>
                       <TableCell>
-                        {flag.status !== "CONFIRMED" &&
-                          flag.status !== "DISMISSED" && (
+                        {flag.status !== 'CONFIRMED' &&
+                          flag.status !== 'DISMISSED' && (
                             <div className="flex items-center gap-2">
                               <Input
                                 placeholder="Note..."
@@ -773,7 +773,7 @@ export default function AdminCampaignDetailPage() {
                                 onClick={() =>
                                   resolveFraudMutation.mutate({
                                     flagId: flag.id,
-                                    status: "CONFIRMED",
+                                    status: 'CONFIRMED',
                                     note: resolveNote,
                                   })
                                 }
@@ -787,7 +787,7 @@ export default function AdminCampaignDetailPage() {
                                 onClick={() =>
                                   resolveFraudMutation.mutate({
                                     flagId: flag.id,
-                                    status: "DISMISSED",
+                                    status: 'DISMISSED',
                                     note: resolveNote,
                                   })
                                 }
@@ -796,8 +796,8 @@ export default function AdminCampaignDetailPage() {
                               </Button>
                             </div>
                           )}
-                        {(flag.status === "CONFIRMED" ||
-                          flag.status === "DISMISSED") && (
+                        {(flag.status === 'CONFIRMED' ||
+                          flag.status === 'DISMISSED') && (
                           <span className="text-sm text-muted-foreground">
                             Resolved
                           </span>

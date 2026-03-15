@@ -1,17 +1,17 @@
-import { db } from "../db";
-import { getPostMetrics as getIGMetrics } from "../services/instagram";
-import { getVideoMetrics as getYTMetrics } from "../services/youtube";
-import { checkViewSpike } from "../services/fraud";
-import { updateMetrics } from "../services/metrics";
+import { db } from '../db';
+import { getPostMetrics as getIGMetrics } from '../services/instagram';
+import { getVideoMetrics as getYTMetrics } from '../services/youtube';
+import { checkViewSpike } from '../services/fraud';
+import { updateMetrics } from '../services/metrics';
 
 export async function syncViews(): Promise<void> {
   // Fetch all LIVE VIEW campaigns with active/completed participations.
   // Include the creator's OAuth tokens so we can call IG/YT APIs on their behalf.
   const campaigns = await db.campaign.findMany({
-    where: { type: "VIEW", status: "LIVE" },
+    where: { type: 'VIEW', status: 'LIVE' },
     include: {
       participations: {
-        where: { status: { in: ["ACTIVE", "COMPLETED"] } },
+        where: { status: { in: ['ACTIVE', 'COMPLETED'] } },
         include: {
           creator: {
             select: {
@@ -35,8 +35,7 @@ export async function syncViews(): Promise<void> {
       try {
         // Get the URL to track — prefer contentUrl, then first contentItem
         const postUrl =
-          participation.contentUrl ??
-          participation.contentItems?.[0]?.url;
+          participation.contentUrl ?? participation.contentItems?.[0]?.url;
 
         if (!postUrl) {
           console.log(
@@ -50,8 +49,7 @@ export async function syncViews(): Promise<void> {
           participation.creator.creatorProfile?.instagramAccessToken ??
           undefined;
         const ytToken =
-          participation.creator.creatorProfile?.youtubeAccessToken ??
-          undefined;
+          participation.creator.creatorProfile?.youtubeAccessToken ?? undefined;
 
         // Determine platform and fetch metrics with the creator's own token
         const platform = detectPlatform(postUrl);
@@ -67,7 +65,7 @@ export async function syncViews(): Promise<void> {
           avgViewPercent?: number;
         } | null = null;
 
-        if (platform === "INSTAGRAM") {
+        if (platform === 'INSTAGRAM') {
           if (!igToken) {
             console.warn(
               `[view-sync] No Instagram access token for creator ${participation.creatorId} — skipping`
@@ -75,9 +73,13 @@ export async function syncViews(): Promise<void> {
             continue;
           }
           metrics = await getIGMetrics(postUrl, igToken);
-        } else if (platform === "YOUTUBE") {
+        } else if (platform === 'YOUTUBE') {
           // YouTube can fall back to public API with YOUTUBE_API_KEY — token is optional
-          metrics = await getYTMetrics(postUrl, ytToken, participation.creatorId);
+          metrics = await getYTMetrics(
+            postUrl,
+            ytToken,
+            participation.creatorId
+          );
         } else {
           console.log(
             `[view-sync] Unsupported platform for URL: ${postUrl} — skipping`
@@ -100,7 +102,7 @@ export async function syncViews(): Promise<void> {
             platform: platform as any,
             postUrl,
           },
-          orderBy: { snapshotAt: "desc" },
+          orderBy: { snapshotAt: 'desc' },
         });
 
         // Calculate delta: how many new views since last snapshot
@@ -157,7 +159,7 @@ export async function syncViews(): Promise<void> {
 }
 
 function detectPlatform(url: string): string {
-  if (url.includes("instagram.com")) return "INSTAGRAM";
-  if (url.includes("youtube.com") || url.includes("youtu.be")) return "YOUTUBE";
-  return "OTHER";
+  if (url.includes('instagram.com')) return 'INSTAGRAM';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YOUTUBE';
+  return 'OTHER';
 }

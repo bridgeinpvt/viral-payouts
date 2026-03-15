@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { trpc } from "@/trpc/client";
+import { useState } from 'react';
+import Link from 'next/link';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
@@ -10,44 +10,44 @@ import {
   CardContent,
   CardDescription,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
-const CAMPAIGN_TYPES = ["VIEW", "CLICK", "CONVERSION"] as const;
+const CAMPAIGN_TYPES = ['VIEW', 'CLICK', 'CONVERSION'] as const;
 type CampaignType = (typeof CAMPAIGN_TYPES)[number];
 
 const PLATFORMS = [
-  "INSTAGRAM",
-  "YOUTUBE",
-  "TWITTER",
-  "LINKEDIN",
-  "TIKTOK",
+  'INSTAGRAM',
+  'YOUTUBE',
+  'TWITTER',
+  'LINKEDIN',
+  'TIKTOK',
 ] as const;
 type Platform = (typeof PLATFORMS)[number];
 
 const TYPE_BADGE_STYLES: Record<CampaignType, string> = {
-  VIEW: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
-  CLICK: "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
+  VIEW: 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100',
+  CLICK: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100',
   CONVERSION:
-    "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100",
+    'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100',
 };
 
 const PLATFORM_LABELS: Record<Platform, string> = {
-  INSTAGRAM: "Instagram",
-  YOUTUBE: "YouTube",
-  TWITTER: "Twitter",
-  LINKEDIN: "LinkedIn",
-  TIKTOK: "TikTok",
+  INSTAGRAM: 'Instagram',
+  YOUTUBE: 'YouTube',
+  TWITTER: 'Twitter',
+  LINKEDIN: 'LinkedIn',
+  TIKTOK: 'TikTok',
 };
 
 function formatPayout(campaign: {
@@ -57,29 +57,30 @@ function formatPayout(campaign: {
   payoutPerSale?: number | null;
 }) {
   switch (campaign.type) {
-    case "VIEW":
+    case 'VIEW':
       return campaign.payoutPer1KViews
         ? `\u20B9${campaign.payoutPer1KViews} per 1K views`
-        : "View-based payout";
-    case "CLICK":
+        : 'View-based payout';
+    case 'CLICK':
       return campaign.payoutPerClick
         ? `\u20B9${campaign.payoutPerClick} per click`
-        : "Per-click payout";
-    case "CONVERSION":
+        : 'Per-click payout';
+    case 'CONVERSION':
       return campaign.payoutPerSale
         ? `\u20B9${campaign.payoutPerSale} per sale`
-        : "Commission per sale";
+        : 'Commission per sale';
     default:
-      return "Performance payout";
+      return 'Performance payout';
   }
 }
 
 function formatBudgetPool(totalBudget: number): string {
-  if (totalBudget >= 100_000) return `\u20B9${(totalBudget / 100_000).toFixed(1)}L pool`;
-  if (totalBudget >= 1_000) return `\u20B9${(totalBudget / 1_000).toFixed(1)}K pool`;
+  if (totalBudget >= 100_000)
+    return `\u20B9${(totalBudget / 100_000).toFixed(1)}L pool`;
+  if (totalBudget >= 1_000)
+    return `\u20B9${(totalBudget / 1_000).toFixed(1)}K pool`;
   return `\u20B9${totalBudget} pool`;
 }
-
 
 function CampaignCardSkeleton() {
   return (
@@ -110,10 +111,10 @@ function CampaignCardSkeleton() {
 }
 
 export default function MarketplacePage() {
-  const [typeFilter, setTypeFilter] = useState<CampaignType | "ALL">("ALL");
-  const [platformFilter, setPlatformFilter] = useState<Platform | "ALL">("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<CampaignType | 'ALL'>('ALL');
+  const [platformFilter, setPlatformFilter] = useState<Platform | 'ALL'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
     null
   );
@@ -128,21 +129,16 @@ export default function MarketplacePage() {
   };
 
   const queryInput = {
-    ...(typeFilter !== "ALL" && { type: typeFilter as CampaignType }),
-    ...(platformFilter !== "ALL" && { platform: platformFilter as Platform }),
+    ...(typeFilter !== 'ALL' && { type: typeFilter as CampaignType }),
+    ...(platformFilter !== 'ALL' && { platform: platformFilter as Platform }),
     ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
     limit: 20,
   };
 
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-  } = trpc.campaign.getMarketplaceCampaigns.useInfiniteQuery(queryInput, {
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-  });
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
+    trpc.campaign.getMarketplaceCampaigns.useInfiniteQuery(queryInput, {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
 
   const campaigns = data?.pages.flatMap((page) => page.campaigns) ?? [];
 
@@ -169,7 +165,7 @@ export default function MarketplacePage() {
             <div className="flex flex-1 gap-3">
               <Select
                 value={typeFilter}
-                onValueChange={(v) => setTypeFilter(v as CampaignType | "ALL")}
+                onValueChange={(v) => setTypeFilter(v as CampaignType | 'ALL')}
               >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Campaign Type" />
@@ -184,7 +180,7 @@ export default function MarketplacePage() {
 
               <Select
                 value={platformFilter}
-                onValueChange={(v) => setPlatformFilter(v as Platform | "ALL")}
+                onValueChange={(v) => setPlatformFilter(v as Platform | 'ALL')}
               >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Platform" />
@@ -246,10 +242,10 @@ export default function MarketplacePage() {
               variant="outline"
               className="mt-6"
               onClick={() => {
-                setTypeFilter("ALL");
-                setPlatformFilter("ALL");
-                setSearchQuery("");
-                setDebouncedSearch("");
+                setTypeFilter('ALL');
+                setPlatformFilter('ALL');
+                setSearchQuery('');
+                setDebouncedSearch('');
               }}
             >
               Clear filters
@@ -280,12 +276,12 @@ export default function MarketplacePage() {
                         {campaign.brand.brandProfile?.companyLogo ? (
                           <img
                             src={campaign.brand.brandProfile.companyLogo}
-                            alt={brandName ?? "Brand"}
+                            alt={brandName ?? 'Brand'}
                             className="h-10 w-10 rounded-full object-cover border"
                           />
                         ) : (
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                            {(brandName ?? "B").charAt(0).toUpperCase()}
+                            {(brandName ?? 'B').charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
@@ -379,10 +375,10 @@ export default function MarketplacePage() {
                           />
                         </svg>
                         <span>
-                          {participantCount}{" "}
+                          {participantCount}{' '}
                           {participantCount === 1
-                            ? "participant"
-                            : "participants"}
+                            ? 'participant'
+                            : 'participants'}
                         </span>
                       </div>
                     </CardContent>
@@ -406,7 +402,7 @@ export default function MarketplacePage() {
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
                 >
-                  {isFetchingNextPage ? "Loading..." : "Load more campaigns"}
+                  {isFetchingNextPage ? 'Loading...' : 'Load more campaigns'}
                 </Button>
               </div>
             )}

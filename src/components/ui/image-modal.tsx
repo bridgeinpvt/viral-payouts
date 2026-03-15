@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Modal, ModalContent } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
-import Image from "next/image";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Modal, ModalContent } from '@/components/ui/modal';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import Image from 'next/image';
 
 interface ImageModalProps {
   images: string[];
@@ -11,7 +11,12 @@ interface ImageModalProps {
   onClose: () => void;
 }
 
-export function ImageModal({ images, initialIndex, isOpen, onClose }: ImageModalProps) {
+export function ImageModal({
+  images,
+  initialIndex,
+  isOpen,
+  onClose,
+}: ImageModalProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isZoomed, setIsZoomed] = useState(false);
 
@@ -29,35 +34,36 @@ export function ImageModal({ images, initialIndex, isOpen, onClose }: ImageModal
     setIsZoomed(false);
   }, [images.length]);
 
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (!isOpen) return;
-    
-    switch (event.key) {
-      case 'ArrowRight':
-        nextImage();
-        break;
-      case 'ArrowLeft':
-        previousImage();
-        break;
-      case 'Escape':
-        onClose();
-        break;
-    }
-  }, [isOpen, nextImage, previousImage, onClose]);
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!isOpen) return;
+
+      switch (event.key) {
+        case 'ArrowRight':
+          nextImage();
+          break;
+        case 'ArrowLeft':
+          previousImage();
+          break;
+        case 'Escape':
+          onClose();
+          break;
+      }
+    },
+    [isOpen, nextImage, previousImage, onClose]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-
   if (!isOpen) return null;
 
   return (
     <Modal open={isOpen} onOpenChange={onClose}>
-        <ModalContent className="max-w-6xl max-h-[90vh] w-full h-full p-0 bg-background border border-border rounded-lg overflow-hidden sm:max-w-[95vw] sm:max-h-[95vh]">
-          <div className="relative w-full h-full flex items-center justify-center bg-background">
-
+      <ModalContent className="max-w-6xl max-h-[90vh] w-full h-full p-0 bg-background border border-border rounded-lg overflow-hidden sm:max-w-[95vw] sm:max-h-[95vh]">
+        <div className="relative w-full h-full flex items-center justify-center bg-background">
           {/* Image counter */}
           {images.length > 1 && (
             <div className="absolute top-2 left-2 md:top-4 md:left-4 z-50 text-white bg-black/50 px-2 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-medium border border-white/20">
@@ -90,7 +96,7 @@ export function ImageModal({ images, initialIndex, isOpen, onClose }: ImageModal
           )}
 
           {/* Main image */}
-          <div 
+          <div
             className={`relative flex items-center justify-center w-full h-full cursor-pointer transition-transform duration-300 ease-out p-4 md:p-8 ${
               isZoomed ? 'scale-125' : 'scale-100'
             }`}
@@ -114,7 +120,11 @@ export function ImageModal({ images, initialIndex, isOpen, onClose }: ImageModal
               className="text-white hover:text-primary-foreground hover:bg-primary bg-transparent h-8 w-8 md:h-10 md:w-10 rounded-full transition-all duration-200"
               onClick={() => setIsZoomed(!isZoomed)}
             >
-              {isZoomed ? <ZoomOut className="h-3 w-3 md:h-4 md:w-4" /> : <ZoomIn className="h-3 w-3 md:h-4 md:w-4" />}
+              {isZoomed ? (
+                <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
+              ) : (
+                <ZoomIn className="h-3 w-3 md:h-4 md:w-4" />
+              )}
             </Button>
           </div>
 
@@ -126,8 +136,8 @@ export function ImageModal({ images, initialIndex, isOpen, onClose }: ImageModal
                   <button
                     key={index}
                     className={`relative flex-shrink-0 w-12 h-12 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-110 hover:shadow-lg ${
-                      index === currentIndex 
-                        ? 'border-primary shadow-lg scale-110' 
+                      index === currentIndex
+                        ? 'border-primary shadow-lg scale-110'
                         : 'border-primary/50 opacity-70 hover:opacity-100 hover:border-primary/80'
                     }`}
                     onClick={() => {
@@ -147,8 +157,8 @@ export function ImageModal({ images, initialIndex, isOpen, onClose }: ImageModal
               </div>
             </div>
           )}
-          </div>
-        </ModalContent>
-      </Modal>
+        </div>
+      </ModalContent>
+    </Modal>
   );
 }

@@ -1,21 +1,21 @@
-import { z } from "zod";
+import { z } from 'zod';
 import {
   createTRPCRouter,
   publicProcedure,
   protectedProcedure,
-} from "@/server/api/trpc";
-import { TRPCError } from "@trpc/server";
-import bcrypt from "bcryptjs";
-import { OTPType, UserRole, WalletType } from "@prisma/client";
+} from '@/server/api/trpc';
+import { TRPCError } from '@trpc/server';
+import bcrypt from 'bcryptjs';
+import { OTPType, UserRole, WalletType } from '@prisma/client';
 import {
   sendOTPEmail,
   sendPhoneOTPVerify,
   verifyPhoneOTP,
-} from "@/lib/otp-service";
+} from '@/lib/otp-service';
 
 function generateOTP(): string {
-  if (process.env.NODE_ENV === "development") {
-    return "123456";
+  if (process.env.NODE_ENV === 'development') {
+    return '123456';
   }
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -42,7 +42,7 @@ export const authRouter = createTRPCRouter({
       z.object({
         email: z.string().email(),
         type: z.nativeEnum(OTPType).default(OTPType.EMAIL_VERIFICATION),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { email, type } = input;
@@ -54,8 +54,8 @@ export const authRouter = createTRPCRouter({
 
         if (!existingUser) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "No account found with this email address",
+            code: 'NOT_FOUND',
+            message: 'No account found with this email address',
           });
         }
       }
@@ -78,8 +78,8 @@ export const authRouter = createTRPCRouter({
         // Clean up the OTP record if delivery fails — don't leave a dangling code
         await ctx.db.oTP.delete({ where: { id: otp.id } });
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to send verification email. Please try again.",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send verification email. Please try again.',
         });
       }
 
@@ -92,7 +92,7 @@ export const authRouter = createTRPCRouter({
         phone: z.string().min(7),
         countryCode: z.string().min(1).max(4),
         type: z.nativeEnum(OTPType).default(OTPType.PHONE_VERIFICATION),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { phone, countryCode, type } = input;
@@ -104,8 +104,8 @@ export const authRouter = createTRPCRouter({
 
         if (!existingUser) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "No account found with this phone number",
+            code: 'NOT_FOUND',
+            message: 'No account found with this phone number',
           });
         }
       }
@@ -115,8 +115,8 @@ export const authRouter = createTRPCRouter({
         return { success: true, verificationSid: result.sid };
       } catch (deliveryError) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to send OTP. Please try again.",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send OTP. Please try again.',
         });
       }
     }),
@@ -128,21 +128,21 @@ export const authRouter = createTRPCRouter({
         code: z.string(),
         type: z.nativeEnum(OTPType),
         countryCode: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { identifier, code, type, countryCode } = input;
 
       if (type === OTPType.PHONE_VERIFICATION || type === OTPType.LOGIN) {
         const phone = identifier;
-        const codeVal = countryCode || "91";
+        const codeVal = countryCode || '91';
 
         const isValid = await verifyPhoneOTP(phone, codeVal, code);
 
         if (!isValid) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Invalid OTP",
+            code: 'BAD_REQUEST',
+            message: 'Invalid OTP',
           });
         }
 
@@ -156,20 +156,20 @@ export const authRouter = createTRPCRouter({
           verified: false,
           expiresAt: { gt: new Date() },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
 
       if (!otp) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid or expired OTP",
+          code: 'BAD_REQUEST',
+          message: 'Invalid or expired OTP',
         });
       }
 
       if (otp.attempts >= 3) {
         throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: "Too many attempts. Please request a new OTP",
+          code: 'TOO_MANY_REQUESTS',
+          message: 'Too many attempts. Please request a new OTP',
         });
       }
 
@@ -180,8 +180,8 @@ export const authRouter = createTRPCRouter({
         });
 
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid OTP",
+          code: 'BAD_REQUEST',
+          message: 'Invalid OTP',
         });
       }
 
@@ -202,7 +202,7 @@ export const authRouter = createTRPCRouter({
         password: z.string().min(6),
         name: z.string().min(1),
         emailOtpId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { email, phone, countryCode, password, name, emailOtpId } = input;
@@ -213,8 +213,8 @@ export const authRouter = createTRPCRouter({
 
       if (existingEmail) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "Email already registered",
+          code: 'CONFLICT',
+          message: 'Email already registered',
         });
       }
 
@@ -224,8 +224,8 @@ export const authRouter = createTRPCRouter({
 
       if (existingPhone) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "Phone number already registered",
+          code: 'CONFLICT',
+          message: 'Phone number already registered',
         });
       }
 
@@ -235,8 +235,8 @@ export const authRouter = createTRPCRouter({
 
       if (!emailOtp || !emailOtp.verified || emailOtp.identifier !== email) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Please verify your email first",
+          code: 'BAD_REQUEST',
+          message: 'Please verify your email first',
         });
       }
 
@@ -264,7 +264,7 @@ export const authRouter = createTRPCRouter({
     .input(
       z.object({
         email: z.string().email(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { email } = input;
@@ -275,8 +275,8 @@ export const authRouter = createTRPCRouter({
 
       if (!existingUser) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "No account found with this email address",
+          code: 'NOT_FOUND',
+          message: 'No account found with this email address',
         });
       }
 
@@ -301,8 +301,8 @@ export const authRouter = createTRPCRouter({
       } catch (deliveryError) {
         await ctx.db.oTP.delete({ where: { id: otp.id } });
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to send verification email. Please try again.",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send verification email. Please try again.',
         });
       }
 
@@ -315,7 +315,7 @@ export const authRouter = createTRPCRouter({
         email: z.string().email(),
         code: z.string(),
         newPassword: z.string().min(6),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { email, code, newPassword } = input;
@@ -327,20 +327,20 @@ export const authRouter = createTRPCRouter({
           verified: false,
           expiresAt: { gt: new Date() },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
 
       if (!otp) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid or expired OTP",
+          code: 'BAD_REQUEST',
+          message: 'Invalid or expired OTP',
         });
       }
 
       if (otp.attempts >= 3) {
         throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: "Too many attempts. Please request a new OTP",
+          code: 'TOO_MANY_REQUESTS',
+          message: 'Too many attempts. Please request a new OTP',
         });
       }
 
@@ -351,8 +351,8 @@ export const authRouter = createTRPCRouter({
         });
 
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid OTP",
+          code: 'BAD_REQUEST',
+          message: 'Invalid OTP',
         });
       }
 
@@ -362,8 +362,8 @@ export const authRouter = createTRPCRouter({
 
       if (!user) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
+          code: 'NOT_FOUND',
+          message: 'User not found',
         });
       }
 
@@ -399,7 +399,7 @@ export const authRouter = createTRPCRouter({
         instagramHandle: z.string().optional(),
         youtubeHandle: z.string().optional(),
         upiId: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
@@ -412,8 +412,8 @@ export const authRouter = createTRPCRouter({
 
       if (existingUsername && existingUsername.id !== userId) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "Username is already taken",
+          code: 'CONFLICT',
+          message: 'Username is already taken',
         });
       }
 
@@ -479,7 +479,7 @@ export const authRouter = createTRPCRouter({
     .input(
       z.object({
         role: z.nativeEnum(UserRole),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;

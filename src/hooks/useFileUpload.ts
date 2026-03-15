@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
 interface UploadResponse {
   url: string;
@@ -12,7 +12,10 @@ interface UseFileUploadOptions {
   onSuccess?: (response: UploadResponse) => void;
 }
 
-export function useFileUpload({ purpose, onSuccess }: UseFileUploadOptions = {}) {
+export function useFileUpload({
+  purpose,
+  onSuccess,
+}: UseFileUploadOptions = {}) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -24,23 +27,23 @@ export function useFileUpload({ purpose, onSuccess }: UseFileUploadOptions = {})
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
-      if (purpose) formData.append("purpose", purpose);
+      formData.append('file', file);
+      if (purpose) formData.append('purpose', purpose);
 
       // Simulate progress since fetch doesn't support progress natively
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
+      const response = await fetch('/api/upload', {
+        method: 'POST',
         body: formData,
       });
 
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        throw new Error("Upload failed");
+        throw new Error('Upload failed');
       }
 
       const data = await response.json();
@@ -48,7 +51,7 @@ export function useFileUpload({ purpose, onSuccess }: UseFileUploadOptions = {})
       onSuccess?.(data);
       return data;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Upload failed";
+      const message = err instanceof Error ? err.message : 'Upload failed';
       setError(message);
       throw err;
     } finally {

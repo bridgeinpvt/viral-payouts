@@ -1,7 +1,7 @@
-import { z } from "zod";
-import { createTRPCRouter, adminProcedure } from "@/server/api/trpc";
-import { TRPCError } from "@trpc/server";
-import { FraudFlagStatus, ParticipationStatus } from "@prisma/client";
+import { z } from 'zod';
+import { createTRPCRouter, adminProcedure } from '@/server/api/trpc';
+import { TRPCError } from '@trpc/server';
+import { FraudFlagStatus, ParticipationStatus } from '@prisma/client';
 
 export const adminRouter = createTRPCRouter({
   // Dashboard stats
@@ -13,32 +13,36 @@ export const adminRouter = createTRPCRouter({
       liveCampaigns,
       pendingPayouts,
     ] = await Promise.all([
-      ctx.db.user.count({ where: { role: "BRAND" } }),
-      ctx.db.user.count({ where: { role: "CREATOR" } }),
+      ctx.db.user.count({ where: { role: 'BRAND' } }),
+      ctx.db.user.count({ where: { role: 'CREATOR' } }),
       ctx.db.campaign.count(),
-      ctx.db.campaign.count({ where: { status: "LIVE" } }),
-      ctx.db.payout.count({ where: { approvalStatus: "PENDING_APPROVAL" } }),
+      ctx.db.campaign.count({ where: { status: 'LIVE' } }),
+      ctx.db.payout.count({ where: { approvalStatus: 'PENDING_APPROVAL' } }),
     ]);
 
     // GMV, revenue, payouts from latest platform analytics
     const latestAnalytics = await ctx.db.platformDailyAnalytics.findFirst({
-      orderBy: { date: "desc" },
+      orderBy: { date: 'desc' },
     });
 
     // Active fraud flags
     const activeFraudFlags = await ctx.db.fraudFlag.count({
-      where: { status: { in: ["DETECTED", "INVESTIGATING"] } },
+      where: { status: { in: ['DETECTED', 'INVESTIGATING'] } },
     });
 
     // Total wallet balances
     const brandWallets = await ctx.db.wallet.aggregate({
-      where: { type: "BRAND" },
+      where: { type: 'BRAND' },
       _sum: { availableBalance: true, escrowBalance: true },
     });
 
     const creatorWallets = await ctx.db.wallet.aggregate({
-      where: { type: "CREATOR" },
-      _sum: { availableBalance: true, pendingBalance: true, lifetimeEarnings: true },
+      where: { type: 'CREATOR' },
+      _sum: {
+        availableBalance: true,
+        pendingBalance: true,
+        lifetimeEarnings: true,
+      },
     });
 
     return {
@@ -92,21 +96,28 @@ export const adminRouter = createTRPCRouter({
             },
           },
           metrics: true,
-          dailyAnalytics: { orderBy: { date: "desc" }, take: 30 },
-          fraudFlags: { orderBy: { createdAt: "desc" } },
+          dailyAnalytics: { orderBy: { date: 'desc' }, take: 30 },
+          fraudFlags: { orderBy: { createdAt: 'desc' } },
           trackingLinks: {
             include: {
               creator: {
-                select: { id: true, name: true, creatorProfile: { select: { displayName: true } } },
+                select: {
+                  id: true,
+                  name: true,
+                  creatorProfile: { select: { displayName: true } },
+                },
               },
             },
-            orderBy: { totalClicks: "desc" },
+            orderBy: { totalClicks: 'desc' },
           },
         },
       });
 
       if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
       }
 
       return campaign;
@@ -127,8 +138,8 @@ export const adminRouter = createTRPCRouter({
       if (input.status) where.status = input.status;
       if (input.search) {
         where.OR = [
-          { name: { contains: input.search, mode: "insensitive" } },
-          { slug: { contains: input.search, mode: "insensitive" } },
+          { name: { contains: input.search, mode: 'insensitive' } },
+          { slug: { contains: input.search, mode: 'insensitive' } },
         ];
       }
 
@@ -136,12 +147,18 @@ export const adminRouter = createTRPCRouter({
         where,
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           brand: {
-            select: { id: true, name: true, brandProfile: { select: { companyName: true } } },
+            select: {
+              id: true,
+              name: true,
+              brandProfile: { select: { companyName: true } },
+            },
           },
-          escrow: { select: { totalAmount: true, releasedAmount: true, status: true } },
+          escrow: {
+            select: { totalAmount: true, releasedAmount: true, status: true },
+          },
           _count: { select: { participations: true, fraudFlags: true } },
         },
       });
@@ -159,9 +176,14 @@ export const adminRouter = createTRPCRouter({
   freezeCreator: adminProcedure
     .input(z.object({ creatorId: z.string(), reason: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const creator = await ctx.db.user.findUnique({ where: { id: input.creatorId } });
-      if (!creator || creator.role !== "CREATOR") {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Creator not found" });
+      const creator = await ctx.db.user.findUnique({
+        where: { id: input.creatorId },
+      });
+      if (!creator || creator.role !== 'CREATOR') {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Creator not found',
+        });
       }
 
       // Deactivate user
@@ -174,7 +196,9 @@ export const adminRouter = createTRPCRouter({
       await ctx.db.campaignParticipation.updateMany({
         where: {
           creatorId: input.creatorId,
-          status: { in: [ParticipationStatus.APPROVED, ParticipationStatus.ACTIVE] },
+          status: {
+            in: [ParticipationStatus.APPROVED, ParticipationStatus.ACTIVE],
+          },
         },
         data: { status: ParticipationStatus.FROZEN },
       });
@@ -203,12 +227,15 @@ export const adminRouter = createTRPCRouter({
       });
 
       if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
       }
 
       return await ctx.db.campaign.update({
         where: { id: input.campaignId },
-        data: { status: "PAUSED" },
+        data: { status: 'PAUSED' },
       });
     }),
 
@@ -222,22 +249,29 @@ export const adminRouter = createTRPCRouter({
       });
 
       if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
       }
 
-      if (campaign.status !== "PENDING_REVIEW") {
+      if (campaign.status !== 'PENDING_REVIEW') {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Only pending campaigns can be approved",
+          code: 'BAD_REQUEST',
+          message: 'Only pending campaigns can be approved',
         });
       }
 
       // If escrow is funded, it goes LIVE, else it goes to FUNDING
-      const nextStatus = campaign.escrow?.status === "LOCKED" ? "LIVE" : "FUNDING";
+      const nextStatus =
+        campaign.escrow?.status === 'LOCKED' ? 'LIVE' : 'FUNDING';
 
       return await ctx.db.campaign.update({
         where: { id: input.campaignId },
-        data: { status: nextStatus, publishedAt: nextStatus === "LIVE" ? new Date() : null },
+        data: {
+          status: nextStatus,
+          publishedAt: nextStatus === 'LIVE' ? new Date() : null,
+        },
       });
     }),
 
@@ -250,19 +284,22 @@ export const adminRouter = createTRPCRouter({
       });
 
       if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
       }
 
-      if (campaign.status !== "PENDING_REVIEW") {
+      if (campaign.status !== 'PENDING_REVIEW') {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Only pending campaigns can be rejected",
+          code: 'BAD_REQUEST',
+          message: 'Only pending campaigns can be rejected',
         });
       }
 
       return await ctx.db.campaign.update({
         where: { id: input.campaignId },
-        data: { status: "DRAFT" }, // Note: we can add a 'rejectionReason' field later, but returning to DRAFT is the standard flow
+        data: { status: 'DRAFT' }, // Note: we can add a 'rejectionReason' field later, but returning to DRAFT is the standard flow
       });
     }),
 
@@ -275,17 +312,20 @@ export const adminRouter = createTRPCRouter({
       });
 
       if (!payout) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Payout not found" });
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Payout not found' });
       }
 
-      if (payout.approvalStatus !== "PENDING_APPROVAL") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Payout already processed" });
+      if (payout.approvalStatus !== 'PENDING_APPROVAL') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Payout already processed',
+        });
       }
 
       return await ctx.db.payout.update({
         where: { id: input.payoutId },
         data: {
-          approvalStatus: "APPROVED",
+          approvalStatus: 'APPROVED',
           approvedBy: ctx.session.user.id,
           approvedAt: new Date(),
         },
@@ -302,11 +342,14 @@ export const adminRouter = createTRPCRouter({
       });
 
       if (!payout) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Payout not found" });
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Payout not found' });
       }
 
-      if (payout.approvalStatus !== "PENDING_APPROVAL") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Payout already processed" });
+      if (payout.approvalStatus !== 'PENDING_APPROVAL') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Payout already processed',
+        });
       }
 
       // Refund the amount back to creator wallet
@@ -314,8 +357,8 @@ export const adminRouter = createTRPCRouter({
         ctx.db.payout.update({
           where: { id: input.payoutId },
           data: {
-            approvalStatus: "REJECTED",
-            status: "CANCELLED",
+            approvalStatus: 'REJECTED',
+            status: 'CANCELLED',
             failedReason: input.reason,
           },
         }),
@@ -338,10 +381,10 @@ export const adminRouter = createTRPCRouter({
       const results = await ctx.db.payout.updateMany({
         where: {
           id: { in: input.payoutIds },
-          approvalStatus: "PENDING_APPROVAL",
+          approvalStatus: 'PENDING_APPROVAL',
         },
         data: {
-          approvalStatus: "APPROVED",
+          approvalStatus: 'APPROVED',
           approvedBy: ctx.session.user.id,
           approvedAt: new Date(),
         },
@@ -360,13 +403,17 @@ export const adminRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const payouts = await ctx.db.payout.findMany({
-        where: { approvalStatus: "PENDING_APPROVAL" },
+        where: { approvalStatus: 'PENDING_APPROVAL' },
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: 'asc' },
         include: {
           user: {
-            select: { id: true, name: true, creatorProfile: { select: { displayName: true, tier: true } } },
+            select: {
+              id: true,
+              name: true,
+              creatorProfile: { select: { displayName: true, tier: true } },
+            },
           },
           paymentMethod: true,
         },
@@ -390,31 +437,31 @@ export const adminRouter = createTRPCRouter({
       });
 
       if (!payout) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Payout not found" });
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Payout not found' });
       }
 
-      if (payout.status !== "COMPLETED") {
+      if (payout.status !== 'COMPLETED') {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Can only reverse completed payouts",
+          code: 'BAD_REQUEST',
+          message: 'Can only reverse completed payouts',
         });
       }
 
       await ctx.db.$transaction([
         ctx.db.payout.update({
           where: { id: input.payoutId },
-          data: { status: "FAILED", failedReason: `Reversed: ${input.reason}` },
+          data: { status: 'FAILED', failedReason: `Reversed: ${input.reason}` },
         }),
         ctx.db.transaction.create({
           data: {
             walletId: payout.walletId,
             toUserId: payout.userId,
             amount: payout.amount,
-            type: "REFUND",
-            status: "COMPLETED",
+            type: 'REFUND',
+            status: 'COMPLETED',
             description: `Payout reversal: ${input.reason}`,
             referenceId: payout.id,
-            referenceType: "payout_reversal",
+            referenceType: 'payout_reversal',
           },
         }),
       ]);
@@ -447,7 +494,7 @@ export const adminRouter = createTRPCRouter({
         where,
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           campaign: { select: { id: true, name: true, slug: true } },
         },
@@ -467,7 +514,7 @@ export const adminRouter = createTRPCRouter({
     .input(
       z.object({
         flagId: z.string(),
-        status: z.enum(["INVESTIGATING", "CONFIRMED", "DISMISSED"]),
+        status: z.enum(['INVESTIGATING', 'CONFIRMED', 'DISMISSED']),
         note: z.string(),
       })
     )
@@ -477,7 +524,10 @@ export const adminRouter = createTRPCRouter({
       });
 
       if (!flag) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Fraud flag not found" });
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Fraud flag not found',
+        });
       }
 
       return await ctx.db.fraudFlag.update({
@@ -498,7 +548,7 @@ export const adminRouter = createTRPCRouter({
   listUsers: adminProcedure
     .input(
       z.object({
-        role: z.enum(["BRAND", "CREATOR"]).optional(),
+        role: z.enum(['BRAND', 'CREATOR']).optional(),
         search: z.string().optional(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(),
@@ -509,8 +559,8 @@ export const adminRouter = createTRPCRouter({
       if (input.role) where.role = input.role;
       if (input.search) {
         where.OR = [
-          { name: { contains: input.search, mode: "insensitive" } },
-          { email: { contains: input.search, mode: "insensitive" } },
+          { name: { contains: input.search, mode: 'insensitive' } },
+          { email: { contains: input.search, mode: 'insensitive' } },
         ];
       }
 
@@ -518,7 +568,7 @@ export const adminRouter = createTRPCRouter({
         where,
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           name: true,
@@ -529,7 +579,9 @@ export const adminRouter = createTRPCRouter({
           isActive: true,
           createdAt: true,
           brandProfile: { select: { companyName: true, isVerified: true } },
-          creatorProfile: { select: { displayName: true, tier: true, isVerified: true } },
+          creatorProfile: {
+            select: { displayName: true, tier: true, isVerified: true },
+          },
         },
       });
 

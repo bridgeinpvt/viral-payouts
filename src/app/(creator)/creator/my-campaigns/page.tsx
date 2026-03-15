@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { trpc } from "@/trpc/client";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from 'next/navigation';
+import { trpc } from '@/trpc/client';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -18,28 +18,28 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
 const statusColors: Record<string, string> = {
-  APPLIED: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  APPROVED: "bg-blue-100 text-blue-700 border-blue-200",
-  ACTIVE: "bg-green-100 text-green-700 border-green-200",
-  COMPLETED: "bg-gray-100 text-gray-700 border-gray-200",
-  REJECTED: "bg-red-100 text-red-700 border-red-200",
-  FROZEN: "bg-purple-100 text-purple-700 border-purple-200",
+  APPLIED: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  APPROVED: 'bg-blue-100 text-blue-700 border-blue-200',
+  ACTIVE: 'bg-green-100 text-green-700 border-green-200',
+  COMPLETED: 'bg-gray-100 text-gray-700 border-gray-200',
+  REJECTED: 'bg-red-100 text-red-700 border-red-200',
+  FROZEN: 'bg-purple-100 text-purple-700 border-purple-200',
 };
 
 const typeLabels: Record<string, string> = {
-  VIEW: "Views",
-  CLICK: "Clicks",
-  CONVERSION: "Conversions",
+  VIEW: 'Views',
+  CLICK: 'Clicks',
+  CONVERSION: 'Conversions',
 };
 
 function formatDate(date: string | Date) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+  return new Date(date).toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 }
 
@@ -83,20 +83,20 @@ export default function MyCampaignsPage() {
           <CardTitle>Participations</CardTitle>
           <CardDescription>
             {participations?.length ?? 0} campaign
-            {participations?.length !== 1 ? "s" : ""} total
+            {participations?.length !== 1 ? 's' : ''} total
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!participations || participations.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
-                You have not joined any campaigns yet. Visit the{" "}
+                You have not joined any campaigns yet. Visit the{' '}
                 <a
                   href="/creator/marketplace"
                   className="text-primary underline"
                 >
                   Marketplace
-                </a>{" "}
+                </a>{' '}
                 to find campaigns.
               </p>
             </div>
@@ -118,9 +118,7 @@ export default function MyCampaignsPage() {
                     key={participation.id}
                     className="cursor-pointer"
                     onClick={() =>
-                      router.push(
-                        `/creator/my-campaigns/${participation.id}`
-                      )
+                      router.push(`/creator/my-campaigns/${participation.id}`)
                     }
                   >
                     <TableCell className="font-medium">
@@ -157,8 +155,7 @@ export default function MyCampaignsPage() {
                         )}
                         <span>
                           {participation.campaign.brand.brandProfile
-                            ?.companyName ??
-                            participation.campaign.brand.name}
+                            ?.companyName ?? participation.campaign.brand.name}
                         </span>
                       </div>
                     </TableCell>
@@ -172,7 +169,7 @@ export default function MyCampaignsPage() {
                       <Badge
                         className={
                           statusColors[participation.status] ??
-                          "bg-gray-100 text-gray-700"
+                          'bg-gray-100 text-gray-700'
                         }
                       >
                         {participation.status}
@@ -180,14 +177,20 @@ export default function MyCampaignsPage() {
                     </TableCell>
                     <TableCell>{formatDate(participation.createdAt)}</TableCell>
                     <TableCell>
-                      {participation.trackingLinks && participation.trackingLinks.length > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          {participation.trackingLinks.reduce((acc, link) => acc + (link.totalClicks || 0), 0)} clicks
-                        </span>
-                      )}
+                      {participation.trackingLinks &&
+                        participation.trackingLinks.length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {participation.trackingLinks.reduce(
+                              (acc, link) => acc + (link.totalClicks || 0),
+                              0
+                            )}{' '}
+                            clicks
+                          </span>
+                        )}
                       {participation.promoCode && (
                         <span className="text-xs text-muted-foreground">
-                          {participation.promoCode.code} ({participation.promoCode.totalUses} uses)
+                          {participation.promoCode.code} (
+                          {participation.promoCode.totalUses} uses)
                         </span>
                       )}
                     </TableCell>

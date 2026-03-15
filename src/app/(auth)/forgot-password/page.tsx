@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Rocket,
   Mail,
@@ -23,25 +23,25 @@ import {
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
-} from "lucide-react";
-import { toast } from "sonner";
-import { trpc } from "@/trpc/client";
-import { OTPType } from "@prisma/client";
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { trpc } from '@/trpc/client';
+import { OTPType } from '@prisma/client';
 
-type Step = "email" | "verify" | "reset";
+type Step = 'email' | 'verify' | 'reset';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("email");
+  const [step, setStep] = useState<Step>('email');
   const [showPassword, setShowPassword] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [emailOtp, setEmailOtp] = useState("");
-  const [phone, setPhone] = useState("");
-  const [countryCode] = useState("91");
-  const [phoneOtp, setPhoneOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [phone, setPhone] = useState('');
+  const [countryCode] = useState('91');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [emailVerified, setEmailVerified] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
@@ -49,8 +49,8 @@ export default function ForgotPasswordPage() {
 
   const sendEmailOTP = trpc.auth.sendEmailOTP.useMutation({
     onSuccess: () => {
-      setStep("verify");
-      toast.success("Code sent to email");
+      setStep('verify');
+      toast.success('Code sent to email');
     },
     onError: (e) => toast.error(e.message),
   });
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
   const verifyEmailOTP = trpc.auth.verifyOTPCode.useMutation({
     onSuccess: () => {
       setEmailVerified(true);
-      toast.success("Email verified!");
+      toast.success('Email verified!');
     },
     onError: (e) => toast.error(e.message),
   });
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
   const sendPhoneOTP = trpc.auth.sendPhoneOTP.useMutation({
     onSuccess: () => {
       setPhoneOtpSent(true);
-      toast.success("OTP sent to phone");
+      toast.success('OTP sent to phone');
     },
     onError: (e) => toast.error(e.message),
   });
@@ -74,15 +74,15 @@ export default function ForgotPasswordPage() {
   const verifyPhoneOTP = trpc.auth.verifyOTPCode.useMutation({
     onSuccess: () => {
       setPhoneVerified(true);
-      toast.success("Phone verified!");
+      toast.success('Phone verified!');
     },
     onError: (e) => toast.error(e.message),
   });
 
   const resetPassword = trpc.auth.resetPassword.useMutation({
     onSuccess: () => {
-      toast.success("Password reset!");
-      router.push("/login");
+      toast.success('Password reset!');
+      router.push('/login');
     },
     onError: (e) => toast.error(e.message),
   });
@@ -98,13 +98,13 @@ export default function ForgotPasswordPage() {
           </div>
           <CardTitle className="text-2xl">Reset Password</CardTitle>
           <CardDescription>
-            {step === "email" && "Verify your identity"}
-            {step === "verify" && "Complete verification"}
-            {step === "reset" && "Set new password"}
+            {step === 'email' && 'Verify your identity'}
+            {step === 'verify' && 'Complete verification'}
+            {step === 'reset' && 'Set new password'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {step === "email" && (
+          {step === 'email' && (
             <div className="space-y-3">
               <div className="space-y-1">
                 <Label htmlFor="email">Registered Email</Label>
@@ -132,7 +132,7 @@ export default function ForgotPasswordPage() {
             </div>
           )}
 
-          {step === "verify" && (
+          {step === 'verify' && (
             <div className="space-y-3">
               <div className="rounded-lg border p-3 space-y-2">
                 <div className="flex items-center justify-between">
@@ -163,7 +163,7 @@ export default function ForgotPasswordPage() {
                       value={emailOtp}
                       onChange={(e) =>
                         setEmailOtp(
-                          e.target.value.replace(/\D/g, "").slice(0, 6),
+                          e.target.value.replace(/\D/g, '').slice(0, 6)
                         )
                       }
                       maxLength={6}
@@ -182,7 +182,7 @@ export default function ForgotPasswordPage() {
                       {verifyEmailOTP.isPending ? (
                         <Loader2 className="h-4 w-4" />
                       ) : (
-                        "Verify"
+                        'Verify'
                       )}
                     </Button>
                   </div>
@@ -212,9 +212,9 @@ export default function ForgotPasswordPage() {
                       {sendPhoneOTP.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : phoneOtpSent ? (
-                        "Resend"
+                        'Resend'
                       ) : (
-                        "Send"
+                        'Send'
                       )}
                     </Button>
                   )}
@@ -227,7 +227,7 @@ export default function ForgotPasswordPage() {
                         value={phone}
                         onChange={(e) =>
                           setPhone(
-                            e.target.value.replace(/\D/g, "").slice(0, 10),
+                            e.target.value.replace(/\D/g, '').slice(0, 10)
                           )
                         }
                         maxLength={10}
@@ -240,7 +240,7 @@ export default function ForgotPasswordPage() {
                           value={phoneOtp}
                           onChange={(e) =>
                             setPhoneOtp(
-                              e.target.value.replace(/\D/g, "").slice(0, 6),
+                              e.target.value.replace(/\D/g, '').slice(0, 6)
                             )
                           }
                           maxLength={6}
@@ -262,7 +262,7 @@ export default function ForgotPasswordPage() {
                           {verifyPhoneOTP.isPending ? (
                             <Loader2 className="h-4 w-4" />
                           ) : (
-                            "Verify"
+                            'Verify'
                           )}
                         </Button>
                       </div>
@@ -273,7 +273,7 @@ export default function ForgotPasswordPage() {
 
               <Button
                 className="w-full"
-                onClick={() => setStep("reset")}
+                onClick={() => setStep('reset')}
                 disabled={!canProceed}
               >
                 Continue <ArrowRight className="ml-2 h-4 w-4" />
@@ -281,7 +281,7 @@ export default function ForgotPasswordPage() {
             </div>
           )}
 
-          {step === "reset" && (
+          {step === 'reset' && (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -292,7 +292,7 @@ export default function ForgotPasswordPage() {
               className="space-y-3"
             >
               <div className="rounded-lg bg-muted p-2 text-xs text-center">
-                <CheckCircle2 className="inline h-3 w-3 mr-1 text-green-600" />{" "}
+                <CheckCircle2 className="inline h-3 w-3 mr-1 text-green-600" />{' '}
                 {email} & +91{phone} verified
               </div>
               <div className="space-y-1">
@@ -300,7 +300,7 @@ export default function ForgotPasswordPage() {
                 <div className="relative">
                   <Input
                     id="new-password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     minLength={6}
@@ -343,7 +343,7 @@ export default function ForgotPasswordPage() {
           )}
 
           <p className="text-center text-sm text-muted-foreground">
-            Remember password?{" "}
+            Remember password?{' '}
             <Link
               href="/login"
               className="text-primary hover:underline font-medium"

@@ -1,56 +1,56 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import { trpc } from "@/trpc/client";
-import { Platform } from "@prisma/client";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { trpc } from '@/trpc/client';
+import { Platform } from '@prisma/client';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
+} from '@/components/ui/select';
+import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
-  APPLIED: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  APPROVED: "bg-blue-100 text-blue-700 border-blue-200",
-  ACTIVE: "bg-green-100 text-green-700 border-green-200",
-  COMPLETED: "bg-gray-100 text-gray-700 border-gray-200",
-  REJECTED: "bg-red-100 text-red-700 border-red-200",
-  FROZEN: "bg-purple-100 text-purple-700 border-purple-200",
+  APPLIED: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  APPROVED: 'bg-blue-100 text-blue-700 border-blue-200',
+  ACTIVE: 'bg-green-100 text-green-700 border-green-200',
+  COMPLETED: 'bg-gray-100 text-gray-700 border-gray-200',
+  REJECTED: 'bg-red-100 text-red-700 border-red-200',
+  FROZEN: 'bg-purple-100 text-purple-700 border-purple-200',
 };
 
 const typeLabels: Record<string, string> = {
-  VIEW: "Views",
-  CLICK: "Clicks",
-  CONVERSION: "Conversions",
+  VIEW: 'Views',
+  CLICK: 'Clicks',
+  CONVERSION: 'Conversions',
 };
 
 const platformLabels: Record<Platform, string> = {
-  INSTAGRAM: "Instagram",
-  YOUTUBE: "YouTube",
-  TWITTER: "Twitter",
-  LINKEDIN: "LinkedIn",
-  TIKTOK: "TikTok",
+  INSTAGRAM: 'Instagram',
+  YOUTUBE: 'YouTube',
+  TWITTER: 'Twitter',
+  LINKEDIN: 'LinkedIn',
+  TIKTOK: 'TikTok',
 };
 
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 2,
   }).format(amount);
 }
@@ -63,16 +63,16 @@ export default function CreatorCampaignDetailPage() {
   const generateLinkMutation = trpc.campaign.generateTrackingLink.useMutation({
     onSuccess: () => {
       utils.campaign.getMyParticipation.invalidate({ id });
-      toast.success("Tracking link generated successfully!");
+      toast.success('Tracking link generated successfully!');
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to generate tracking link.");
+      toast.error(error.message || 'Failed to generate tracking link.');
     },
   });
 
   function handleGenerateLink() {
     if (!platform) {
-      toast.error("Please select a platform first.");
+      toast.error('Please select a platform first.');
       return;
     }
     generateLinkMutation.mutate({
@@ -88,26 +88,26 @@ export default function CreatorCampaignDetailPage() {
   const { data: mySnapshots } =
     trpc.analytics.getCreatorContentSnapshots.useQuery(
       { participationId: id },
-      { enabled: !!id },
+      { enabled: !!id }
     );
 
   const submitMutation = trpc.campaign.submitContent.useMutation({
     onSuccess: () => {
       utils.campaign.getMyParticipation.invalidate({ id });
-      setContentUrl("");
-      setCaption("");
-      toast.success("Content submitted successfully!");
+      setContentUrl('');
+      setCaption('');
+      toast.success('Content submitted successfully!');
     },
     onError: (error) => {
       toast.error(
-        error.message || "Failed to submit content. Please try again.",
+        error.message || 'Failed to submit content. Please try again.'
       );
     },
   });
 
-  const [contentUrl, setContentUrl] = useState("");
-  const [platform, setPlatform] = useState<Platform | "">("");
-  const [caption, setCaption] = useState("");
+  const [contentUrl, setContentUrl] = useState('');
+  const [platform, setPlatform] = useState<Platform | ''>('');
+  const [caption, setCaption] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
 
   function handleCopy(text: string, label: string) {
@@ -119,11 +119,11 @@ export default function CreatorCampaignDetailPage() {
 
   function handleSubmitContent() {
     if (!contentUrl) {
-      alert("Please enter your content URL.");
+      alert('Please enter your content URL.');
       return;
     }
     if (!platform) {
-      alert("Please select a platform.");
+      alert('Please select a platform.');
       return;
     }
     submitMutation.mutate({
@@ -173,7 +173,7 @@ export default function CreatorCampaignDetailPage() {
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            by {campaign.brand.brandProfile?.companyName ?? campaign.brand.name}{" "}
+            by {campaign.brand.brandProfile?.companyName ?? campaign.brand.name}{' '}
             &middot; {typeLabels[campaign.type] ?? campaign.type} Campaign
           </p>
         </div>
@@ -203,11 +203,11 @@ export default function CreatorCampaignDetailPage() {
                 Payout
               </p>
               <p className="text-sm font-semibold">
-                {campaign.type === "VIEW" &&
+                {campaign.type === 'VIEW' &&
                   `₹${campaign.payoutPer1KViews ?? 0} per 1K views`}
-                {campaign.type === "CLICK" &&
+                {campaign.type === 'CLICK' &&
                   `₹${campaign.payoutPerClick ?? 0} per click`}
-                {campaign.type === "CONVERSION" &&
+                {campaign.type === 'CONVERSION' &&
                   `₹${campaign.payoutPerSale ?? 0} per sale`}
               </p>
             </div>
@@ -215,9 +215,9 @@ export default function CreatorCampaignDetailPage() {
         </Card>
 
         {/* Instructions & Assets (Only visible if approved or active) */}
-        {participation.status === "APPROVED" ||
-        participation.status === "ACTIVE" ||
-        participation.status === "COMPLETED" ? (
+        {participation.status === 'APPROVED' ||
+        participation.status === 'ACTIVE' ||
+        participation.status === 'COMPLETED' ? (
           <Card>
             <CardHeader>
               <CardTitle>Instructions & Assets</CardTitle>
@@ -319,8 +319,8 @@ export default function CreatorCampaignDetailPage() {
       </div>
 
       {/* Creator Journey Timeline (If Approved) */}
-      {(participation.status === "APPROVED" ||
-        participation.status === "ACTIVE") && (
+      {(participation.status === 'APPROVED' ||
+        participation.status === 'ACTIVE') && (
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader>
             <CardTitle className="text-lg">Your Campaign Journey</CardTitle>
@@ -341,7 +341,7 @@ export default function CreatorCampaignDetailPage() {
 
               <div className="flex flex-col items-center flex-1 text-center relative z-10">
                 <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.trackingLinks?.length ? "bg-primary text-primary-foreground" : "bg-background border text-muted-foreground"}`}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.trackingLinks?.length ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}
                 >
                   2
                 </div>
@@ -353,7 +353,7 @@ export default function CreatorCampaignDetailPage() {
 
               <div className="flex flex-col items-center flex-1 text-center relative z-10">
                 <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.contentUrl ? "bg-primary text-primary-foreground" : "bg-background border text-muted-foreground"}`}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.contentUrl ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}
                 >
                   3
                 </div>
@@ -365,7 +365,7 @@ export default function CreatorCampaignDetailPage() {
 
               <div className="flex flex-col items-center flex-1 text-center relative z-10">
                 <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.status === "ACTIVE" ? "bg-primary text-primary-foreground" : "bg-background border text-muted-foreground"}`}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 shadow-sm ${participation.status === 'ACTIVE' ? 'bg-primary text-primary-foreground' : 'bg-background border text-muted-foreground'}`}
                 >
                   4
                 </div>
@@ -380,10 +380,10 @@ export default function CreatorCampaignDetailPage() {
       )}
 
       {/* Tracking Link (CLICK campaigns) */}
-      {(participation.status === "APPROVED" ||
-        participation.status === "ACTIVE" ||
-        participation.status === "COMPLETED") &&
-        campaign.type === "CLICK" && (
+      {(participation.status === 'APPROVED' ||
+        participation.status === 'ACTIVE' ||
+        participation.status === 'COMPLETED') &&
+        campaign.type === 'CLICK' && (
           <Card>
             <CardHeader>
               <CardTitle>Tracking Links</CardTitle>
@@ -419,8 +419,8 @@ export default function CreatorCampaignDetailPage() {
                   className="w-full sm:w-auto"
                 >
                   {generateLinkMutation.isPending
-                    ? "Generating..."
-                    : "Generate Link"}
+                    ? 'Generating...'
+                    : 'Generate Link'}
                 </Button>
               </div>
 
@@ -432,10 +432,10 @@ export default function CreatorCampaignDetailPage() {
                     Your Active Links
                   </h4>
                   {participation.trackingLinks.map((link) => {
-                    const linkUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/go/${link.slug}`;
+                    const linkUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/go/${link.slug}`;
                     const platformName = link.platform
                       ? platformLabels[link.platform as Platform]
-                      : "General";
+                      : 'General';
 
                     return (
                       <div
@@ -455,7 +455,7 @@ export default function CreatorCampaignDetailPage() {
                             className="h-8"
                             onClick={() => handleCopy(linkUrl, link.id)}
                           >
-                            {copied === link.id ? "Copied!" : "Copy URL"}
+                            {copied === link.id ? 'Copied!' : 'Copy URL'}
                           </Button>
                         </div>
                         <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-2">
@@ -480,10 +480,10 @@ export default function CreatorCampaignDetailPage() {
         )}
 
       {/* Promo Code (CONVERSION campaigns) */}
-      {(participation.status === "APPROVED" ||
-        participation.status === "ACTIVE" ||
-        participation.status === "COMPLETED") &&
-        campaign.type === "CONVERSION" &&
+      {(participation.status === 'APPROVED' ||
+        participation.status === 'ACTIVE' ||
+        participation.status === 'COMPLETED') &&
+        campaign.type === 'CONVERSION' &&
         promoCode && (
           <Card>
             <CardHeader>
@@ -500,13 +500,13 @@ export default function CreatorCampaignDetailPage() {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={() => handleCopy(promoCode.code, "code")}
+                  onClick={() => handleCopy(promoCode.code, 'code')}
                 >
-                  {copied === "code" ? "Copied!" : "Copy"}
+                  {copied === 'code' ? 'Copied!' : 'Copy'}
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Total uses:{" "}
+                Total uses:{' '}
                 <span className="font-medium">{promoCode.totalUses}</span>
               </p>
             </CardContent>
@@ -514,8 +514,8 @@ export default function CreatorCampaignDetailPage() {
         )}
 
       {/* Content Submission */}
-      {(participation.status === "APPROVED" ||
-        participation.status === "ACTIVE") && (
+      {(participation.status === 'APPROVED' ||
+        participation.status === 'ACTIVE') && (
         <Card>
           <CardHeader>
             <CardTitle>Submit Content</CardTitle>
@@ -579,7 +579,7 @@ export default function CreatorCampaignDetailPage() {
               onClick={handleSubmitContent}
               disabled={submitMutation.isPending}
             >
-              {submitMutation.isPending ? "Submitting..." : "Submit Content"}
+              {submitMutation.isPending ? 'Submitting...' : 'Submit Content'}
             </Button>
           </CardContent>
         </Card>
@@ -598,7 +598,7 @@ export default function CreatorCampaignDetailPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               <div className="rounded-lg border p-4 text-center">
                 <p className="text-2xl font-bold">
-                  {metrics.verifiedViews.toLocaleString("en-IN")}
+                  {metrics.verifiedViews.toLocaleString('en-IN')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Verified Views
@@ -606,7 +606,7 @@ export default function CreatorCampaignDetailPage() {
               </div>
               <div className="rounded-lg border p-4 text-center">
                 <p className="text-2xl font-bold">
-                  {metrics.verifiedClicks.toLocaleString("en-IN")}
+                  {metrics.verifiedClicks.toLocaleString('en-IN')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Verified Clicks
@@ -614,7 +614,7 @@ export default function CreatorCampaignDetailPage() {
               </div>
               <div className="rounded-lg border p-4 text-center">
                 <p className="text-2xl font-bold">
-                  {metrics.verifiedConversions.toLocaleString("en-IN")}
+                  {metrics.verifiedConversions.toLocaleString('en-IN')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Conversions
@@ -665,17 +665,17 @@ export default function CreatorCampaignDetailPage() {
                         </Badge>
                       )}
                       <span className="text-xs text-muted-foreground">
-                        Synced{" "}
+                        Synced{' '}
                         {snap.lastSyncedAt
                           ? new Date(snap.lastSyncedAt).toLocaleString()
-                          : "not yet"}
+                          : 'not yet'}
                       </span>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
                       <p className="text-xl font-bold">
-                        {snap.currentViews.toLocaleString("en-IN")}
+                        {snap.currentViews.toLocaleString('en-IN')}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Views
@@ -688,7 +688,7 @@ export default function CreatorCampaignDetailPage() {
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
                       <p className="text-xl font-bold">
-                        {snap.likes.toLocaleString("en-IN")}
+                        {snap.likes.toLocaleString('en-IN')}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Likes
@@ -696,7 +696,7 @@ export default function CreatorCampaignDetailPage() {
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
                       <p className="text-xl font-bold">
-                        {snap.comments.toLocaleString("en-IN")}
+                        {snap.comments.toLocaleString('en-IN')}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Comments
@@ -704,7 +704,7 @@ export default function CreatorCampaignDetailPage() {
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
                       <p className="text-xl font-bold">
-                        {snap.shares.toLocaleString("en-IN")}
+                        {snap.shares.toLocaleString('en-IN')}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Shares
@@ -714,7 +714,7 @@ export default function CreatorCampaignDetailPage() {
                       <p className="text-xl font-bold">
                         {snap.currentViews > 0
                           ? ((snap.likes / snap.currentViews) * 100).toFixed(1)
-                          : "0"}
+                          : '0'}
                         %
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">

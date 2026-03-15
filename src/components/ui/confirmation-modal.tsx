@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Modal,
   ModalContent,
@@ -11,19 +11,19 @@ import {
   ModalDescription,
   ModalFooter,
   ModalTrigger,
-} from "@/components/ui/modal"
-import { AlertTriangle, Trash } from "lucide-react"
-import { logger } from "@/lib/logger"
+} from '@/components/ui/modal';
+import { AlertTriangle, Trash } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface ConfirmationModalProps {
-  children: React.ReactNode
-  title: string
-  description: string
-  confirmText: string
-  confirmationPhrase?: string
-  onConfirm: () => void | Promise<void>
-  variant?: "default" | "destructive"
-  isLoading?: boolean
+  children: React.ReactNode;
+  title: string;
+  description: string;
+  confirmText: string;
+  confirmationPhrase?: string;
+  onConfirm: () => void | Promise<void>;
+  variant?: 'default' | 'destructive';
+  isLoading?: boolean;
 }
 
 export function ConfirmationModal({
@@ -33,49 +33,47 @@ export function ConfirmationModal({
   confirmText,
   confirmationPhrase,
   onConfirm,
-  variant = "default",
+  variant = 'default',
   isLoading = false,
 }: ConfirmationModalProps) {
-  const [open, setOpen] = useState(false)
-  const [inputValue, setInputValue] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const isConfirmationRequired = Boolean(confirmationPhrase)
-  const canConfirm = isConfirmationRequired 
+  const isConfirmationRequired = Boolean(confirmationPhrase);
+  const canConfirm = isConfirmationRequired
     ? inputValue.trim().toLowerCase() === confirmationPhrase?.toLowerCase()
-    : true
+    : true;
 
   const handleConfirm = async () => {
-    if (!canConfirm) return
+    if (!canConfirm) return;
 
-    setIsProcessing(true)
+    setIsProcessing(true);
     try {
-      await onConfirm()
-      setOpen(false)
-      setInputValue("")
+      await onConfirm();
+      setOpen(false);
+      setInputValue('');
     } catch (error) {
-      logger.error("Confirmation action failed:", error)
+      logger.error('Confirmation action failed:', error);
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
+    setOpen(newOpen);
     if (!newOpen) {
-      setInputValue("")
+      setInputValue('');
     }
-  }
+  };
 
   return (
     <Modal open={open} onOpenChange={handleOpenChange}>
-      <ModalTrigger asChild>
-        {children}
-      </ModalTrigger>
+      <ModalTrigger asChild>{children}</ModalTrigger>
       <ModalContent className="max-w-md">
         <ModalHeader>
           <div className="flex items-center space-x-2">
-            {variant === "destructive" ? (
+            {variant === 'destructive' ? (
               <AlertTriangle className="h-5 w-5 text-destructive" />
             ) : (
               <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -91,13 +89,21 @@ export function ConfirmationModal({
           {isConfirmationRequired && (
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                Type <span className="font-mono font-semibold">{confirmationPhrase}</span> to confirm:
+                Type{' '}
+                <span className="font-mono font-semibold">
+                  {confirmationPhrase}
+                </span>{' '}
+                to confirm:
               </p>
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder={confirmationPhrase}
-                className={variant === "destructive" ? "border-destructive/50 focus:border-destructive" : ""}
+                className={
+                  variant === 'destructive'
+                    ? 'border-destructive/50 focus:border-destructive'
+                    : ''
+                }
               />
             </div>
           )}
@@ -112,7 +118,7 @@ export function ConfirmationModal({
             Cancel
           </Button>
           <Button
-            variant={variant === "destructive" ? "destructive" : "default"}
+            variant={variant === 'destructive' ? 'destructive' : 'default'}
             onClick={handleConfirm}
             disabled={!canConfirm || isProcessing || isLoading}
           >
@@ -123,7 +129,9 @@ export function ConfirmationModal({
               </>
             ) : (
               <>
-                {variant === "destructive" && <Trash className="h-4 w-4 mr-2" />}
+                {variant === 'destructive' && (
+                  <Trash className="h-4 w-4 mr-2" />
+                )}
                 {confirmText}
               </>
             )}
@@ -131,5 +139,5 @@ export function ConfirmationModal({
         </ModalFooter>
       </ModalContent>
     </Modal>
-  )
+  );
 }

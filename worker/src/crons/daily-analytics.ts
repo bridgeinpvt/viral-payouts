@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from '../db';
 
 export async function aggregateDailyAnalytics(): Promise<void> {
   const yesterday = new Date();
@@ -10,7 +10,7 @@ export async function aggregateDailyAnalytics(): Promise<void> {
 
   // Aggregate per-campaign daily analytics
   const liveCampaigns = await db.campaign.findMany({
-    where: { status: { in: ["LIVE", "COMPLETED"] } },
+    where: { status: { in: ['LIVE', 'COMPLETED'] } },
     select: { id: true },
   });
 
@@ -50,8 +50,8 @@ export async function aggregateDailyAnalytics(): Promise<void> {
             campaignId: campaign.id,
           },
           createdAt: { gte: yesterday, lt: today },
-          type: "EARNING",
-          status: "COMPLETED",
+          type: 'EARNING',
+          status: 'COMPLETED',
         },
         _sum: { amount: true },
       });
@@ -79,7 +79,10 @@ export async function aggregateDailyAnalytics(): Promise<void> {
         },
       });
     } catch (error) {
-      console.error(`[daily-analytics] Error for campaign ${campaign.id}:`, error);
+      console.error(
+        `[daily-analytics] Error for campaign ${campaign.id}:`,
+        error
+      );
     }
   }
 
@@ -88,8 +91,8 @@ export async function aggregateDailyAnalytics(): Promise<void> {
     const totalGMV = await db.transaction.aggregate({
       where: {
         createdAt: { gte: yesterday, lt: today },
-        type: "CAMPAIGN_FUND",
-        status: "COMPLETED",
+        type: 'CAMPAIGN_FUND',
+        status: 'COMPLETED',
       },
       _sum: { amount: true },
     });
@@ -97,7 +100,7 @@ export async function aggregateDailyAnalytics(): Promise<void> {
     const totalPayouts = await db.payout.aggregate({
       where: {
         processedAt: { gte: yesterday, lt: today },
-        status: "COMPLETED",
+        status: 'COMPLETED',
       },
       _sum: { netAmount: true },
     });
@@ -105,8 +108,8 @@ export async function aggregateDailyAnalytics(): Promise<void> {
     const totalRevenue = await db.transaction.aggregate({
       where: {
         createdAt: { gte: yesterday, lt: today },
-        type: "PLATFORM_FEE",
-        status: "COMPLETED",
+        type: 'PLATFORM_FEE',
+        status: 'COMPLETED',
       },
       _sum: { amount: true },
     });
@@ -123,7 +126,7 @@ export async function aggregateDailyAnalytics(): Promise<void> {
 
     const confirmedFraud = await db.fraudFlag.count({
       where: {
-        status: "CONFIRMED",
+        status: 'CONFIRMED',
         createdAt: { lt: today },
       },
     });
@@ -145,8 +148,14 @@ export async function aggregateDailyAnalytics(): Promise<void> {
       },
     });
 
-    console.log("[daily-analytics] Platform analytics aggregated for", yesterday.toISOString().split("T")[0]);
+    console.log(
+      '[daily-analytics] Platform analytics aggregated for',
+      yesterday.toISOString().split('T')[0]
+    );
   } catch (error) {
-    console.error("[daily-analytics] Error aggregating platform analytics:", error);
+    console.error(
+      '[daily-analytics] Error aggregating platform analytics:',
+      error
+    );
   }
 }

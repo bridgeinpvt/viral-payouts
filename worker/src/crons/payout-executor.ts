@@ -1,12 +1,12 @@
-import { db } from "../db";
-import { createPayout } from "../services/razorpay";
+import { db } from '../db';
+import { createPayout } from '../services/razorpay';
 
 export async function executePayouts(): Promise<void> {
   // Find all approved payouts that haven't been processed yet
   const pendingPayouts = await db.payout.findMany({
     where: {
-      approvalStatus: "APPROVED",
-      status: "PENDING",
+      approvalStatus: 'APPROVED',
+      status: 'PENDING',
     },
     include: {
       user: {
@@ -24,7 +24,7 @@ export async function executePayouts(): Promise<void> {
   });
 
   if (pendingPayouts.length === 0) {
-    console.log("[payout-executor] No pending payouts to process");
+    console.log('[payout-executor] No pending payouts to process');
     return;
   }
 
@@ -35,18 +35,18 @@ export async function executePayouts(): Promise<void> {
       // Mark as processing
       await db.payout.update({
         where: { id: payout.id },
-        data: { status: "PROCESSING" },
+        data: { status: 'PROCESSING' },
       });
 
       if (!payout.paymentMethod) {
         console.error(
-          `[payout-executor] No payment method for payout ${payout.id}`,
+          `[payout-executor] No payment method for payout ${payout.id}`
         );
         await db.payout.update({
           where: { id: payout.id },
           data: {
-            status: "FAILED",
-            failedReason: "No payment method configured",
+            status: 'FAILED',
+            failedReason: 'No payment method configured',
           },
         });
         continue;
@@ -58,14 +58,14 @@ export async function executePayouts(): Promise<void> {
           .fundAccountId,
         amount: payout.netAmount ?? payout.amount,
         referenceId: payout.id,
-        narration: `Payout for ${payout.user.name ?? "creator"}`,
+        narration: `Payout for ${payout.user.name ?? 'creator'}`,
       });
 
       // Update payout with Razorpay reference
       await db.payout.update({
         where: { id: payout.id },
         data: {
-          status: "COMPLETED",
+          status: 'COMPLETED',
           processedAt: new Date(),
           razorpayPayoutId: razorpayPayout.id,
         },
@@ -73,31 +73,31 @@ export async function executePayouts(): Promise<void> {
 
       // Create transaction record for the creator wallet
       const creatorWallet = payout.user.wallet;
-      if (creatorWallet && creatorWallet.type === "CREATOR") {
+      if (creatorWallet && creatorWallet.type === 'CREATOR') {
         await db.transaction.create({
           data: {
             walletId: creatorWallet.id,
-            type: "WITHDRAWAL",
+            type: 'WITHDRAWAL',
             amount: -(payout.netAmount ?? payout.amount),
-            status: "COMPLETED",
+            status: 'COMPLETED',
             description: `Payout processed - ${payout.id}`,
             referenceId: payout.id,
-            referenceType: "PAYOUT",
+            referenceType: 'PAYOUT',
           },
         });
       }
 
       console.log(
-        `[payout-executor] Payout ${payout.id} completed: ₹${payout.netAmount ?? payout.amount}`,
+        `[payout-executor] Payout ${payout.id} completed: ₹${payout.netAmount ?? payout.amount}`
       );
     } catch (error) {
       console.error(`[payout-executor] Failed payout ${payout.id}:`, error);
       await db.payout.update({
         where: { id: payout.id },
         data: {
-          status: "FAILED",
+          status: 'FAILED',
           failedReason:
-            error instanceof Error ? error.message : "Unknown error",
+            error instanceof Error ? error.message : 'Unknown error',
         },
       });
     }

@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { trpc } from "@/trpc/client";
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -16,11 +16,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 function formatCurrency(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return `₹${amount.toLocaleString('en-IN')}`;
 }
 
 function StatSkeleton() {
@@ -37,15 +37,27 @@ function StatSkeleton() {
 }
 
 function TokenHealthBadge({ status }: { status: string }) {
-  if (status === "OK") return <Badge className="bg-green-100 text-green-700 border-green-200">OK</Badge>;
-  if (status === "EXPIRING_SOON") return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Expiring Soon</Badge>;
-  if (status === "EXPIRED") return <Badge className="bg-red-100 text-red-700 border-red-200">Expired</Badge>;
+  if (status === 'OK')
+    return (
+      <Badge className="bg-green-100 text-green-700 border-green-200">OK</Badge>
+    );
+  if (status === 'EXPIRING_SOON')
+    return (
+      <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
+        Expiring Soon
+      </Badge>
+    );
+  if (status === 'EXPIRED')
+    return (
+      <Badge className="bg-red-100 text-red-700 border-red-200">Expired</Badge>
+    );
   return <Badge variant="secondary">Unknown</Badge>;
 }
 
 export default function AdminAnalyticsPage() {
   const { data, isLoading } = trpc.analytics.getAdminAnalytics.useQuery();
-  const { data: tokenHealth, isLoading: tokenHealthLoading } = trpc.analytics.getAdminTokenHealth.useQuery();
+  const { data: tokenHealth, isLoading: tokenHealthLoading } =
+    trpc.analytics.getAdminTokenHealth.useQuery();
 
   if (isLoading || !data) {
     return (
@@ -84,9 +96,7 @@ export default function AdminAnalyticsPage() {
               <CardDescription>Onboarded Users</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">
-                {data.funnel.onboardedUsers}
-              </p>
+              <p className="text-3xl font-bold">{data.funnel.onboardedUsers}</p>
               {data.funnel.totalUsers > 0 && (
                 <p className="text-sm text-muted-foreground">
                   {(
@@ -125,9 +135,7 @@ export default function AdminAnalyticsPage() {
 
       {/* Campaign Type Breakdown */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold">
-          Campaign Type Breakdown
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold">Campaign Type Breakdown</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.campaignTypeStats.map((stat) => (
             <Card key={stat.type}>
@@ -195,7 +203,7 @@ export default function AdminAnalyticsPage() {
                   <TableCell>
                     {campaign.brand?.brandProfile?.companyName ??
                       campaign.brand?.name ??
-                      "-"}
+                      '-'}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{campaign.type}</Badge>
@@ -213,7 +221,10 @@ export default function AdminAnalyticsPage() {
               ))}
               {data.topCampaigns.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground"
+                  >
                     No campaign data available
                   </TableCell>
                 </TableRow>
@@ -245,7 +256,7 @@ export default function AdminAnalyticsPage() {
               {data.topCreators.map((creator) => (
                 <TableRow key={creator.userId}>
                   <TableCell className="font-medium">
-                    {creator.displayName ?? creator.user?.name ?? "Unknown"}
+                    {creator.displayName ?? creator.user?.name ?? 'Unknown'}
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{creator.tier}</Badge>
@@ -260,7 +271,10 @@ export default function AdminAnalyticsPage() {
               ))}
               {data.topCreators.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-muted-foreground"
+                  >
                     No creator data available
                   </TableCell>
                 </TableRow>
@@ -296,17 +310,25 @@ export default function AdminAnalyticsPage() {
                 {tokenHealth && tokenHealth.length > 0 ? (
                   tokenHealth.map((creator) => (
                     <TableRow key={creator.userId}>
-                      <TableCell className="font-medium">{creator.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {creator.name}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {creator.instagramHandle ? `@${creator.instagramHandle}` : "—"}
+                        {creator.instagramHandle
+                          ? `@${creator.instagramHandle}`
+                          : '—'}
                       </TableCell>
                       <TableCell className="text-sm">
                         {creator.tokenExpiresAt
-                          ? new Date(creator.tokenExpiresAt).toLocaleDateString("en-IN")
-                          : "—"}
+                          ? new Date(creator.tokenExpiresAt).toLocaleDateString(
+                              'en-IN'
+                            )
+                          : '—'}
                       </TableCell>
                       <TableCell className="text-right">
-                        {creator.daysUntilExpiry !== null ? creator.daysUntilExpiry : "—"}
+                        {creator.daysUntilExpiry !== null
+                          ? creator.daysUntilExpiry
+                          : '—'}
                       </TableCell>
                       <TableCell>
                         <TokenHealthBadge status={creator.status} />
@@ -315,7 +337,10 @@ export default function AdminAnalyticsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-muted-foreground"
+                    >
                       No creators with Instagram connected
                     </TableCell>
                   </TableRow>

@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Clearing database...");
+  console.log('Clearing database...');
 
   await prisma.transaction.deleteMany({});
   await prisma.notification.deleteMany({});
@@ -22,7 +22,7 @@ async function main() {
   await prisma.verificationToken.deleteMany({});
   await prisma.user.deleteMany({});
 
-  console.log("Database cleared!");
+  console.log('Database cleared!');
 }
 
 main()

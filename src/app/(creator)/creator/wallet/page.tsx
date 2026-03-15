@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { trpc } from "@/trpc/client";
+import { useState } from 'react';
+import { trpc } from '@/trpc/client';
 import {
   Card,
   CardHeader,
@@ -9,10 +9,10 @@ import {
   CardContent,
   CardDescription,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -20,53 +20,53 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 function formatCurrency(amount: number): string {
-  return `\u20B9${amount.toLocaleString("en-IN")}`;
+  return `\u20B9${amount.toLocaleString('en-IN')}`;
 }
 
 function getStatusColor(
-  status: string,
-): "default" | "secondary" | "destructive" | "outline" {
+  status: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
-    case "COMPLETED":
-    case "APPROVED":
-    case "ESCROW_RELEASE":
-      return "default";
-    case "PENDING":
-    case "PENDING_APPROVAL":
-    case "PROCESSING":
-      return "secondary";
-    case "FAILED":
-    case "REJECTED":
-      return "destructive";
+    case 'COMPLETED':
+    case 'APPROVED':
+    case 'ESCROW_RELEASE':
+      return 'default';
+    case 'PENDING':
+    case 'PENDING_APPROVAL':
+    case 'PROCESSING':
+      return 'secondary';
+    case 'FAILED':
+    case 'REJECTED':
+      return 'destructive';
     default:
-      return "outline";
+      return 'outline';
   }
 }
 
 function getTransactionTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    EARNING: "Earning",
-    WITHDRAWAL: "Withdrawal",
-    BONUS: "Bonus",
-    REFUND: "Refund",
-    CAMPAIGN_FUND: "Campaign Fund",
-    ESCROW_LOCK: "Escrow Lock",
-    ESCROW_RELEASE: "Escrow Release",
-    PLATFORM_FEE: "Platform Fee",
+    EARNING: 'Earning',
+    WITHDRAWAL: 'Withdrawal',
+    BONUS: 'Bonus',
+    REFUND: 'Refund',
+    CAMPAIGN_FUND: 'Campaign Fund',
+    ESCROW_LOCK: 'Escrow Lock',
+    ESCROW_RELEASE: 'Escrow Release',
+    PLATFORM_FEE: 'Platform Fee',
   };
   return labels[type] ?? type;
 }
@@ -125,9 +125,9 @@ export default function CreatorWalletPage() {
       utils.wallet.getCreatorWallet.invalidate();
       utils.wallet.getTransactions.invalidate();
       utils.wallet.getPayouts.invalidate();
-      setWithdrawAmount("");
-      setSelectedPaymentMethod("");
-      toast.success("Withdrawal request submitted successfully!");
+      setWithdrawAmount('');
+      setSelectedPaymentMethod('');
+      toast.success('Withdrawal request submitted successfully!');
     },
     onError: (err) => {
       toast.error(err.message);
@@ -139,7 +139,7 @@ export default function CreatorWalletPage() {
       utils.wallet.getCreatorWallet.invalidate();
       setShowAddPayment(false);
       resetPaymentForm();
-      toast.success("Payment method added successfully");
+      toast.success('Payment method added successfully');
     },
     onError: (err) => {
       toast.error(err.message);
@@ -147,24 +147,24 @@ export default function CreatorWalletPage() {
   });
 
   // Withdrawal form state
-  const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
   // Add payment method form state
   const [showAddPayment, setShowAddPayment] = useState(false);
-  const [paymentType, setPaymentType] = useState<"UPI" | "BANK_ACCOUNT">("UPI");
-  const [upiId, setUpiId] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [ifsc, setIfsc] = useState("");
-  const [accountName, setAccountName] = useState("");
+  const [paymentType, setPaymentType] = useState<'UPI' | 'BANK_ACCOUNT'>('UPI');
+  const [upiId, setUpiId] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [ifsc, setIfsc] = useState('');
+  const [accountName, setAccountName] = useState('');
   const [isPrimary, setIsPrimary] = useState(false);
 
   function resetPaymentForm() {
-    setPaymentType("UPI");
-    setUpiId("");
-    setAccountNumber("");
-    setIfsc("");
-    setAccountName("");
+    setPaymentType('UPI');
+    setUpiId('');
+    setAccountNumber('');
+    setIfsc('');
+    setAccountName('');
     setIsPrimary(false);
   }
 
@@ -180,7 +180,7 @@ export default function CreatorWalletPage() {
 
   function handleAddPaymentMethod() {
     const details: Record<string, string> =
-      paymentType === "UPI" ? { upiId } : { accountNumber, ifsc, accountName };
+      paymentType === 'UPI' ? { upiId } : { accountNumber, ifsc, accountName };
 
     addPaymentMethodMutation.mutate({
       type: paymentType,
@@ -195,7 +195,7 @@ export default function CreatorWalletPage() {
     !withdrawMutation.isPending;
 
   const isPaymentFormValid =
-    paymentType === "UPI"
+    paymentType === 'UPI'
       ? upiId.trim().length > 0
       : accountNumber.trim().length > 0 &&
         ifsc.trim().length > 0 &&
@@ -260,7 +260,7 @@ export default function CreatorWalletPage() {
                 size="sm"
                 onClick={() => setShowAddPayment(!showAddPayment)}
               >
-                {showAddPayment ? "Cancel" : "Add Payment Method"}
+                {showAddPayment ? 'Cancel' : 'Add Payment Method'}
               </Button>
             </div>
             <CardDescription>Manage your payout destinations.</CardDescription>
@@ -273,7 +273,7 @@ export default function CreatorWalletPage() {
                   <Select
                     value={paymentType}
                     onValueChange={(v) =>
-                      setPaymentType(v as "UPI" | "BANK_ACCOUNT")
+                      setPaymentType(v as 'UPI' | 'BANK_ACCOUNT')
                     }
                   >
                     <SelectTrigger>
@@ -286,7 +286,7 @@ export default function CreatorWalletPage() {
                   </Select>
                 </div>
 
-                {paymentType === "UPI" ? (
+                {paymentType === 'UPI' ? (
                   <div className="space-y-2">
                     <Label htmlFor="upiId">UPI ID</Label>
                     <Input
@@ -349,8 +349,8 @@ export default function CreatorWalletPage() {
                   className="w-full"
                 >
                   {addPaymentMethodMutation.isPending
-                    ? "Adding..."
-                    : "Add Payment Method"}
+                    ? 'Adding...'
+                    : 'Add Payment Method'}
                 </Button>
                 {addPaymentMethodMutation.isError && (
                   <p className="text-sm text-red-600">
@@ -376,10 +376,10 @@ export default function CreatorWalletPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">
-                          {method.type === "UPI"
-                            ? "UPI"
-                            : method.type === "BANK_ACCOUNT"
-                              ? "Bank Account"
+                          {method.type === 'UPI'
+                            ? 'UPI'
+                            : method.type === 'BANK_ACCOUNT'
+                              ? 'Bank Account'
                               : method.type}
                         </p>
                         {method.isPrimary && (
@@ -390,10 +390,10 @@ export default function CreatorWalletPage() {
                         )}
                       </div>
                       <p className="text-muted-foreground text-xs mt-1">
-                        {method.type === "UPI"
+                        {method.type === 'UPI'
                           ? (method.details as Record<string, string>).upiId
-                          : method.type === "BANK_ACCOUNT"
-                            ? `${(method.details as Record<string, string>).accountName} - ****${((method.details as Record<string, string>).accountNumber ?? "").slice(-4)}`
+                          : method.type === 'BANK_ACCOUNT'
+                            ? `${(method.details as Record<string, string>).accountName} - ****${((method.details as Record<string, string>).accountNumber ?? '').slice(-4)}`
                             : JSON.stringify(method.details)}
                       </p>
                     </div>
@@ -441,12 +441,12 @@ export default function CreatorWalletPage() {
                 <SelectContent>
                   {wallet?.paymentMethods?.map((method) => (
                     <SelectItem key={method.id} value={method.id}>
-                      {method.type === "UPI"
+                      {method.type === 'UPI'
                         ? `UPI - ${(method.details as Record<string, string>).upiId}`
-                        : method.type === "BANK_ACCOUNT"
+                        : method.type === 'BANK_ACCOUNT'
                           ? `Bank - ${(method.details as Record<string, string>).accountName}`
                           : method.type}
-                      {method.isPrimary ? " (Primary)" : ""}
+                      {method.isPrimary ? ' (Primary)' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -460,8 +460,8 @@ export default function CreatorWalletPage() {
               className="w-full"
             >
               {withdrawMutation.isPending
-                ? "Processing..."
-                : "Request Withdrawal"}
+                ? 'Processing...'
+                : 'Request Withdrawal'}
             </Button>
             {withdrawMutation.isError && (
               <p className="text-sm text-red-600">
@@ -499,10 +499,10 @@ export default function CreatorWalletPage() {
                 transactionsData.transactions.map((tx) => (
                   <TableRow key={tx.id}>
                     <TableCell className="text-sm">
-                      {new Date(tx.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
+                      {new Date(tx.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
                       })}
                     </TableCell>
                     <TableCell>
@@ -513,20 +513,20 @@ export default function CreatorWalletPage() {
                     <TableCell className="text-sm">{tx.description}</TableCell>
                     <TableCell
                       className={`text-right text-sm font-medium ${
-                        tx.type === "EARNING" ||
-                        tx.type === "BONUS" ||
-                        tx.type === "REFUND" ||
-                        tx.type === "ESCROW_RELEASE"
-                          ? "text-green-600"
-                          : "text-red-600"
+                        tx.type === 'EARNING' ||
+                        tx.type === 'BONUS' ||
+                        tx.type === 'REFUND' ||
+                        tx.type === 'ESCROW_RELEASE'
+                          ? 'text-green-600'
+                          : 'text-red-600'
                       }`}
                     >
-                      {tx.type === "EARNING" ||
-                      tx.type === "BONUS" ||
-                      tx.type === "REFUND" ||
-                      tx.type === "ESCROW_RELEASE"
-                        ? "+"
-                        : "-"}
+                      {tx.type === 'EARNING' ||
+                      tx.type === 'BONUS' ||
+                      tx.type === 'REFUND' ||
+                      tx.type === 'ESCROW_RELEASE'
+                        ? '+'
+                        : '-'}
                       {formatCurrency(Math.abs(tx.amount))}
                     </TableCell>
                     <TableCell>
@@ -578,10 +578,10 @@ export default function CreatorWalletPage() {
                 payouts.map((payout) => (
                   <TableRow key={payout.id}>
                     <TableCell className="text-sm">
-                      {new Date(payout.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
+                      {new Date(payout.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
                       })}
                     </TableCell>
                     <TableCell className="text-right text-sm">
@@ -599,9 +599,9 @@ export default function CreatorWalletPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {payout.paymentMethod.type === "UPI"
+                      {payout.paymentMethod.type === 'UPI'
                         ? `UPI - ${(payout.paymentMethod.details as Record<string, string>).upiId}`
-                        : payout.paymentMethod.type === "BANK_ACCOUNT"
+                        : payout.paymentMethod.type === 'BANK_ACCOUNT'
                           ? `Bank - ${(payout.paymentMethod.details as Record<string, string>).accountName}`
                           : payout.paymentMethod.type}
                     </TableCell>

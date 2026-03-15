@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth";
-import { getDashboardPath } from "@/lib/rbac";
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/server/auth';
+import { getDashboardPath } from '@/lib/rbac';
 
 export default async function AuthLayout({
   children,
@@ -17,9 +17,5 @@ export default async function AuthLayout({
     }
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {children}
-    </div>
-  );
+  return <div className="min-h-screen bg-background">{children}</div>;
 }
